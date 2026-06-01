@@ -71,8 +71,18 @@ class OllamaProvider(ModelProvider):
         latency_ms = int((time.monotonic() - start) * 1000)
         data = response.json()
 
+        if isinstance(data, dict) and data.get("error"):
+            raise ProviderError(f"Ollama API error: {data['error']}", retryable=False)
+        message = data.get("message") if isinstance(data, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str):
+            raise ProviderError(
+                "Ollama returned a malformed response (missing message.content)",
+                retryable=False,
+            )
+
         return CompletionResponse(
-            content=data["message"]["content"],
+            content=content,
             model_id=model_id,
             latency_ms=latency_ms,
             input_tokens=data.get("prompt_eval_count"),

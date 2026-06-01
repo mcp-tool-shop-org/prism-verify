@@ -6,11 +6,10 @@ Catches uniquely: structurally well-formed artifacts whose invariants are unsati
 
 from __future__ import annotations
 
-import json
 import time
 
-from prism.core.types import Artifact, Finding, LensOutcome, LensResult
-from prism.lenses.base import Lens
+from prism.core.types import Artifact, LensResult
+from prism.lenses.base import Lens, parse_lens_response
 from prism.providers.base import CompletionRequest, ModelProvider
 
 SYSTEM_PROMPT = """You are an invariant and test-adequacy verifier. Your job is to determine
@@ -83,44 +82,10 @@ that would catch a planted bug?"""
         )
         latency_ms = int((time.monotonic() - start) * 1000)
 
-        try:
-            data = json.loads(response.content)
-        except json.JSONDecodeError:
-            return LensResult(
-                lens=self.name,
-                model_family=model_family,
-                model_id=model_id,
-                outcome=LensOutcome.UNCERTAIN,
-                findings=[
-                    Finding(
-                        category="parse_error",
-                        evidence="Verifier response was not valid JSON",
-                        severity="major",
-                    )
-                ],
-                confidence=0.0,
-                sees_reasoning=False,
-                latency_ms=latency_ms,
-            )
-
-        findings = [
-            Finding(
-                file=f.get("file"),
-                line=f.get("line"),
-                category=f.get("category", "unknown"),
-                evidence=f.get("evidence", ""),
-                severity=f.get("severity", "major"),
-            )
-            for f in data.get("findings", [])
-        ]
-
-        return LensResult(
+        return parse_lens_response(
+            response.content,
             lens=self.name,
             model_family=model_family,
             model_id=model_id,
-            outcome=LensOutcome(data.get("outcome", "uncertain")),
-            findings=findings,
-            confidence=float(data.get("confidence", 0.5)),
-            sees_reasoning=False,
             latency_ms=latency_ms,
         )

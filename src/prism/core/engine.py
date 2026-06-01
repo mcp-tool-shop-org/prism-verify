@@ -14,6 +14,7 @@ from prism.core.stripping import StripVerificationError, strip_reasoning
 from prism.core.submodularity import compute_pairwise_rho
 from prism.core.types import (
     Artifact,
+    Finding,
     LensOutcome,
     LensResult,
     RefusalReason,
@@ -102,8 +103,6 @@ class VerificationEngine:
             )
 
         # Create stripped artifact for lenses
-        from prism.core.types import Artifact
-
         stripped_artifact = Artifact(
             type=request.artifact.type,
             content=strip_result.content,
@@ -111,11 +110,36 @@ class VerificationEngine:
         )
 
         # Fan-out: run all lenses in parallel
+        selected_lenses = lenses[: request.budget.max_lenses]
         lens_tasks = [
             self._run_lens(lens, stripped_artifact, request.intent, route, provider)
-            for lens in lenses[: request.budget.max_lenses]
+            for lens in selected_lenses
         ]
-        lens_results = await asyncio.gather(*lens_tasks)
+        gathered = await asyncio.gather(*lens_tasks, return_exceptions=True)
+        lens_results: list[LensResult] = []
+        for lens, res in zip(selected_lenses, gathered, strict=True):
+            if isinstance(res, BaseException):
+                # Defense-in-depth: an unexpected error in one lens must never crash
+                # the whole pipeline — record it as an errored UNCERTAIN placeholder.
+                lens_results.append(
+                    LensResult(
+                        lens=lens.name,
+                        model_family=route.family.value,
+                        model_id=route.model_id,
+                        outcome=LensOutcome.UNCERTAIN,
+                        findings=[
+                            Finding(
+                                category="internal_error",
+                                evidence=f"Lens raised an unexpected error: {res}",
+                                severity="major",
+                            )
+                        ],
+                        confidence=0.0,
+                        errored=True,
+                    )
+                )
+            else:
+                lens_results.append(res)
 
         # Step 4: Submodularity check
         sub_result = compute_pairwise_rho(
@@ -184,8 +208,6 @@ class VerificationEngine:
         provider: ModelProvider,
     ) -> LensResult:
         """Run a single lens, handling provider errors gracefully."""
-        from prism.core.types import Finding, LensOutcome, LensResult
-
         try:
             return await lens.evaluate(
                 artifact=artifact,
@@ -211,6 +233,7 @@ class VerificationEngine:
                 ],
                 confidence=0.0,
                 sees_reasoning=False,
+                errored=True,
             )
 
     def _aggregate_verdict(

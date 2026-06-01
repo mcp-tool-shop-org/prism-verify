@@ -77,8 +77,18 @@ class OpenAIProvider(ModelProvider):
         latency_ms = int((time.monotonic() - start) * 1000)
         data = response.json()
 
-        content = data["choices"][0]["message"]["content"]
-        usage = data.get("usage", {})
+        if isinstance(data, dict) and data.get("error"):
+            raise ProviderError(f"OpenAI API error: {data['error']}", retryable=False)
+        choices = data.get("choices") if isinstance(data, dict) else None
+        first = choices[0] if isinstance(choices, list) and choices else None
+        message = first.get("message") if isinstance(first, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str):
+            raise ProviderError(
+                "OpenAI returned a malformed response (missing choices[0].message.content)",
+                retryable=False,
+            )
+        usage = data.get("usage", {}) if isinstance(data, dict) else {}
 
         return CompletionResponse(
             content=content,

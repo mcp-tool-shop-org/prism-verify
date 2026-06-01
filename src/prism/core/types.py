@@ -119,6 +119,7 @@ class LensResult(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     sees_reasoning: bool = False
     latency_ms: int | None = None
+    errored: bool = False  # fault placeholder (provider/parse error), not a genuine adjudication
 
 
 class Receipt(BaseModel):
