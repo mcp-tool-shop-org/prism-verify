@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/prism-verify/main/assets/prism-verify-logo.png" alt="prism-verify logo" width="320">
+</p>
+
 # prism-verify
 
 Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts.
