@@ -32,6 +32,42 @@ from prism.receipts.store import ReceiptStore
 MIN_LENSES = 3
 
 
+def aggregate_verdict(lens_results: list[LensResult]) -> tuple[Verdict, float, bool]:
+    """Aggregate genuine (non-errored) lens results into a verdict.
+
+    Conservative ordering:
+      - any FAIL with a critical finding -> REFUSE (non-retryable)
+      - any FAIL                          -> REVISE (retryable); an explicit FAIL is
+        authoritative, so finding severity may escalate it to REFUSE but never nullify it
+      - any UNCERTAIN                     -> ESCALATE (route to a human)
+      - all PASS                          -> ACCEPT
+
+    Callers pass only genuine results; provider/parse faults are handled upstream as an
+    availability refusal, so a single transient blip never silently forces an escalation.
+    """
+    has_critical = False
+    has_fail = False
+    has_uncertain = False
+    confidences: list[float] = []
+    for lr in lens_results:
+        confidences.append(lr.confidence)
+        if lr.outcome == LensOutcome.FAIL:
+            has_fail = True
+            if any(f.severity == "critical" for f in lr.findings):
+                has_critical = True
+        elif lr.outcome == LensOutcome.UNCERTAIN:
+            has_uncertain = True
+
+    confidence = min(confidences) if confidences else 0.0
+    if has_critical:
+        return Verdict.REFUSE, confidence, False
+    if has_fail:
+        return Verdict.REVISE, confidence, True
+    if has_uncertain:
+        return Verdict.ESCALATE, confidence, False
+    return Verdict.ACCEPT, confidence, False
+
+
 class VerificationEngine:
     """Core engine that executes the full verification pipeline."""
 
@@ -52,9 +88,10 @@ class VerificationEngine:
         1. STRIP reasoning from artifact
         2. ROUTE to alt-family verifier
         3. FAN-OUT lenses in parallel
-        4. RHO check (submodularity)
-        5. AGGREGATE verdict
-        6. RECEIPT generation
+        4. SPLIT genuine adjudications from provider/parse faults
+        5. RHO check (submodularity) over genuine results
+        6. AGGREGATE verdict over genuine results
+        7. RECEIPT generation
         """
         # Step 1: Strip reasoning
         try:
@@ -141,12 +178,26 @@ class VerificationEngine:
             else:
                 lens_results.append(res)
 
-        # Step 4: Submodularity check
+        # Step 4: split genuine adjudications from provider/parse faults. Too few genuine
+        # results means the verifier could not get enough independent signal -- that is an
+        # availability fault (retryable), NOT a lens collapse and NOT a human escalation.
+        genuine_results = [lr for lr in lens_results if not lr.errored]
+        if len(genuine_results) < MIN_LENSES:
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail=(
+                    f"Only {len(genuine_results)} of {len(lens_results)} lenses produced a "
+                    f"genuine result (need >= {MIN_LENSES}); the rest hit provider/parse faults"
+                ),
+                retryable=True,
+            )
+
+        # Step 5: Submodularity check over genuine results only -- fault placeholders share
+        # identical finding keys and would otherwise trip a false LENS_COLLAPSE.
         sub_result = compute_pairwise_rho(
-            lens_results,
+            genuine_results,
             thresholds=request.pairwise_rho_thresholds,
         )
-
         if not sub_result.passed:
             return VerifyError(
                 reason=RefusalReason.LENS_COLLAPSE,
@@ -154,22 +205,22 @@ class VerificationEngine:
                 retryable=False,
             )
 
-        # Step 5: Aggregate verdict
-        verdict, confidence, retryable = self._aggregate_verdict(lens_results)
+        # Step 6: aggregate verdict over genuine results.
+        verdict, confidence, retryable = aggregate_verdict(genuine_results)
 
-        # Generate revision hint if verdict is REVISE
+        # Generate revision hint if verdict is REVISE (from genuine findings only).
         revision_hint = None
         if verdict == Verdict.REVISE:
-            # Collect critical/major findings as hint
-            hints = []
-            for lr in lens_results:
-                for f in lr.findings:
-                    if f.severity in ("critical", "major"):
-                        hints.append(f.evidence)
+            hints = [
+                f.evidence
+                for lr in genuine_results
+                for f in lr.findings
+                if f.severity in ("critical", "major")
+            ]
             if hints:
                 revision_hint = "; ".join(hints)[:500]
 
-        # Step 6: Generate receipt
+        # Step 7: Generate receipt
         lens_results_json = json.dumps(
             [lr.model_dump() for lr in lens_results], default=str
         )
@@ -247,53 +298,3 @@ class VerificationEngine:
             )
         result.prompt_hash = prompt_hash
         return result
-
-    def _aggregate_verdict(
-        self, lens_results: list[LensResult]
-    ) -> tuple[Verdict, float, bool]:
-        """Aggregate lens results into a single verdict.
-
-        Logic:
-        - Any lens FAIL with critical finding -> REFUSE
-        - Any lens FAIL with major finding -> REVISE
-        - All lenses UNCERTAIN -> ESCALATE
-        - All lenses PASS -> ACCEPT
-        - Mixed -> lowest severity drives verdict
-        """
-
-        has_critical = False
-        has_major_fail = False
-        all_uncertain = True
-        all_pass = True
-        confidences = []
-
-        for lr in lens_results:
-            confidences.append(lr.confidence)
-
-            if lr.outcome == LensOutcome.PASS:
-                all_uncertain = False
-            elif lr.outcome == LensOutcome.FAIL:
-                all_uncertain = False
-                all_pass = False
-                for f in lr.findings:
-                    if f.severity == "critical":
-                        has_critical = True
-                    elif f.severity == "major":
-                        has_major_fail = True
-            elif lr.outcome == LensOutcome.UNCERTAIN:
-                all_pass = False
-
-        # Compute confidence as minimum (conservative)
-        confidence = min(confidences) if confidences else 0.0
-
-        if has_critical:
-            return Verdict.REFUSE, confidence, False
-        elif has_major_fail:
-            return Verdict.REVISE, confidence, True
-        elif all_uncertain:
-            return Verdict.ESCALATE, confidence, False
-        elif all_pass:
-            return Verdict.ACCEPT, confidence, False
-        else:
-            # Mixed uncertain + pass
-            return Verdict.ACCEPT, confidence, False
