@@ -5,6 +5,7 @@ import pytest
 
 from prism.core.routing import (
     CIRCUIT_BREAKER_THRESHOLD,
+    DEFAULT_ROUTING_MAP,
     CircuitState,
     FamilyRouter,
     RoutingError,
@@ -69,7 +70,7 @@ class TestFamilyRouter:
         for family, model_id in [
             (ModelFamily.GOOGLE, "gemini-2.5-pro"),
             (ModelFamily.OPENAI, "gpt-5.4-mini"),
-            (ModelFamily.LOCAL, "qwen3:32b"),
+            (ModelFamily.LOCAL, "mistral-small:24b"),
         ]:
             for _ in range(CIRCUIT_BREAKER_THRESHOLD):
                 router.report_failure(family, model_id)
@@ -91,6 +92,52 @@ class TestFamilyRouter:
         # Should still select the same primary
         new_route = router.select_verifier(ModelFamily.ANTHROPIC)
         assert new_route.model_id == route.model_id
+
+    def test_skips_family_with_no_configured_provider(self):
+        """Router walks past a candidate whose family has no provider (local-only trap)."""
+        router = FamilyRouter()
+        # Anthropic caller, but only a local provider is configured: the primary (Google)
+        # and secondary (OpenAI) routes must be skipped, not dead-ended on.
+        route = router.select_verifier(ModelFamily.ANTHROPIC, available_families={"local"})
+        assert route.family == ModelFamily.LOCAL
+        assert route.model_id == "mistral-small:24b"
+
+    def test_no_configured_cross_family_raises(self):
+        """If the only configured provider is the caller's own family, refuse."""
+        router = FamilyRouter()
+        with pytest.raises(RoutingError):
+            router.select_verifier(ModelFamily.ANTHROPIC, available_families={"anthropic"})
+
+    def test_available_families_none_preserves_legacy_behavior(self):
+        """Omitting available_families keeps the original primary route (no filtering)."""
+        router = FamilyRouter()
+        route = router.select_verifier(ModelFamily.ANTHROPIC)
+        assert route.family == ModelFamily.GOOGLE
+        assert route.is_fallback is False
+
+
+def test_hosted_routing_ids_are_served_by_their_providers():
+    """Guard the routing-map <-> provider drift the audit found, for the hosted families.
+
+    Every hosted verifier model_id in DEFAULT_ROUTING_MAP must be one its provider actually
+    serves (LOCAL is covered by test_local_route_id_matches_ollama_default).
+    """
+    from prism.providers.anthropic import AnthropicProvider
+    from prism.providers.google import GoogleProvider
+    from prism.providers.openai import OpenAIProvider
+
+    served = {
+        ModelFamily.ANTHROPIC: set(AnthropicProvider(api_key="x").available_models),
+        ModelFamily.GOOGLE: set(GoogleProvider(api_key="x").available_models),
+        ModelFamily.OPENAI: set(OpenAIProvider(api_key="x").available_models),
+    }
+    for routes in DEFAULT_ROUTING_MAP.values():
+        for family, model_id in routes:
+            if family in served:
+                assert model_id in served[family], (
+                    f"routing map references {family.value}:{model_id}, "
+                    f"but that provider serves {sorted(served[family])}"
+                )
 
 
 class TestCircuitState:

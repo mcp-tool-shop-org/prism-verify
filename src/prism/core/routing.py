@@ -21,17 +21,17 @@ DEFAULT_ROUTING_MAP: dict[ModelFamily, list[tuple[ModelFamily, str]]] = {
     ModelFamily.ANTHROPIC: [
         (ModelFamily.GOOGLE, "gemini-2.5-pro"),
         (ModelFamily.OPENAI, "gpt-5.4-mini"),
-        (ModelFamily.LOCAL, "qwen3:32b"),
+        (ModelFamily.LOCAL, "mistral-small:24b"),
     ],
     ModelFamily.OPENAI: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
         (ModelFamily.GOOGLE, "gemini-2.5-pro"),
-        (ModelFamily.LOCAL, "qwen3:32b"),
+        (ModelFamily.LOCAL, "mistral-small:24b"),
     ],
     ModelFamily.GOOGLE: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
         (ModelFamily.OPENAI, "gpt-5.4-mini"),
-        (ModelFamily.LOCAL, "qwen3:32b"),
+        (ModelFamily.LOCAL, "mistral-small:24b"),
     ],
     ModelFamily.LOCAL: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
@@ -107,23 +107,38 @@ class FamilyRouter:
             self._circuits[key] = CircuitState()
         return self._circuits[key]
 
-    def select_verifier(self, caller_family: ModelFamily) -> RouteSelection:
+    def select_verifier(
+        self,
+        caller_family: ModelFamily,
+        available_families: set[str] | None = None,
+    ) -> RouteSelection:
         """Select the best available alt-family verifier.
 
         Args:
             caller_family: The caller's model family (will be excluded).
+            available_families: Families that actually have a configured provider. When
+                given, candidates whose family has no provider are SKIPPED rather than
+                selected — otherwise the router hands back a family the engine cannot serve
+                and the request dead-ends on VERIFIER_UNAVAILABLE (the local-only-deployment
+                trap: an Anthropic caller with only a local provider would otherwise be
+                routed to Google/OpenAI and refused out of the box).
 
         Returns:
             RouteSelection with the chosen verifier.
 
         Raises:
-            RoutingError: If all cross-family routes are unavailable (circuit-open).
+            RoutingError: If no cross-family route is both configured and circuit-closed.
         """
         candidates = self._routing_map.get(caller_family, [])
 
         for i, (family, model_id) in enumerate(candidates):
             # Lock 1: never same-family (defensive check)
             if family == caller_family:
+                continue
+
+            # Walk past families with no configured provider instead of selecting an
+            # unserviceable route.
+            if available_families is not None and family.value not in available_families:
                 continue
 
             circuit_key = f"{family.value}:{model_id}"
@@ -137,8 +152,8 @@ class FamilyRouter:
                 )
 
         raise RoutingError(
-            f"VERIFIER_UNAVAILABLE: all cross-family routes for caller={caller_family.value} "
-            f"have open circuit-breakers"
+            f"VERIFIER_UNAVAILABLE: no cross-family route for caller={caller_family.value} "
+            f"is both configured and circuit-closed"
         )
 
     def report_success(self, family: ModelFamily, model_id: str) -> None:
@@ -152,7 +167,10 @@ class FamilyRouter:
         self._get_circuit(circuit_key).record_failure()
 
     def get_next_fallback(
-        self, caller_family: ModelFamily, failed_model_id: str
+        self,
+        caller_family: ModelFamily,
+        failed_model_id: str,
+        available_families: set[str] | None = None,
     ) -> RouteSelection | None:
         """Get the next available fallback after a failure.
 
@@ -168,6 +186,8 @@ class FamilyRouter:
                 past_failed = True
                 continue
             if not past_failed:
+                continue
+            if available_families is not None and family.value not in available_families:
                 continue
 
             circuit_key = f"{family.value}:{model_id}"

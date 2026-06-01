@@ -103,9 +103,14 @@ class VerificationEngine:
                 retryable=False,
             )
 
-        # Step 2: Route to alt-family
+        # Step 2: Route to alt-family. Pass the set of configured provider families so the
+        # router walks past candidates we cannot actually serve instead of dead-ending on a
+        # family with no provider (the local-only-deployment trap).
         try:
-            route = self._router.select_verifier(request.caller.model_family)
+            route = self._router.select_verifier(
+                request.caller.model_family,
+                available_families=set(self._providers.keys()),
+            )
         except RoutingError:
             return VerifyError(
                 reason=RefusalReason.VERIFIER_UNAVAILABLE,
@@ -152,7 +157,23 @@ class VerificationEngine:
             self._run_lens(lens, stripped_artifact, request.intent, route, provider)
             for lens in selected_lenses
         ]
-        gathered = await asyncio.gather(*lens_tasks, return_exceptions=True)
+        # The latency budget is a hard ANDON ceiling: if the lens fan-out cannot finish
+        # within the caller's declared max_latency_ms, refuse with BUDGET_EXCEEDED rather
+        # than block the caller's agent step past its budget.
+        try:
+            gathered = await asyncio.wait_for(
+                asyncio.gather(*lens_tasks, return_exceptions=True),
+                timeout=request.budget.max_latency_ms / 1000,
+            )
+        except TimeoutError:
+            return VerifyError(
+                reason=RefusalReason.BUDGET_EXCEEDED,
+                detail=(
+                    f"Lens fan-out exceeded the {request.budget.max_latency_ms}ms "
+                    "latency budget"
+                ),
+                retryable=True,
+            )
         lens_results: list[LensResult] = []
         for lens, res in zip(selected_lenses, gathered, strict=True):
             if isinstance(res, BaseException):

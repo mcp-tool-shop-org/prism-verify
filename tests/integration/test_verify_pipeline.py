@@ -6,6 +6,7 @@ signed receipt -- and proves the lens_prompt_hashes PIN end-to-end.
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 import httpx
@@ -29,6 +30,7 @@ from prism.lenses.contract import ContractCompletenessLens
 from prism.lenses.groundedness import GroundednessLens
 from prism.lenses.invariant import InvariantLens
 from prism.lenses.registry import register_lens
+from prism.providers.base import CompletionRequest, CompletionResponse, ModelProvider
 from prism.providers.ollama import OllamaProvider
 from prism.receipts.store import ReceiptStore
 
@@ -42,7 +44,9 @@ def _build_engine(tmp_path) -> tuple[VerificationEngine, ReceiptStore]:
     register_lens(InvariantLens())
     register_lens(GroundednessLens())
     # Route an Anthropic-family caller to a LOCAL (Ollama) verifier so we can mock the HTTP.
-    router = FamilyRouter(routing_map={ModelFamily.ANTHROPIC: [(ModelFamily.LOCAL, "qwen3:32b")]})
+    router = FamilyRouter(
+        routing_map={ModelFamily.ANTHROPIC: [(ModelFamily.LOCAL, "mistral-small:24b")]}
+    )
     store = ReceiptStore(db_path=tmp_path / "receipts.db", signing_secret=b"integration-secret")
     engine = VerificationEngine(
         providers={"local": OllamaProvider(base_url=OLLAMA_URL)},
@@ -75,7 +79,7 @@ async def test_full_pipeline_accept_signs_receipt_with_pin(tmp_path):
     assert len(result.lens_results) == 4
     assert all(lr.outcome.value == "pass" for lr in result.lens_results)
     assert all(not lr.errored for lr in result.lens_results)
-    assert all(lr.model_id == "qwen3:32b" for lr in result.lens_results)
+    assert all(lr.model_id == "mistral-small:24b" for lr in result.lens_results)
 
     # PIN proven end-to-end: a SHA-256 prompt hash per lens, persisted AND signed.
     hashes = result.receipt.lens_prompt_hashes
@@ -106,4 +110,42 @@ def test_local_route_id_matches_ollama_default():
         for family, model_id in routes
         if family == ModelFamily.LOCAL
     }
-    assert local_ids == {"qwen3:32b"}  # must match OllamaProvider's default model
+    assert local_ids == {"mistral-small:24b"}  # must match OllamaProvider's default model
+
+
+class _SlowProvider(ModelProvider):
+    """A local provider that always sleeps longer than a tight latency budget."""
+
+    @property
+    def family(self) -> ModelFamily:
+        return ModelFamily.LOCAL
+
+    @property
+    def available_models(self) -> list[str]:
+        return ["slow-local"]
+
+    async def complete(self, request: CompletionRequest) -> CompletionResponse:
+        await asyncio.sleep(0.2)
+        return CompletionResponse(
+            content='{"outcome": "pass", "confidence": 0.9, "findings": []}',
+            model_id="slow-local",
+            latency_ms=200,
+        )
+
+    async def health_check(self) -> bool:
+        return True
+
+
+async def test_budget_exceeded_when_fanout_outruns_latency_budget(tmp_path):
+    engine, store = _build_engine(tmp_path)
+    engine._providers["local"] = _SlowProvider()
+    request = _request()
+    # Drive the budget below the 1000ms constructor floor for a fast deterministic test
+    # (assignment validation is off, so this bypasses the ge=1000 bound).
+    request.budget.max_latency_ms = 50
+
+    result = await engine.verify(request)
+    assert isinstance(result, VerifyError)
+    assert result.reason == RefusalReason.BUDGET_EXCEEDED
+    assert result.retryable is True
+    store.close()
