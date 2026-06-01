@@ -51,14 +51,7 @@ class ContractCompletenessLens(Lens):
     def description(self) -> str:
         return "Verifies that the artifact satisfies every clause of the declared intent."
 
-    async def evaluate(
-        self,
-        artifact: Artifact,
-        intent: str,
-        model_family: str,
-        model_id: str,
-        provider: ModelProvider,
-    ) -> LensResult:
+    def build_prompts(self, artifact: Artifact, intent: str) -> tuple[str, str]:
         user_prompt = f"""## Intent
 {intent}
 
@@ -68,11 +61,22 @@ class ContractCompletenessLens(Lens):
 ```
 
 Evaluate whether this artifact satisfies every clause of the intent."""
+        return SYSTEM_PROMPT, user_prompt
+
+    async def evaluate(
+        self,
+        artifact: Artifact,
+        intent: str,
+        model_family: str,
+        model_id: str,
+        provider: ModelProvider,
+    ) -> LensResult:
+        system_prompt, user_prompt = self.build_prompts(artifact, intent)
 
         start = time.monotonic()
         response = await provider.complete(
             CompletionRequest(
-                system_prompt=SYSTEM_PROMPT,
+                system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 model_id=model_id,
             )

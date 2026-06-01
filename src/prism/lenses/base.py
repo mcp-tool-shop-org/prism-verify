@@ -6,6 +6,7 @@ and returns a LensResult via an alt-family model.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from abc import ABC, abstractmethod
@@ -35,6 +36,16 @@ class Lens(ABC):
         ...
 
     @abstractmethod
+    def build_prompts(self, artifact: Artifact, intent: str) -> tuple[str, str]:
+        """Return the (system_prompt, user_prompt) this lens issues for (artifact, intent).
+
+        Must be deterministic and side-effect-free: the engine hashes this pair into the
+        receipt for replayability (PIN_PER_STEP), and evaluate() builds its request from
+        the same pair.
+        """
+        ...
+
+    @abstractmethod
     async def evaluate(
         self,
         artifact: Artifact,
@@ -59,6 +70,19 @@ class Lens(ABC):
 
 
 _VALID_OUTCOMES = {"pass", "fail", "uncertain"}
+
+
+def compute_prompt_hash(system_prompt: str, user_prompt: str) -> str:
+    """SHA-256 over the (system_prompt, user_prompt) pair a lens issued.
+
+    Pinned into the receipt so a verification is byte-for-byte replayable
+    (PIN_PER_STEP). A NUL separator prevents (sys+user) collisions across the join.
+    """
+    h = hashlib.sha256()
+    h.update(system_prompt.encode())
+    h.update(b"\x00")
+    h.update(user_prompt.encode())
+    return h.hexdigest()
 
 
 def _extract_json(text: str) -> str:

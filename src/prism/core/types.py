@@ -120,6 +120,7 @@ class LensResult(BaseModel):
     sees_reasoning: bool = False
     latency_ms: int | None = None
     errored: bool = False  # fault placeholder (provider/parse error), not a genuine adjudication
+    prompt_hash: str | None = None  # SHA-256 of (system_prompt, user_prompt); set by the engine
 
 
 class Receipt(BaseModel):
@@ -132,6 +133,8 @@ class Receipt(BaseModel):
     verifier_models: list[str]
     pairwise_rho: dict[str, float]
     reasoning_visibility_mode: ReasoningVisibility
+    lens_prompt_hashes: dict[str, str] = Field(default_factory=dict)
+    schema_version: int = 2
     signature: str
     replayable: bool = True
 

@@ -23,7 +23,7 @@ from prism.core.types import (
     VerifyRequest,
     VerifyResponse,
 )
-from prism.lenses.base import Lens
+from prism.lenses.base import Lens, compute_prompt_hash
 from prism.lenses.registry import resolve_lenses
 from prism.providers.base import ModelProvider, ProviderError
 from prism.receipts.store import ReceiptStore
@@ -174,6 +174,10 @@ class VerificationEngine:
             [lr.model_dump() for lr in lens_results], default=str
         )
 
+        lens_prompt_hashes = {
+            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
+        }
+
         receipt = self._receipt_store.create_receipt(
             pre_strip_hash=strip_result.pre_strip_hash,
             post_strip_hash=strip_result.post_strip_hash,
@@ -184,6 +188,7 @@ class VerificationEngine:
             confidence=confidence,
             retryable=retryable,
             lens_results_json=lens_results_json,
+            lens_prompt_hashes=lens_prompt_hashes,
         )
 
         # Report success to router
@@ -208,8 +213,12 @@ class VerificationEngine:
         provider: ModelProvider,
     ) -> LensResult:
         """Run a single lens, handling provider errors gracefully."""
+        # Pin the exact prompts this lens issues (PIN_PER_STEP) so the receipt is
+        # replayable even when the provider call fails.
+        system_prompt, user_prompt = lens.build_prompts(artifact, intent)
+        prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
         try:
-            return await lens.evaluate(
+            result = await lens.evaluate(
                 artifact=artifact,
                 intent=intent,
                 model_family=route.family.value,
@@ -234,7 +243,10 @@ class VerificationEngine:
                 confidence=0.0,
                 sees_reasoning=False,
                 errored=True,
+                prompt_hash=prompt_hash,
             )
+        result.prompt_hash = prompt_hash
+        return result
 
     def _aggregate_verdict(
         self, lens_results: list[LensResult]
