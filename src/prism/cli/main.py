@@ -40,9 +40,9 @@ def cli() -> None:
 @click.option(
     "--type",
     "artifact_type",
-    type=click.Choice(["code", "tool_call"]),
+    type=click.Choice(["code", "tool_call", "citations"]),
     default="code",
-    help="Artifact type",
+    help="Artifact type (citations = a JSON array of citations to verify)",
 )
 @click.option(
     "--caller-family",

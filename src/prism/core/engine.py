@@ -7,14 +7,29 @@ This is the main verify() entrypoint that everything else wraps (CLI, MCP, HTTP)
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
+from typing import Literal
 
+from pydantic import ValidationError
+
+from prism.core.citations import (
+    build_citation_groundedness_prompts,
+    numeric_mismatch,
+    parse_citation_groundedness,
+    parse_citations,
+)
 from prism.core.routing import FamilyRouter, RouteSelection, RoutingError
 from prism.core.stripping import StripVerificationError, strip_reasoning
 from prism.core.submodularity import compute_pairwise_rho
 from prism.core.types import (
     Artifact,
+    ArtifactType,
+    Citation,
+    CitationResult,
+    ExistenceOutcome,
     Finding,
+    FindingMatch,
     LensOutcome,
     LensResult,
     RefusalReason,
@@ -25,8 +40,9 @@ from prism.core.types import (
 )
 from prism.lenses.base import Lens, compute_prompt_hash
 from prism.lenses.registry import resolve_lenses
-from prism.providers.base import ModelProvider, ProviderError
+from prism.providers.base import CompletionRequest, ModelProvider, ProviderError
 from prism.receipts.store import ReceiptStore
+from prism.retrieval.oracle import CitationOracle, ExistenceResult
 
 # Minimum lenses required (Lock 3)
 MIN_LENSES = 3
@@ -68,6 +84,37 @@ def aggregate_verdict(lens_results: list[LensResult]) -> tuple[Verdict, float, b
     return Verdict.ACCEPT, confidence, False
 
 
+def _citation_as_lensresult(cr: CitationResult) -> LensResult:
+    """Project a per-citation verdict onto a LensResult so aggregate_verdict can fold it.
+
+    Citations have no LLM-lens ensemble to average; this lets the artifact-level verdict reuse
+    the same conservative ordering (any REFUSE -> REFUSE; else any REVISE -> REVISE; else any
+    ESCALATE -> ESCALATE; else ACCEPT).
+    """
+    severity: Literal["critical", "major", "minor"]
+    if cr.verdict == Verdict.REFUSE:
+        outcome, severity = LensOutcome.FAIL, "critical"
+    elif cr.verdict == Verdict.REVISE:
+        outcome, severity = LensOutcome.FAIL, "major"
+    elif cr.verdict == Verdict.ESCALATE:
+        outcome, severity = LensOutcome.UNCERTAIN, "major"
+    else:
+        outcome, severity = LensOutcome.PASS, "minor"
+    findings = (
+        []
+        if outcome == LensOutcome.PASS
+        else [Finding(category="citation", evidence=cr.detail, severity=severity)]
+    )
+    return LensResult(
+        lens="citation",
+        model_family="oracle",
+        model_id="retrieval",
+        outcome=outcome,
+        findings=findings,
+        confidence=1.0,
+    )
+
+
 class VerificationEngine:
     """Core engine that executes the full verification pipeline."""
 
@@ -76,10 +123,12 @@ class VerificationEngine:
         providers: dict[str, ModelProvider],
         router: FamilyRouter | None = None,
         receipt_store: ReceiptStore | None = None,
+        oracle: CitationOracle | None = None,
     ) -> None:
         self._providers = providers
         self._router = router or FamilyRouter()
         self._receipt_store = receipt_store or ReceiptStore()
+        self._oracle = oracle or CitationOracle()
 
     async def verify(self, request: VerifyRequest) -> VerifyResponse | VerifyError:
         """Execute the full verification pipeline.
@@ -93,6 +142,11 @@ class VerificationEngine:
         6. AGGREGATE verdict over genuine results
         7. RECEIPT generation
         """
+        # v0.3: citations take a distinct path (deterministic existence floor -> numeric
+        # guard -> RAG-fed groundedness lens), not the code-artifact multi-lens pipeline.
+        if request.artifact.type == ArtifactType.CITATIONS:
+            return await self._verify_citations(request)
+
         # Step 1: Strip reasoning
         try:
             strip_result = strip_reasoning(request.artifact.content)
@@ -319,3 +373,268 @@ class VerificationEngine:
             )
         result.prompt_hash = prompt_hash
         return result
+
+    async def _verify_citations(
+        self, request: VerifyRequest
+    ) -> VerifyResponse | VerifyError:
+        """Citation path: existence floor -> numeric guard -> groundedness, per citation.
+
+        The four code-artifact locks are reinterpreted here as three mechanism-diverse stages
+        (a retrieval oracle, a numeric parser, a family-different LLM lens), which are
+        decorrelated by construction — so MIN_LENSES / submodularity (designed for same-
+        mechanism LLM lenses) do not apply. See design/04-citation-verification.md.
+        """
+        try:
+            citations = parse_citations(request.artifact.content)
+        except (json.JSONDecodeError, ValueError, ValidationError) as exc:
+            return VerifyError(
+                reason=RefusalReason.INVALID_ARTIFACT,
+                detail=f"citations artifact is not a valid JSON array of citations: {exc}",
+                retryable=False,
+            )
+        if not citations:
+            return VerifyError(
+                reason=RefusalReason.INVALID_ARTIFACT,
+                detail="citations artifact contained no citations",
+                retryable=False,
+            )
+
+        # Route to a family-different verifier for the groundedness stage.
+        try:
+            route = self._router.select_verifier(
+                request.caller.model_family,
+                available_families=set(self._providers.keys()),
+            )
+        except RoutingError:
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail="All cross-family routes have open circuit-breakers",
+                retryable=True,
+            )
+        provider = self._providers.get(route.family.value)
+        if provider is None:
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail=f"No provider configured for family={route.family.value}",
+                retryable=False,
+            )
+
+        results: list[CitationResult] = []
+        lens_results: list[LensResult] = []
+        pins: list[dict[str, str]] = []
+        for citation in citations:
+            existence = await self._oracle.resolve(citation)
+            pins.append(
+                {
+                    "id": citation.id or "",
+                    "identifier": citation.identifier or "",
+                    "query": existence.query,
+                    "source_sha256": existence.source_sha256 or "",
+                    "existence": existence.outcome.value,
+                }
+            )
+            cr, lr = await self._adjudicate_citation(citation, existence, route, provider)
+            results.append(cr)
+            if lr is not None:
+                lens_results.append(lr)
+
+        pseudo = [_citation_as_lensresult(cr) for cr in results]
+        verdict, confidence, retryable = aggregate_verdict(pseudo)
+
+        hints = [
+            f"{cr.action}: {cr.detail}" for cr in results if cr.verdict == Verdict.REVISE
+        ]
+        revision_hint = "; ".join(hints)[:500] if hints else None
+
+        content_hash = hashlib.sha256(request.artifact.content.encode()).hexdigest()
+        lens_results_json = json.dumps([lr.model_dump() for lr in lens_results], default=str)
+        lens_prompt_hashes = {
+            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
+        }
+        receipt = self._receipt_store.create_receipt(
+            pre_strip_hash=content_hash,
+            post_strip_hash=content_hash,
+            verifier_models=[route.model_id],
+            pairwise_rho={},
+            reasoning_visibility_mode=request.reasoning_visibility,
+            verdict=verdict.value,
+            confidence=confidence,
+            retryable=retryable,
+            lens_results_json=lens_results_json,
+            lens_prompt_hashes=lens_prompt_hashes,
+            artifact_type=request.artifact.type.value,
+            retrieval_pins=pins,
+        )
+        self._router.report_success(route.family, route.model_id)
+        return VerifyResponse(
+            verdict=verdict,
+            confidence=confidence,
+            retryable=retryable,
+            revision_hint=revision_hint,
+            lens_results=lens_results,
+            pairwise_rho={},
+            citation_results=results,
+            receipt=receipt,
+        )
+
+    async def _adjudicate_citation(
+        self,
+        citation: Citation,
+        existence: ExistenceResult,
+        route: RouteSelection,
+        provider: ModelProvider,
+    ) -> tuple[CitationResult, LensResult | None]:
+        """Map a citation's existence/numeric/groundedness outcome to a verdict + action."""
+        cid, ident = citation.id, citation.identifier
+
+        if existence.outcome == ExistenceOutcome.FABRICATED:
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=existence.outcome,
+                    verdict=Verdict.REFUSE,
+                    action="DROP",
+                    detail=existence.detail,
+                ),
+                None,
+            )
+        if existence.outcome == ExistenceOutcome.METADATA_MISMATCH:
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=existence.outcome,
+                    verdict=Verdict.REVISE,
+                    action="FIX METADATA",
+                    detail=existence.detail,
+                    source_title=existence.source_title,
+                ),
+                None,
+            )
+        if existence.outcome == ExistenceOutcome.UNRESOLVABLE:
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=existence.outcome,
+                    verdict=Verdict.ESCALATE,
+                    action="RETRIEVE MANUALLY",
+                    detail=existence.detail,
+                ),
+                None,
+            )
+
+        # RESOLVED -> numeric guard (deterministic), then groundedness (LLM lens).
+        source_text = f"{existence.source_title or ''}\n\n{existence.source_abstract or ''}"
+        mismatched, mism_detail = numeric_mismatch(citation.claim, source_text)
+        if mismatched:
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=ExistenceOutcome.RESOLVED,
+                    finding_match=FindingMatch.CONTRADICTED,
+                    verdict=Verdict.REVISE,
+                    action="FIX TO MATCH SOURCE",
+                    detail=mism_detail,
+                    source_title=existence.source_title,
+                ),
+                None,
+            )
+        if not (existence.source_abstract and existence.source_abstract.strip()):
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=ExistenceOutcome.RESOLVED,
+                    finding_match=FindingMatch.NOT_ADDRESSED,
+                    verdict=Verdict.ESCALATE,
+                    action="RETRIEVE FULL TEXT",
+                    detail="resolved, but no abstract was available to ground the claim",
+                    source_title=existence.source_title,
+                ),
+                None,
+            )
+
+        system, user = build_citation_groundedness_prompts(
+            citation.claim, existence.source_title or "", existence.source_abstract
+        )
+        prompt_hash = compute_prompt_hash(system, user)
+        lens_name = f"citation_groundedness:{cid or ident or '?'}"
+        try:
+            resp = await provider.complete(
+                CompletionRequest(
+                    system_prompt=system, user_prompt=user, model_id=route.model_id
+                )
+            )
+        except ProviderError as exc:
+            self._router.report_failure(route.family, route.model_id)
+            lr = LensResult(
+                lens=lens_name,
+                model_family=route.family.value,
+                model_id=route.model_id,
+                outcome=LensOutcome.UNCERTAIN,
+                findings=[
+                    Finding(category="provider_error", evidence=str(exc), severity="major")
+                ],
+                confidence=0.0,
+                errored=True,
+                prompt_hash=prompt_hash,
+            )
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=ExistenceOutcome.RESOLVED,
+                    finding_match=FindingMatch.NOT_ADDRESSED,
+                    verdict=Verdict.ESCALATE,
+                    action="RETRIEVE MANUALLY",
+                    detail=f"groundedness verifier unavailable: {exc}",
+                    source_title=existence.source_title,
+                ),
+                lr,
+            )
+
+        gnd, span, conf = parse_citation_groundedness(resp.content)
+        if gnd == "supported":
+            fmatch, verdict, action = FindingMatch.SUPPORTED, Verdict.ACCEPT, "OK"
+            detail, lens_outcome = "source supports the claim", LensOutcome.PASS
+        elif gnd == "contradicted":
+            fmatch, verdict, action = (
+                FindingMatch.CONTRADICTED,
+                Verdict.REVISE,
+                "FIX TO MATCH SOURCE",
+            )
+            detail, lens_outcome = "retrieved source contradicts the claim", LensOutcome.FAIL
+        else:
+            fmatch, verdict, action = (
+                FindingMatch.NOT_ADDRESSED,
+                Verdict.ESCALATE,
+                "RETRIEVE FULL TEXT",
+            )
+            detail = "claim is not addressed in the title+abstract"
+            lens_outcome = LensOutcome.UNCERTAIN
+        lr = LensResult(
+            lens=lens_name,
+            model_family=route.family.value,
+            model_id=route.model_id,
+            outcome=lens_outcome,
+            findings=[],
+            confidence=conf,
+            prompt_hash=prompt_hash,
+        )
+        return (
+            CitationResult(
+                citation_id=cid,
+                identifier=ident,
+                existence=ExistenceOutcome.RESOLVED,
+                finding_match=fmatch,
+                verdict=verdict,
+                action=action,
+                detail=detail,
+                source_title=existence.source_title,
+                supporting_span=span,
+            ),
+            lr,
+        )

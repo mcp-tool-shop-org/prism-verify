@@ -65,7 +65,9 @@ CREATE TABLE IF NOT EXISTS receipts (
     retryable INTEGER NOT NULL,
     lens_results TEXT NOT NULL,
     lens_prompt_hashes TEXT NOT NULL DEFAULT '{}',
-    schema_version INTEGER NOT NULL DEFAULT 2,
+    artifact_type TEXT NOT NULL DEFAULT 'code',
+    retrieval_pins TEXT NOT NULL DEFAULT '[]',
+    schema_version INTEGER NOT NULL DEFAULT 3,
     signature TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -73,10 +75,13 @@ CREATE TABLE IF NOT EXISTS receipts (
 CREATE INDEX IF NOT EXISTS idx_receipts_timestamp ON receipts(timestamp);
 """
 
-# Current signed-receipt schema version. v1 (legacy) signed only the 7 base fields;
-# v2 also signs reasoning_visibility_mode, confidence, retryable, a hash of lens_results,
-# and lens_prompt_hashes (the PIN) — plus the version itself, to block downgrade attacks.
-CURRENT_SCHEMA_VERSION = 2
+# Current signed-receipt schema version. v1 (legacy) signed only the 7 base fields; v2 also
+# signs reasoning_visibility_mode, confidence, retryable, a hash of lens_results, and
+# lens_prompt_hashes (the PIN); v3 (citations) also signs artifact_type and a hash of
+# retrieval_pins (the per-citation query + retrieved-source hash) — plus the version itself, to
+# block downgrade attacks. Each version signs only its own field-set, so legacy receipts still
+# verify after a migration.
+CURRENT_SCHEMA_VERSION = 3
 
 
 def _generate_receipt_id() -> str:
@@ -104,6 +109,8 @@ def _build_sign_data(
     retryable: bool,
     lens_results_json: str,
     lens_prompt_hashes: dict[str, str],
+    artifact_type: str = "code",
+    retrieval_pins: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Build the exact dict that is HMAC-signed, for a given schema version.
 
@@ -132,6 +139,16 @@ def _build_sign_data(
             "lens_results_hash": hashlib.sha256(lens_results_json.encode()).hexdigest(),
             "lens_prompt_hashes": lens_prompt_hashes,
             "schema_version": schema_version,
+        }
+    )
+    if schema_version < 3:
+        return base
+    base.update(
+        {
+            "artifact_type": artifact_type,
+            "retrieval_pins_hash": hashlib.sha256(
+                json.dumps(retrieval_pins or [], sort_keys=True).encode()
+            ).hexdigest(),
         }
     )
     return base
@@ -178,6 +195,14 @@ class ReceiptStore:
             self._conn.execute(
                 "ALTER TABLE receipts ADD COLUMN lens_prompt_hashes TEXT NOT NULL DEFAULT '{}'"
             )
+        if "artifact_type" not in columns:
+            self._conn.execute(
+                "ALTER TABLE receipts ADD COLUMN artifact_type TEXT NOT NULL DEFAULT 'code'"
+            )
+        if "retrieval_pins" not in columns:
+            self._conn.execute(
+                "ALTER TABLE receipts ADD COLUMN retrieval_pins TEXT NOT NULL DEFAULT '[]'"
+            )
         self._conn.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
         self._conn.commit()
 
@@ -193,11 +218,14 @@ class ReceiptStore:
         retryable: bool,
         lens_results_json: str,
         lens_prompt_hashes: dict[str, str] | None = None,
+        artifact_type: str = "code",
+        retrieval_pins: list[dict[str, str]] | None = None,
     ) -> Receipt:
         """Create and store a new receipt (always at the current schema version)."""
         receipt_id = _generate_receipt_id()
         timestamp = datetime.now(UTC)
         prompt_hashes = lens_prompt_hashes or {}
+        pins = retrieval_pins or []
 
         sign_data = _build_sign_data(
             schema_version=CURRENT_SCHEMA_VERSION,
@@ -213,6 +241,8 @@ class ReceiptStore:
             retryable=retryable,
             lens_results_json=lens_results_json,
             lens_prompt_hashes=prompt_hashes,
+            artifact_type=artifact_type,
+            retrieval_pins=pins,
         )
         signature = _compute_signature(sign_data, self._secret)
 
@@ -221,8 +251,9 @@ class ReceiptStore:
                 """INSERT INTO receipts
                    (id, pre_strip_hash, post_strip_hash, timestamp, verifier_models,
                     pairwise_rho, reasoning_visibility_mode, verdict, confidence,
-                    retryable, lens_results, lens_prompt_hashes, schema_version, signature)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    retryable, lens_results, lens_prompt_hashes, artifact_type,
+                    retrieval_pins, schema_version, signature)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     receipt_id,
                     pre_strip_hash,
@@ -236,6 +267,8 @@ class ReceiptStore:
                     int(retryable),
                     lens_results_json,
                     json.dumps(prompt_hashes),
+                    artifact_type,
+                    json.dumps(pins),
                     CURRENT_SCHEMA_VERSION,
                     signature,
                 ),
@@ -251,6 +284,8 @@ class ReceiptStore:
             pairwise_rho=pairwise_rho,
             reasoning_visibility_mode=reasoning_visibility_mode,
             lens_prompt_hashes=prompt_hashes,
+            artifact_type=artifact_type,
+            retrieval_pins=pins,
             schema_version=CURRENT_SCHEMA_VERSION,
             signature=signature,
             replayable=True,
@@ -293,6 +328,8 @@ class ReceiptStore:
             retryable=bool(data["retryable"]),
             lens_results_json=data["lens_results"],
             lens_prompt_hashes=json.loads(data.get("lens_prompt_hashes") or "{}"),
+            artifact_type=data.get("artifact_type", "code"),
+            retrieval_pins=json.loads(data.get("retrieval_pins") or "[]"),
         )
         expected = _compute_signature(sign_data, self._secret)
         return hmac.compare_digest(expected, data["signature"])

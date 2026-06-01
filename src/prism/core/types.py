@@ -19,10 +19,11 @@ class ModelFamily(StrEnum):
 
 
 class ArtifactType(StrEnum):
-    """Artifact types supported in v1 (code/tool-call only)."""
+    """Artifact types. v1 shipped code/tool-call; v0.3 adds citations (a JSON array)."""
 
     CODE = "code"
     TOOL_CALL = "tool_call"
+    CITATIONS = "citations"
 
 
 class Verdict(StrEnum):
@@ -56,6 +57,25 @@ class RefusalReason(StrEnum):
     STRIP_VERIFICATION_FAILED = "STRIP_VERIFICATION_FAILED"
     LENS_COLLAPSE = "LENS_COLLAPSE"
     BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
+    INVALID_ARTIFACT = "INVALID_ARTIFACT"
+
+
+class ExistenceOutcome(StrEnum):
+    """Stage 1 (v0.3 citations): deterministic retrieval outcome for one citation."""
+
+    RESOLVED = "resolved"
+    METADATA_MISMATCH = "metadata_mismatch"
+    FABRICATED = "fabricated"
+    UNRESOLVABLE = "unresolvable"
+
+
+class FindingMatch(StrEnum):
+    """Stage 3 (v0.3 citations): groundedness outcome for a resolved citation."""
+
+    SUPPORTED = "supported"
+    CONTRADICTED = "contradicted"
+    NOT_ADDRESSED = "not_addressed"
+    UNCHECKED = "unchecked"
 
 
 # --- Request types ---
@@ -134,7 +154,9 @@ class Receipt(BaseModel):
     pairwise_rho: dict[str, float]
     reasoning_visibility_mode: ReasoningVisibility
     lens_prompt_hashes: dict[str, str] = Field(default_factory=dict)
-    schema_version: int = 2
+    artifact_type: str = "code"
+    retrieval_pins: list[dict[str, str]] = Field(default_factory=list)
+    schema_version: int = 3
     signature: str
     replayable: bool = True
 
@@ -148,6 +170,7 @@ class VerifyResponse(BaseModel):
     revision_hint: str | None = Field(default=None, max_length=500)
     lens_results: list[LensResult]
     pairwise_rho: dict[str, float]
+    citation_results: list[CitationResult] = Field(default_factory=list)
     receipt: Receipt
 
 
@@ -157,3 +180,31 @@ class VerifyError(BaseModel):
     reason: RefusalReason
     detail: str
     retryable: bool = False
+
+
+# --- Citation verification types (v0.3) ---
+
+
+class Citation(BaseModel):
+    """A single citation to verify (one element of a CITATIONS artifact)."""
+
+    claim: str = Field(min_length=1, max_length=2000)
+    title: str = ""
+    authors: str = ""
+    year: int | str | None = None
+    identifier: str | None = None  # arXiv:<id>, a bare arXiv id (vN ok), or a DOI
+    id: str | None = None          # caller's local handle, echoed back in the result
+
+
+class CitationResult(BaseModel):
+    """Per-citation adjudication returned to the caller (two-axis verdict)."""
+
+    citation_id: str | None
+    identifier: str | None
+    existence: ExistenceOutcome
+    finding_match: FindingMatch = FindingMatch.UNCHECKED
+    verdict: Verdict
+    action: str
+    detail: str
+    source_title: str | None = None
+    supporting_span: str | None = None
