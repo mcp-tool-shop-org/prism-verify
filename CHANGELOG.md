@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-01
+
+### Added
+- **Citation verification (headline).** A new `ArtifactType.CITATIONS` artifact (a JSON array of
+  citations) is adjudicated through a two-stage pipeline kept deliberately distinct:
+  - a **deterministic retrieval existence floor** (`prism.retrieval`) — arXiv-ID-first, then
+    Crossref DOI — that ANDON-refuses a non-resolving citation (`FABRICATED`) and distinguishes an
+    oracle-down/blocked retrieval (`UNRESOLVABLE` → escalate) from a genuine non-resolution (never
+    read as fabrication);
+  - a **deterministic numeric guard** that catches the "95.8% vs 89%" class an NLI/LLM lens is
+    structurally blind to (Naik 2018); and
+  - a **RAG-fed Groundedness (L4) lens** given the *retrieved* title+abstract, on a family-different
+    verifier.
+  Two-axis verdict mapping with per-citation action verbs (DROP / FIX METADATA / FIX TO MATCH
+  SOURCE / RETRIEVE MANUALLY); the protocol's `CANNOT_CONFIRM` maps to ESCALATE. Research grounding
+  + design: `design/04-citation-verification.md`.
+- **prism-on-prism meta-test (EXTERNAL_VERIFIER 1→3).** Verifies prism's own design-doc citations
+  through a different family + retrieval-backed existence, asserting metamorphic relations (corrupt
+  id → existence flips to refuse; numeric swap → off accept; author reorder → invariant). Non-
+  circular: it checks retrieval, not recall. Closes the launch bootstrap skip.
+- **Compensate-after-verify flow (NAMED_COMPENSATORS 2→3).** verify → signed receipt → delete /
+  prune → asserts the undo, proving the named compensator end-to-end.
+- Receipt **schema v3**: signs `artifact_type` and a hash of the per-citation `retrieval_pins` (the
+  retrieval query + retrieved-source SHA-256), so a citation verdict is replayable.
+
+### Changed
+- **Router walks configured families.** `select_verifier()` skips candidate families with no
+  configured provider instead of dead-ending on `VERIFIER_UNAVAILABLE` — fixes the out-of-box
+  `prism verify` trap (an Anthropic caller with only a local provider was refused).
+- **`BUDGET_EXCEEDED` is now enforced** as a hard latency-budget timeout on the lens fan-out (was
+  declared in `RefusalReason` but never raised).
+- Hosted verifier model IDs reconciled with provider lineups (`gpt-5.4-mini`, `claude-sonnet-4-6`,
+  `claude-haiku-4-5-20251001`), guarded by a test; local verifier pinned to the non-thinking
+  `mistral-small:24b` with `format=json` + `think=false`.
+
+### Fixed
+- **Security:** the Google provider sends its API key via the `x-goog-api-key` header instead of the
+  URL query string, so the credential no longer leaks into error reprs / tracebacks / logs.
+- OpenAI provider uses `max_completion_tokens` (GPT-5 / o-series reject `max_tokens`) and omits
+  `temperature` for reasoning models.
+- The SQLite receipt store is safe across threads (`check_same_thread=False` + a reentrant lock) and
+  supports the context-manager protocol for deterministic close.
+
+### Migration notes
+- An existing `~/.prism/receipts.db` is migrated to schema v3 in place on first open (`artifact_type`
+  + `retrieval_pins` columns added); legacy v1/v2 rows keep their original signatures and still verify.
+
+### Standards
+- workflow-standards **12/15 → 15/15**: EXTERNAL_VERIFIER 1→3, NAMED_COMPENSATORS 2→3, and
+  BUDGET_EXCEEDED enforced. See `design/02-standards-compliance.md`.
+
 ## [0.2.0] - 2026-06-01
 
 ### Added
