@@ -9,7 +9,7 @@ from datetime import timedelta
 import pytest
 
 from prism.core.types import ReasoningVisibility
-from prism.receipts.store import ReceiptStore
+from prism.receipts.store import ReceiptStore, SigningSecretError
 
 
 @pytest.fixture
@@ -293,3 +293,41 @@ class TestReceiptCompensators:
         assert store.prune(timedelta(days=30)) == 1
         assert store.get_receipt(old.id) is None
         assert store.get_receipt(recent.id) is not None
+
+
+class TestSigningSecretResolution:
+    """v0.2.0: refuse the built-in dev key unless explicitly opted in."""
+
+    def test_no_secret_no_env_raises(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PRISM_SIGNING_SECRET", raising=False)
+        monkeypatch.delenv("PRISM_DEV", raising=False)
+        with pytest.raises(SigningSecretError):
+            ReceiptStore(db_path=tmp_path / "r.db")
+
+    def test_prism_dev_allows_dev_key(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PRISM_SIGNING_SECRET", raising=False)
+        monkeypatch.setenv("PRISM_DEV", "1")
+        ReceiptStore(db_path=tmp_path / "r.db").close()
+
+    def test_explicit_secret_satisfies_without_env(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PRISM_SIGNING_SECRET", raising=False)
+        monkeypatch.delenv("PRISM_DEV", raising=False)
+        ReceiptStore(db_path=tmp_path / "r.db", signing_secret=b"x").close()
+
+    def test_env_secret_round_trips_signature(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PRISM_DEV", raising=False)
+        monkeypatch.setenv("PRISM_SIGNING_SECRET", "prod-secret")
+        store = ReceiptStore(db_path=tmp_path / "r.db")
+        r = store.create_receipt(
+            pre_strip_hash="a",
+            post_strip_hash="b",
+            verifier_models=["m"],
+            pairwise_rho={},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict="accept",
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+        )
+        assert store.verify_signature(r.id) is True
+        store.close()

@@ -210,7 +210,13 @@ def main() -> None:
         print("Error: mcp package not installed", file=sys.stderr)
         sys.exit(1)
 
-    server = create_server()
+    from prism.receipts.store import SigningSecretError
+
+    try:
+        server = create_server()
+    except SigningSecretError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
 
     async def run() -> None:
         async with stdio_server() as (read_stream, write_stream):

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -22,6 +23,32 @@ from prism.core.types import (
 )
 
 DEFAULT_DB_PATH = Path.home() / ".prism" / "receipts.db"
+
+_DEV_SECRET = b"prism-dev-secret"
+
+
+class SigningSecretError(RuntimeError):
+    """Raised when a receipt store is constructed without a usable signing secret."""
+
+
+def _resolve_secret(signing_secret: bytes | None) -> bytes:
+    """Resolve the HMAC signing secret, refusing the insecure dev default in production.
+
+    Resolution order: explicit ``signing_secret`` arg -> ``PRISM_SIGNING_SECRET`` env ->
+    the built-in dev key iff ``PRISM_DEV=1`` -> raise. This stops a deployment from
+    silently signing receipts with the publicly known dev key (forgeable signatures).
+    """
+    if signing_secret is not None:
+        return signing_secret
+    env_secret = os.environ.get("PRISM_SIGNING_SECRET")
+    if env_secret:
+        return env_secret.encode()
+    if os.environ.get("PRISM_DEV") == "1":
+        return _DEV_SECRET
+    raise SigningSecretError(
+        "No receipt signing secret configured. Set PRISM_SIGNING_SECRET (production), "
+        "pass signing_secret=..., or set PRISM_DEV=1 for local development."
+    )
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS receipts (
@@ -117,9 +144,9 @@ class ReceiptStore:
         db_path: Path | None = None,
         signing_secret: bytes | None = None,
     ) -> None:
+        self._secret = _resolve_secret(signing_secret)
         self._db_path = db_path or DEFAULT_DB_PATH
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._secret = signing_secret or b"prism-dev-secret"
         self._conn = sqlite3.connect(str(self._db_path))
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.executescript(_SCHEMA)

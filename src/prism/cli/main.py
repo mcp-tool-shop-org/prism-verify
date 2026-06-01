@@ -7,7 +7,7 @@ import json
 import re
 import sys
 from datetime import timedelta
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import click
 
@@ -22,6 +22,9 @@ from prism.core.types import (
     VerifyResponse,
 )
 from prism.providers.base import ModelProvider
+
+if TYPE_CHECKING:
+    from prism.receipts.store import ReceiptStore
 
 
 @click.group()
@@ -140,29 +143,41 @@ async def _run_verify(request: VerifyRequest, provider_name: str) -> VerifyRespo
 
         providers["anthropic"] = AnthropicProvider(api_key=api_key)
 
-    engine = VerificationEngine(providers=providers)
+    from prism.receipts.store import SigningSecretError
+
+    try:
+        engine = VerificationEngine(providers=providers)
+    except SigningSecretError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
     return await engine.verify(request)
+
+
+def _open_store() -> ReceiptStore:
+    """Construct a ReceiptStore, surfacing a missing signing secret as a clean error."""
+    from prism.receipts.store import ReceiptStore, SigningSecretError
+
+    try:
+        return ReceiptStore()
+    except SigningSecretError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
 
 
 @cli.command()
 @click.argument("receipt_id")
 def replay(receipt_id: str) -> None:
     """Replay a verification receipt."""
-    from prism.receipts.store import ReceiptStore
-
-    store = ReceiptStore()
-    data = store.get_receipt(receipt_id)
-
-    if data is None:
-        click.echo(f"Receipt not found: {receipt_id}", err=True)
-        sys.exit(1)
-
-    # Verify signature
-    valid = store.verify_signature(receipt_id)
-    data["signature_valid"] = valid
-
-    click.echo(json.dumps(data, indent=2, default=str))
-    store.close()
+    store = _open_store()
+    try:
+        data = store.get_receipt(receipt_id)
+        if data is None:
+            click.echo(f"Receipt not found: {receipt_id}", err=True)
+            sys.exit(1)
+        data["signature_valid"] = store.verify_signature(receipt_id)
+        click.echo(json.dumps(data, indent=2, default=str))
+    finally:
+        store.close()
 
 
 def _parse_duration(value: str) -> timedelta:
@@ -186,9 +201,7 @@ def receipt() -> None:
 @click.argument("receipt_id")
 def receipt_delete(receipt_id: str) -> None:
     """Delete a single receipt by ID."""
-    from prism.receipts.store import ReceiptStore
-
-    store = ReceiptStore()
+    store = _open_store()
     try:
         removed = store.delete_receipt(receipt_id)
     finally:
@@ -205,8 +218,6 @@ def receipt_delete(receipt_id: str) -> None:
 @click.option("--yes", is_flag=True, help="Confirm the irreversible bulk deletion")
 def receipt_prune(older_than: str, yes: bool) -> None:
     """Delete every receipt older than a duration (irreversible)."""
-    from prism.receipts.store import ReceiptStore
-
     duration = _parse_duration(older_than)
     if not yes:
         click.echo(
@@ -216,7 +227,7 @@ def receipt_prune(older_than: str, yes: bool) -> None:
         )
         sys.exit(1)
 
-    store = ReceiptStore()
+    store = _open_store()
     try:
         count = store.prune(duration)
     finally:
