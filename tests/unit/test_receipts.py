@@ -189,6 +189,26 @@ CREATE TABLE receipts (
 );
 """
 
+_V02_SCHEMA = """
+CREATE TABLE receipts (
+    id TEXT PRIMARY KEY,
+    pre_strip_hash TEXT NOT NULL,
+    post_strip_hash TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    verifier_models TEXT NOT NULL,
+    pairwise_rho TEXT NOT NULL,
+    reasoning_visibility_mode TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    retryable INTEGER NOT NULL,
+    lens_results TEXT NOT NULL,
+    lens_prompt_hashes TEXT NOT NULL DEFAULT '{}',
+    schema_version INTEGER NOT NULL DEFAULT 2,
+    signature TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""
+
 
 class TestSchemaMigration:
     """Opening a v0.1 receipts.db must upgrade it without breaking legacy signatures."""
@@ -239,7 +259,7 @@ class TestSchemaMigration:
         store = ReceiptStore(db_path=db, signing_secret=secret)
         # Legacy row keeps its original (v1) signature valid.
         assert store.verify_signature("prism-legacy-1") is True
-        # A fresh v2 receipt with a PIN also verifies in the same upgraded DB.
+        # A fresh receipt (current schema, now v3) with a PIN also verifies in the same DB.
         r = store.create_receipt(
             pre_strip_hash="cc",
             post_strip_hash="dd",
@@ -258,6 +278,54 @@ class TestSchemaMigration:
         legacy = store.get_receipt("prism-legacy-1")
         assert legacy["schema_version"] == 1
         assert json.loads(legacy["lens_prompt_hashes"]) == {}
+        store.close()
+
+    def test_migrates_and_preserves_legacy_v2_signature(self, tmp_path):
+        # v2 receipts shipped in v0.2.0, so real v2-signed rows exist; they must still verify after
+        # the v3 (artifact_type / retrieval_pins) migration, signed over their own field-set.
+        from prism.receipts.store import _build_sign_data, _compute_signature
+
+        secret = b"test-secret"
+        db = tmp_path / "old_v2.db"
+        conn = sqlite3.connect(str(db))
+        conn.executescript(_V02_SCHEMA)
+        prompt_hashes = {"contract": "abc123"}
+        sign = _build_sign_data(
+            schema_version=2,
+            receipt_id="prism-legacy-v2",
+            pre_strip_hash="aa",
+            post_strip_hash="bb",
+            timestamp="2026-05-15T00:00:00+00:00",
+            verifier_models=["gemini-2.5-pro"],
+            pairwise_rho={"L1,L2": 0.1},
+            verdict="accept",
+            reasoning_visibility_mode="stripped",
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+            lens_prompt_hashes=prompt_hashes,
+        )
+        sig = _compute_signature(sign, secret)
+        conn.execute(
+            """INSERT INTO receipts
+               (id, pre_strip_hash, post_strip_hash, timestamp, verifier_models, pairwise_rho,
+                reasoning_visibility_mode, verdict, confidence, retryable, lens_results,
+                lens_prompt_hashes, schema_version, signature)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                "prism-legacy-v2", "aa", "bb", "2026-05-15T00:00:00+00:00",
+                json.dumps(["gemini-2.5-pro"]), json.dumps({"L1,L2": 0.1}), "stripped", "accept",
+                0.9, 0, "[]", json.dumps(prompt_hashes), 2, sig,
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+        # Opening with the v3 store migrates (adds artifact_type / retrieval_pins columns).
+        store = ReceiptStore(db_path=db, signing_secret=secret)
+        assert store.verify_signature("prism-legacy-v2") is True  # v2 signature still valid
+        legacy = store.get_receipt("prism-legacy-v2")
+        assert legacy["schema_version"] == 2  # stays v2 — not silently upgraded
         store.close()
 
 

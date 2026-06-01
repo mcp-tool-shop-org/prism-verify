@@ -192,4 +192,6 @@ async def test_meta_mr1_author_reorder_is_invariant(tmp_path):
 
     assert isinstance(r1, VerifyResponse) and isinstance(r2, VerifyResponse)
     assert r1.verdict == r2.verdict  # MR1: invariant under author reorder / whitespace
+    # Anchor the value too, so a both-runs-broken-identically regression cannot pass vacuously.
+    assert r1.verdict == Verdict.ACCEPT
     store.close()
