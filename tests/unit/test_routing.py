@@ -69,7 +69,7 @@ class TestFamilyRouter:
         for family, model_id in [
             (ModelFamily.GOOGLE, "gemini-2.5-pro"),
             (ModelFamily.OPENAI, "gpt-5.4-mini"),
-            (ModelFamily.LOCAL, "qwen3-32b"),
+            (ModelFamily.LOCAL, "qwen3:32b"),
         ]:
             for _ in range(CIRCUIT_BREAKER_THRESHOLD):
                 router.report_failure(family, model_id)

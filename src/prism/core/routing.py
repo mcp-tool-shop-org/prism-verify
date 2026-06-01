@@ -21,17 +21,17 @@ DEFAULT_ROUTING_MAP: dict[ModelFamily, list[tuple[ModelFamily, str]]] = {
     ModelFamily.ANTHROPIC: [
         (ModelFamily.GOOGLE, "gemini-2.5-pro"),
         (ModelFamily.OPENAI, "gpt-5.4-mini"),
-        (ModelFamily.LOCAL, "qwen3-32b"),
+        (ModelFamily.LOCAL, "qwen3:32b"),
     ],
     ModelFamily.OPENAI: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
         (ModelFamily.GOOGLE, "gemini-2.5-pro"),
-        (ModelFamily.LOCAL, "qwen3-32b"),
+        (ModelFamily.LOCAL, "qwen3:32b"),
     ],
     ModelFamily.GOOGLE: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
         (ModelFamily.OPENAI, "gpt-5.4-mini"),
-        (ModelFamily.LOCAL, "qwen3-32b"),
+        (ModelFamily.LOCAL, "qwen3:32b"),
     ],
     ModelFamily.LOCAL: [
         (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
