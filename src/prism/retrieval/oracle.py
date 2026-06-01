@@ -6,6 +6,11 @@ model's parametric recall (which fabricates 11-57% of citations, Naser 2026 arXi
 Read-only and external — a GET, no writes — so it has no compensator (design/03). Precision-
 biased: a fuzzy-only or transient outcome downgrades to UNRESOLVABLE (CANNOT_CONFIRM), never
 upgrades a non-resolving citation to RESOLVED, and an oracle-down is never read as FABRICATED.
+
+The per-identifier cache holds only the TITLE-INDEPENDENT retrieval record (the retrieved
+title/abstract/hash and whether the id was found); the RESOLVED-vs-METADATA_MISMATCH decision is
+title-dependent and is recomputed against each citation's own claimed title, so a repeated id with
+a different claimed title cannot inherit a sibling's verdict.
 """
 
 from __future__ import annotations
@@ -28,7 +33,9 @@ _ATOM = "{http://www.w3.org/2005/Atom}"
 # arXiv id forms: new (2401.01234 / 2401.01234v2) and old (cond-mat/0207270).
 _ARXIV_NEW = re.compile(r"^\d{4}\.\d{4,5}(v\d+)?$")
 _ARXIV_OLD = re.compile(r"^[a-z-]+(\.[A-Z]{2})?/\d{7}(v\d+)?$")
-_DOI = re.compile(r"^10\.\d{4,9}/\S+$")
+# DOI: forbid whitespace / '?' / '#' in the suffix so it cannot inject a query or fragment into
+# the request URL; a '..' traversal segment is rejected separately in _resolve_crossref.
+_DOI = re.compile(r"^10\.\d{4,9}/[^\s?#]+$")
 
 
 @dataclass
@@ -41,6 +48,18 @@ class ExistenceResult:
     source_title: str | None = None
     source_abstract: str | None = None
     source_sha256: str | None = None
+
+
+@dataclass
+class _Record:
+    """Title-INDEPENDENT retrieval record — safe to cache by identifier alone."""
+
+    status: str  # "found" | "fabricated" | "unresolvable"
+    query: str
+    detail: str
+    title: str | None = None
+    abstract: str | None = None
+    sha256: str | None = None
 
 
 def _norm_id(identifier: str) -> str:
@@ -83,7 +102,7 @@ class CitationOracle:
         self._crossref_base = crossref_base.rstrip("/")
         self._mailto = mailto
         self._client = client or httpx.AsyncClient(timeout=15.0)
-        self._cache: dict[str, ExistenceResult] = {}
+        self._cache: dict[str, _Record] = {}
 
     async def resolve(self, citation: Citation) -> ExistenceResult:
         ident = (citation.identifier or "").strip()
@@ -94,41 +113,57 @@ class CitationOracle:
                 detail="no identifier (arXiv id or DOI); title-only is a fuzzy lower-trust tier",
             )
         norm = _norm_id(ident)
-        if norm in self._cache:
-            return self._cache[norm]
+        record = self._cache.get(norm)
+        if record is None:
+            if _ARXIV_NEW.match(norm) or _ARXIV_OLD.match(norm):
+                record = await self._resolve_arxiv(norm)
+            elif _DOI.match(norm):
+                record = await self._resolve_crossref(norm)
+            else:
+                record = _Record(
+                    "unresolvable", "", f"identifier {norm!r} is neither an arXiv id nor a DOI"
+                )
+            self._cache[norm] = record
+        # The title-match decision is recomputed per citation (NOT cached).
+        return self._finalize(record, citation.title)
 
-        if _ARXIV_NEW.match(norm) or _ARXIV_OLD.match(norm):
-            result = await self._resolve_arxiv(norm, citation.title)
-        elif _DOI.match(norm):
-            result = await self._resolve_crossref(norm, citation.title)
-        else:
-            result = ExistenceResult(
-                outcome=ExistenceOutcome.UNRESOLVABLE,
-                query="",
-                detail=f"identifier {norm!r} is neither an arXiv id nor a DOI",
+    def _finalize(self, record: _Record, claimed_title: str) -> ExistenceResult:
+        if record.status == "fabricated":
+            return ExistenceResult(ExistenceOutcome.FABRICATED, record.query, record.detail)
+        if record.status == "unresolvable":
+            return ExistenceResult(ExistenceOutcome.UNRESOLVABLE, record.query, record.detail)
+        if _titles_match(claimed_title, record.title or ""):
+            return ExistenceResult(
+                ExistenceOutcome.RESOLVED,
+                record.query,
+                record.detail,
+                source_title=record.title,
+                source_abstract=record.abstract,
+                source_sha256=record.sha256,
             )
-        self._cache[norm] = result
-        return result
+        return ExistenceResult(
+            ExistenceOutcome.METADATA_MISMATCH,
+            record.query,
+            f"resolved, but to a different title than cited: {record.title!r}",
+            source_title=record.title,
+            source_abstract=record.abstract,
+            source_sha256=record.sha256,
+        )
 
-    async def _resolve_arxiv(self, arxiv_id: str, claimed_title: str) -> ExistenceResult:
-        query = f"{self._arxiv_base}?id_list={arxiv_id}"
+    async def _resolve_arxiv(self, arxiv_id: str) -> _Record:
+        intended = f"{self._arxiv_base}?id_list={arxiv_id}"
         try:
-            resp = await self._client.get(query)
+            resp = await self._client.get(self._arxiv_base, params={"id_list": arxiv_id})
             resp.raise_for_status()
         except httpx.HTTPError as e:
-            return ExistenceResult(
-                outcome=ExistenceOutcome.UNRESOLVABLE,
-                query=query,
-                detail=f"arXiv oracle unreachable: {type(e).__name__}",
+            return _Record(
+                "unresolvable", intended, f"arXiv oracle unreachable: {type(e).__name__}"
             )
+        query = str(resp.request.url)
         try:
             root = ET.fromstring(resp.text)
         except ET.ParseError:
-            return ExistenceResult(
-                outcome=ExistenceOutcome.UNRESOLVABLE,
-                query=query,
-                detail="arXiv returned an unparseable feed",
-            )
+            return _Record("unresolvable", query, "arXiv returned an unparseable feed")
         # A bad id yields a single error <entry> with no <published>; require a real entry.
         real = [
             e
@@ -136,72 +171,50 @@ class CitationOracle:
             if e.find(f"{_ATOM}published") is not None
         ]
         if not real:
-            return ExistenceResult(
-                outcome=ExistenceOutcome.FABRICATED,
-                query=query,
-                detail=f"arXiv has no record for id {arxiv_id}",
-            )
+            return _Record("fabricated", query, f"arXiv has no record for id {arxiv_id}")
         title = (real[0].findtext(f"{_ATOM}title") or "").strip()
         abstract = (real[0].findtext(f"{_ATOM}summary") or "").strip()
-        return self._build_resolved(query, arxiv_id, "arXiv", claimed_title, title, abstract)
+        source = f"{title}\n\n{abstract}".strip()
+        return _Record(
+            "found", query, f"arXiv id {arxiv_id} resolved",
+            title=title or None, abstract=abstract or None,
+            sha256=_sha256(source) if source else None,
+        )
 
-    async def _resolve_crossref(self, doi: str, claimed_title: str) -> ExistenceResult:
-        query = f"{self._crossref_base}/{doi}?mailto={self._mailto}"
+    async def _resolve_crossref(self, doi: str) -> _Record:
+        # Reject path-traversal: httpx collapses '..' segments, which would steer the GET to a
+        # different path than the signed pin records. The DOI's own '/' separators are fine.
+        if ".." in doi:
+            return _Record("unresolvable", "", f"DOI {doi!r} contains a path-traversal segment")
+        intended = f"{self._crossref_base}/{doi}"
         try:
-            resp = await self._client.get(query)
+            # mailto travels as a real query param (not f-string concatenation), so an
+            # attacker-shaped identifier cannot shadow or inject query parameters.
+            resp = await self._client.get(intended, params={"mailto": self._mailto})
         except httpx.HTTPError as e:
-            return ExistenceResult(
-                outcome=ExistenceOutcome.UNRESOLVABLE,
-                query=query,
-                detail=f"Crossref oracle unreachable: {type(e).__name__}",
+            return _Record(
+                "unresolvable",
+                f"{intended}?mailto={self._mailto}",
+                f"Crossref oracle unreachable: {type(e).__name__}",
             )
+        query = str(resp.request.url)  # the URL actually issued — what the pin should record
         if resp.status_code == 404:
-            return ExistenceResult(
-                outcome=ExistenceOutcome.FABRICATED,
-                query=query,
-                detail=f"Crossref has no record for DOI {doi}",
-            )
+            return _Record("fabricated", query, f"Crossref has no record for DOI {doi}")
         try:
             resp.raise_for_status()
             message = resp.json().get("message", {})
         except (httpx.HTTPError, ValueError):
-            return ExistenceResult(
-                outcome=ExistenceOutcome.UNRESOLVABLE,
-                query=query,
-                detail="Crossref oracle returned an error / unparseable response",
+            return _Record(
+                "unresolvable", query, "Crossref oracle returned an error / unparseable response"
             )
         titles = message.get("title") or []
         title = str(titles[0]).strip() if titles else ""
         abstract = re.sub(r"<[^>]+>", "", str(message.get("abstract", "") or "")).strip()
-        return self._build_resolved(query, doi, "DOI", claimed_title, title, abstract)
-
-    def _build_resolved(
-        self,
-        query: str,
-        ident: str,
-        kind: str,
-        claimed_title: str,
-        title: str,
-        abstract: str,
-    ) -> ExistenceResult:
         source = f"{title}\n\n{abstract}".strip()
-        digest = _sha256(source) if source else None
-        if not _titles_match(claimed_title, title):
-            return ExistenceResult(
-                outcome=ExistenceOutcome.METADATA_MISMATCH,
-                query=query,
-                detail=f"{kind} {ident} resolves to a different title: {title!r}",
-                source_title=title or None,
-                source_abstract=abstract or None,
-                source_sha256=digest,
-            )
-        return ExistenceResult(
-            outcome=ExistenceOutcome.RESOLVED,
-            query=query,
-            detail=f"{kind} {ident} resolved",
-            source_title=title or None,
-            source_abstract=abstract or None,
-            source_sha256=digest,
+        return _Record(
+            "found", query, f"DOI {doi} resolved",
+            title=title or None, abstract=abstract or None,
+            sha256=_sha256(source) if source else None,
         )
 
     async def aclose(self) -> None:
