@@ -11,6 +11,7 @@ import hmac
 import json
 import os
 import sqlite3
+import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -147,7 +148,13 @@ class ReceiptStore:
         self._secret = _resolve_secret(signing_secret)
         self._db_path = db_path or DEFAULT_DB_PATH
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(self._db_path))
+        # prism runs on an asyncio loop that may live on a different thread than the one
+        # that constructed the store (e.g. embedded in a threaded host); the default
+        # check_same_thread=True would then raise on first cross-thread use. Open with
+        # check_same_thread=False and serialize every access through a reentrant lock —
+        # safe for a shared handle, without per-call connection churn.
+        self._lock = threading.RLock()
+        self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.executescript(_SCHEMA)
         self._migrate()
@@ -209,30 +216,31 @@ class ReceiptStore:
         )
         signature = _compute_signature(sign_data, self._secret)
 
-        self._conn.execute(
-            """INSERT INTO receipts
-               (id, pre_strip_hash, post_strip_hash, timestamp, verifier_models,
-                pairwise_rho, reasoning_visibility_mode, verdict, confidence,
-                retryable, lens_results, lens_prompt_hashes, schema_version, signature)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                receipt_id,
-                pre_strip_hash,
-                post_strip_hash,
-                timestamp.isoformat(),
-                json.dumps(verifier_models),
-                json.dumps(pairwise_rho),
-                reasoning_visibility_mode.value,
-                verdict,
-                confidence,
-                int(retryable),
-                lens_results_json,
-                json.dumps(prompt_hashes),
-                CURRENT_SCHEMA_VERSION,
-                signature,
-            ),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO receipts
+                   (id, pre_strip_hash, post_strip_hash, timestamp, verifier_models,
+                    pairwise_rho, reasoning_visibility_mode, verdict, confidence,
+                    retryable, lens_results, lens_prompt_hashes, schema_version, signature)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_id,
+                    pre_strip_hash,
+                    post_strip_hash,
+                    timestamp.isoformat(),
+                    json.dumps(verifier_models),
+                    json.dumps(pairwise_rho),
+                    reasoning_visibility_mode.value,
+                    verdict,
+                    confidence,
+                    int(retryable),
+                    lens_results_json,
+                    json.dumps(prompt_hashes),
+                    CURRENT_SCHEMA_VERSION,
+                    signature,
+                ),
+            )
+            self._conn.commit()
 
         return Receipt(
             id=receipt_id,
@@ -250,15 +258,15 @@ class ReceiptStore:
 
     def get_receipt(self, receipt_id: str) -> dict[str, Any] | None:
         """Retrieve a receipt by ID."""
-        cursor = self._conn.execute(
-            "SELECT * FROM receipts WHERE id = ?", (receipt_id,)
-        )
-        row = cursor.fetchone()
-        if row is None:
-            return None
-
-        columns = [desc[0] for desc in cursor.description]
-        return dict(zip(columns, row))
+        with self._lock:
+            cursor = self._conn.execute(
+                "SELECT * FROM receipts WHERE id = ?", (receipt_id,)
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [desc[0] for desc in cursor.description]
+            return dict(zip(columns, row))
 
     def verify_signature(self, receipt_id: str) -> bool:
         """Verify the HMAC signature of a stored receipt.
@@ -296,9 +304,10 @@ class ReceiptStore:
         a deleted receipt cannot be recovered — deletion is a GDPR/retention escape hatch,
         not an undo for a wrong verdict.
         """
-        cur = self._conn.execute("DELETE FROM receipts WHERE id = ?", (receipt_id,))
-        self._conn.commit()
-        return cur.rowcount > 0
+        with self._lock:
+            cur = self._conn.execute("DELETE FROM receipts WHERE id = ?", (receipt_id,))
+            self._conn.commit()
+            return cur.rowcount > 0
 
     def prune(self, older_than: timedelta) -> int:
         """Delete receipts older than ``older_than``; returns the number removed.
@@ -308,9 +317,17 @@ class ReceiptStore:
         audit trail matters.
         """
         cutoff = (datetime.now(UTC) - older_than).isoformat()
-        cur = self._conn.execute("DELETE FROM receipts WHERE timestamp < ?", (cutoff,))
-        self._conn.commit()
-        return cur.rowcount
+        with self._lock:
+            cur = self._conn.execute("DELETE FROM receipts WHERE timestamp < ?", (cutoff,))
+            self._conn.commit()
+            return cur.rowcount
+
+    def __enter__(self) -> ReceiptStore:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()

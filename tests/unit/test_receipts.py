@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import sqlite3
+import threading
 from datetime import timedelta
 
 import pytest
@@ -331,3 +332,44 @@ class TestSigningSecretResolution:
         )
         assert store.verify_signature(r.id) is True
         store.close()
+
+
+class TestStoreLifecycle:
+    """v0.3.0: cross-thread safety + context-manager close."""
+
+    def _mk(self, store):
+        return store.create_receipt(
+            pre_strip_hash="a",
+            post_strip_hash="b",
+            verifier_models=["m"],
+            pairwise_rho={},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict="accept",
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+        )
+
+    def test_usable_from_a_different_thread(self, tmp_path):
+        # Constructed on the main thread, used from a worker thread: without
+        # check_same_thread=False this raises sqlite3.ProgrammingError.
+        store = ReceiptStore(db_path=tmp_path / "t.db", signing_secret=b"s")
+        results: list[bool] = []
+
+        def _work() -> None:
+            r = self._mk(store)
+            results.append(store.verify_signature(r.id))
+
+        t = threading.Thread(target=_work)
+        t.start()
+        t.join()
+        assert results == [True]
+        store.close()
+
+    def test_context_manager_closes_connection(self, tmp_path):
+        with ReceiptStore(db_path=tmp_path / "c.db", signing_secret=b"s") as store:
+            r = self._mk(store)
+            assert store.verify_signature(r.id) is True
+        # After the context exits the connection is closed.
+        with pytest.raises(sqlite3.ProgrammingError):
+            store.get_receipt(r.id)
