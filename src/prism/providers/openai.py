@@ -17,13 +17,23 @@ from prism.providers.base import (
 DEFAULT_BASE_URL = "https://api.openai.com"
 
 
+def _is_reasoning_model(model_id: str) -> bool:
+    """OpenAI reasoning models (o-series, GPT-5) reject the deprecated ``max_tokens`` and a
+    non-default ``temperature``; they require ``max_completion_tokens`` and the default
+    temperature. (OpenAI API reference: ``max_tokens`` is deprecated and GPT-5 returns
+    "Unsupported parameter: 'max_tokens' is not supported with this model.")
+    """
+    m = model_id.lower()
+    return m.startswith(("o1", "o3", "o4", "gpt-5"))
+
+
 class OpenAIProvider(ModelProvider):
     """Provider for OpenAI models."""
 
     def __init__(
         self,
         api_key: str,
-        default_model: str = "gpt-4.1-mini",
+        default_model: str = "gpt-5.4-mini",
         base_url: str = DEFAULT_BASE_URL,
     ) -> None:
         self._api_key = api_key
@@ -44,9 +54,29 @@ class OpenAIProvider(ModelProvider):
     @property
     def available_models(self) -> list[str]:
         return [
-            "gpt-4.1-mini",
-            "gpt-4.1",
+            "gpt-5.4-mini",
+            "gpt-5",
+            "gpt-5.5",
         ]
+
+    def _build_body(self, model_id: str, request: CompletionRequest) -> dict[str, object]:
+        """Build the chat-completions body with the correct param shape per model.
+
+        ``max_completion_tokens`` replaces the deprecated ``max_tokens`` (GPT-5/o-series
+        reject ``max_tokens`` outright). Reasoning models also reject a non-default
+        ``temperature``, so it is sent only for non-reasoning chat models.
+        """
+        body: dict[str, object] = {
+            "model": model_id,
+            "max_completion_tokens": request.max_tokens,
+            "messages": [
+                {"role": "system", "content": request.system_prompt},
+                {"role": "user", "content": request.user_prompt},
+            ],
+        }
+        if not _is_reasoning_model(model_id):
+            body["temperature"] = request.temperature
+        return body
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
         model_id = request.model_id or self._default_model
@@ -55,15 +85,7 @@ class OpenAIProvider(ModelProvider):
         try:
             response = await self._client.post(
                 "/v1/chat/completions",
-                json={
-                    "model": model_id,
-                    "max_tokens": request.max_tokens,
-                    "temperature": request.temperature,
-                    "messages": [
-                        {"role": "system", "content": request.system_prompt},
-                        {"role": "user", "content": request.user_prompt},
-                    ],
-                },
+                json=self._build_body(model_id, request),
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:

@@ -23,7 +23,7 @@ class AnthropicProvider(ModelProvider):
     def __init__(
         self,
         api_key: str,
-        default_model: str = "claude-haiku-4-5-20250601",
+        default_model: str = "claude-haiku-4-5-20251001",
         base_url: str = DEFAULT_BASE_URL,
     ) -> None:
         self._api_key = api_key
@@ -45,8 +45,8 @@ class AnthropicProvider(ModelProvider):
     @property
     def available_models(self) -> list[str]:
         return [
-            "claude-haiku-4-5-20250601",
-            "claude-sonnet-4-6-20260601",
+            "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-6",
         ]
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:

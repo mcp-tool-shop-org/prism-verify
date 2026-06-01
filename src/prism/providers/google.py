@@ -29,7 +29,16 @@ class GoogleProvider(ModelProvider):
         self._api_key = api_key
         self._default_model = default_model
         self._base_url = base_url
-        self._client = httpx.AsyncClient(timeout=30.0)
+        # The API key travels in the x-goog-api-key header, never the URL query string.
+        # A `?key=` query leaks the credential into httpx error reprs, tracebacks, proxy
+        # logs, and access logs; a header does not.
+        self._client = httpx.AsyncClient(
+            timeout=30.0,
+            headers={
+                "x-goog-api-key": self._api_key,
+                "Content-Type": "application/json",
+            },
+        )
 
     @property
     def family(self) -> ModelFamily:
@@ -43,10 +52,7 @@ class GoogleProvider(ModelProvider):
         model_id = request.model_id or self._default_model
         start = time.monotonic()
 
-        url = (
-            f"{self._base_url}/v1beta/models/{model_id}:generateContent"
-            f"?key={self._api_key}"
-        )
+        url = f"{self._base_url}/v1beta/models/{model_id}:generateContent"
 
         try:
             response = await self._client.post(
@@ -98,7 +104,7 @@ class GoogleProvider(ModelProvider):
 
     async def health_check(self) -> bool:
         try:
-            url = f"{self._base_url}/v1beta/models?key={self._api_key}"
+            url = f"{self._base_url}/v1beta/models"
             response = await self._client.get(url)
             return response.status_code == 200
         except httpx.HTTPError:

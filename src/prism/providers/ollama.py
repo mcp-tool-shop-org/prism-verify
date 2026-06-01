@@ -23,7 +23,7 @@ class OllamaProvider(ModelProvider):
     def __init__(
         self,
         base_url: str = DEFAULT_BASE_URL,
-        default_model: str = "qwen3:32b",
+        default_model: str = "mistral-small:24b",
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._default_model = default_model
@@ -51,6 +51,17 @@ class OllamaProvider(ModelProvider):
                         {"role": "user", "content": request.user_prompt},
                     ],
                     "stream": False,
+                    # format=json constrains decoding to a valid JSON object — the single
+                    # biggest reliability win for local verdicts (Ollama uses XGrammar
+                    # internally; constrained decoding is ~50% faster AND +3% accuracy,
+                    # JSONSchemaBench arXiv:2501.10868). think=false keeps a thinking model
+                    # from spending the num_predict budget on hidden reasoning and returning
+                    # empty: Ollama's format zeroes non-compliant tokens INCLUDING <think>,
+                    # so format+thinking are incompatible (ollama #10538). Pair with a
+                    # NON-thinking instruct model (mistral-small:24b / granite4.1:30b return
+                    # clean JSON; qwen3:32b returned empty — empirical v0.3 run).
+                    "format": "json",
+                    "think": False,
                     "options": {
                         "temperature": request.temperature,
                         "num_predict": request.max_tokens,
