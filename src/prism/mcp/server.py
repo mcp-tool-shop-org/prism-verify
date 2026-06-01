@@ -94,7 +94,10 @@ def create_server() -> Any:
                     "properties": {
                         "artifact": {
                             "type": "string",
-                            "description": "The code or tool-call content to verify",
+                            "description": (
+                                "The artifact to verify: code, a tool-call, or a JSON array "
+                                "of citations (when artifact_type=citations)"
+                            ),
                         },
                         "intent": {
                             "type": "string",
@@ -102,9 +105,11 @@ def create_server() -> Any:
                         },
                         "artifact_type": {
                             "type": "string",
-                            "enum": ["code", "tool_call"],
+                            "enum": ["code", "tool_call", "citations"],
                             "default": "code",
-                            "description": "Type of artifact",
+                            "description": (
+                                "Type of artifact (citations = a JSON array of citations to verify)"
+                            ),
                         },
                         "caller_family": {
                             "type": "string",

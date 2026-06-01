@@ -167,6 +167,13 @@ family-different verifier. Outcome ∈ {`SUPPORTED`, `CONTRADICTED`, `NOT_ADDRES
 `compute_prompt_hash` machinery (PIN). Only runs on `RESOLVED` citations with an abstract; a
 resolved citation with no abstract → `NOT_ADDRESSED` (escalate to full text).
 
+The claim and retrieved source are fed to the lens as **untrusted data** wrapped in `<<<...>>>`
+markers (prompt-injection defense-in-depth). Groundedness is **advisory over the sound floor**: the
+deterministic existence + numeric stages run first and are unreachable by prompt text, so an
+injected verdict can at most affect a genuinely-resolved citation's groundedness — it can never
+manufacture existence. A future hardening: verify the lens's `supporting_span` actually occurs in
+the retrieved abstract before honoring a `supported`.
+
 ### Verdict mapping (two-axis)
 
 | Stage outcome | Verdict class | Action verb to the caller |
