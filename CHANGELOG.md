@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-01
+
+A post-ship adversarial verification pass (3 decorrelated lenses over the v0.3.0 diff) found and
+fixed real defects. v0.3.0 stays immutable; these land as a patch.
+
+### Fixed
+- **Citation oracle cache (was a silent wrong verdict).** The per-identifier cache held the full
+  existence result, but RESOLVED-vs-METADATA_MISMATCH is title-dependent; a repeated arXiv-id / DOI
+  with a different claimed title inherited the first citation's verdict (and the cache is
+  engine-lifetime, so it leaked across requests). The cache now holds only the title-independent
+  retrieved record and recomputes the title match per citation.
+- **DOI request hardening + pin integrity.** An unvalidated DOI suffix was interpolated into the
+  Crossref path (path-traversal / query-param injection), and the signed retrieval pin recorded a
+  URL different from the one httpx actually fetched. The DOI pattern now forbids `?`/`#`/whitespace,
+  `..` segments are rejected, `mailto` travels as a real query param, and the pin records the URL
+  actually issued.
+- **MCP `verify` tool now advertises `citations`.** The CLI was migrated in v0.3.0 but the MCP
+  inputSchema still enumerated only `code`/`tool_call`, making the headline feature unreachable via MCP.
+- **Groundedness prompt-injection defense-in-depth.** The claim and retrieved source are wrapped in
+  `<<<...>>>` untrusted-data markers; groundedness stays advisory over the sound existence floor.
+
+### Tests
+- Crossref-transient (5xx / 429 / timeout / unparseable) → UNRESOLVABLE (not FABRICATED); the cache
+  title-recompute regression; DOI path-traversal rejection; pin-equals-request-URL; a v2→v3 receipt
+  migration; and the MR1 metamorphic test now pins its verdict value.
+
+### Standards
+- workflow-standards remains 15/15; this is a correctness / hardening patch with no scope change.
+
 ## [0.3.0] - 2026-06-01
 
 ### Added
