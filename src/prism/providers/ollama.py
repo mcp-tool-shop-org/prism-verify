@@ -60,7 +60,8 @@ class OllamaProvider(ModelProvider):
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             raise ProviderError(
-                f"Ollama API error: {e.response.status_code}", retryable=e.response.status_code >= 500
+                f"Ollama API error: {e.response.status_code}",
+                retryable=e.response.status_code >= 500,
             ) from e
         except httpx.ConnectError as e:
             raise ProviderError(

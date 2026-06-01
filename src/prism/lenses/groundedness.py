@@ -35,7 +35,8 @@ Respond with valid JSON matching this schema:
     {
       "file": "filename or null",
       "line": line_number_or_null,
-      "category": "fabricated_reference" | "phantom_api" | "ungrounded_claim" | "hallucinated_behavior",
+      "category": "fabricated_reference" | "phantom_api"
+                | "ungrounded_claim" | "hallucinated_behavior",
       "evidence": "the specific claim and why it appears fabricated",
       "severity": "critical" | "major" | "minor"
     }
@@ -71,7 +72,8 @@ class GroundednessLens(Lens):
 {artifact.content}
 ```
 
-Check: does this artifact contain any fabricated references, phantom APIs, or ungrounded factual claims?"""
+Check: does this artifact contain any fabricated references, \
+phantom APIs, or ungrounded factual claims?"""
 
         start = time.monotonic()
         response = await provider.complete(

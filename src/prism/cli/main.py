@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from typing import Literal
 
 import click
 
@@ -16,7 +17,9 @@ from prism.core.types import (
     ModelFamily,
     VerifyError,
     VerifyRequest,
+    VerifyResponse,
 )
+from prism.providers.base import ModelProvider
 
 
 @click.group()
@@ -74,9 +77,9 @@ def verify(
         artifact_content = artifact
 
     # Parse lenses
-    lens_list: list[str] | str = "auto"
+    lens_list: list[str] | Literal["auto"] = "auto"
     if lenses != "auto":
-        lens_list = [l.strip() for l in lenses.split(",")]
+        lens_list = [item.strip() for item in lenses.split(",")]
 
     request = VerifyRequest(
         artifact=Artifact(
@@ -103,7 +106,7 @@ def verify(
         click.echo(json.dumps(result.model_dump(), indent=2, default=str))
 
 
-async def _run_verify(request: VerifyRequest, provider_name: str):
+async def _run_verify(request: VerifyRequest, provider_name: str) -> VerifyResponse | VerifyError:
     """Set up engine and run verification."""
     from prism.core.engine import VerificationEngine
     from prism.lenses.boundary import CrossBoundaryLens
@@ -119,7 +122,7 @@ async def _run_verify(request: VerifyRequest, provider_name: str):
     register_lens(GroundednessLens())
 
     # Set up provider
-    providers = {}
+    providers: dict[str, ModelProvider] = {}
     if provider_name == "ollama":
         from prism.providers.ollama import OllamaProvider
 

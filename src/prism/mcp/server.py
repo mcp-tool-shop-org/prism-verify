@@ -6,15 +6,14 @@ import asyncio
 import json
 import os
 import sys
+from typing import Any, Literal
 
 from prism.core.engine import VerificationEngine
 from prism.core.types import (
     Artifact,
     ArtifactType,
-    Budget,
     CallerContext,
     ModelFamily,
-    ReasoningVisibility,
     VerifyError,
     VerifyRequest,
 )
@@ -23,6 +22,7 @@ from prism.lenses.contract import ContractCompletenessLens
 from prism.lenses.groundedness import GroundednessLens
 from prism.lenses.invariant import InvariantLens
 from prism.lenses.registry import register_lens
+from prism.providers.base import ModelProvider
 from prism.receipts.store import ReceiptStore
 
 
@@ -34,7 +34,7 @@ def _setup_engine() -> VerificationEngine:
     register_lens(InvariantLens())
     register_lens(GroundednessLens())
 
-    providers = {}
+    providers: dict[str, ModelProvider] = {}
 
     # Always try Ollama (local, free)
     from prism.providers.ollama import OllamaProvider
@@ -65,11 +65,10 @@ def _setup_engine() -> VerificationEngine:
     return VerificationEngine(providers=providers)
 
 
-def create_server():
+def create_server() -> Any:
     """Create the MCP server with verify and replay tools."""
     try:
         from mcp.server import Server
-        from mcp.server.stdio import stdio_server
         from mcp.types import TextContent, Tool
     except ImportError:
         print("Error: mcp package not installed. Install with: pip install prism-verify[mcp]",
@@ -80,7 +79,7 @@ def create_server():
     engine = _setup_engine()
     receipt_store = ReceiptStore()
 
-    @server.list_tools()
+    @server.list_tools()  # type: ignore[no-untyped-call, untyped-decorator]
     async def list_tools() -> list[Tool]:
         return [
             Tool(
@@ -127,7 +126,10 @@ def create_server():
             ),
             Tool(
                 name="replay",
-                description="Replay a verification receipt by ID. Returns the full receipt with signature validation.",
+                description=(
+                    "Replay a verification receipt by ID. "
+                    "Returns the full receipt with signature validation."
+                ),
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -141,8 +143,8 @@ def create_server():
             ),
         ]
 
-    @server.call_tool()
-    async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+    @server.call_tool()  # type: ignore[untyped-decorator]
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[Any]:
         if name == "verify":
             return await _handle_verify(arguments, engine)
         elif name == "replay":
@@ -153,14 +155,14 @@ def create_server():
     return server
 
 
-async def _handle_verify(arguments: dict, engine: VerificationEngine) -> list:
+async def _handle_verify(arguments: dict[str, Any], engine: VerificationEngine) -> list[Any]:
     from mcp.types import TextContent
 
     # Parse lenses
     lenses_raw = arguments.get("lenses", "auto")
-    lens_list: list[str] | str = "auto"
+    lens_list: list[str] | Literal["auto"] = "auto"
     if lenses_raw != "auto":
-        lens_list = [l.strip() for l in lenses_raw.split(",")]
+        lens_list = [item.strip() for item in lenses_raw.split(",")]
 
     request = VerifyRequest(
         artifact=Artifact(
@@ -185,7 +187,7 @@ async def _handle_verify(arguments: dict, engine: VerificationEngine) -> list:
     return [TextContent(type="text", text=json.dumps(output, indent=2, default=str))]
 
 
-async def _handle_replay(arguments: dict, receipt_store: ReceiptStore) -> list:
+async def _handle_replay(arguments: dict[str, Any], receipt_store: ReceiptStore) -> list[Any]:
     from mcp.types import TextContent
 
     receipt_id = arguments["receipt_id"]
@@ -210,7 +212,7 @@ def main() -> None:
 
     server = create_server()
 
-    async def run():
+    async def run() -> None:
         async with stdio_server() as (read_stream, write_stream):
             await server.run(read_stream, write_stream, server.create_initialization_options())
 

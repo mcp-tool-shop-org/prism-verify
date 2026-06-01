@@ -33,7 +33,8 @@ Respond with valid JSON matching this schema:
     {
       "file": "filename or null",
       "line": line_number_or_null,
-      "category": "invariant_violation" | "untested_edge_case" | "insufficient_coverage" | "logical_contradiction",
+      "category": "invariant_violation" | "untested_edge_case"
+                | "insufficient_coverage" | "logical_contradiction",
       "evidence": "specific description of the invariant issue or test gap",
       "severity": "critical" | "major" | "minor"
     }
@@ -69,7 +70,8 @@ class InvariantLens(Lens):
 {artifact.content}
 ```
 
-Check: do all claimed invariants hold? Are there untested edge cases that would catch a planted bug?"""
+Check: do all claimed invariants hold? Are there untested edge cases \
+that would catch a planted bug?"""
 
         start = time.monotonic()
         response = await provider.complete(

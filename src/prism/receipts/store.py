@@ -10,15 +10,15 @@ import hashlib
 import hmac
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import ulid
 
 from prism.core.types import (
     ReasoningVisibility,
     Receipt,
-    VerifyResponse,
 )
 
 DEFAULT_DB_PATH = Path.home() / ".prism" / "receipts.db"
@@ -48,7 +48,7 @@ def _generate_receipt_id() -> str:
     return f"prism-{ulid.new().str.lower()}"
 
 
-def _compute_signature(receipt_data: dict, secret: bytes) -> str:
+def _compute_signature(receipt_data: dict[str, Any], secret: bytes) -> str:
     """HMAC-SHA256 over canonical JSON representation."""
     canonical = json.dumps(receipt_data, sort_keys=True, separators=(",", ":"))
     return hmac.new(secret, canonical.encode(), hashlib.sha256).hexdigest()
@@ -83,7 +83,7 @@ class ReceiptStore:
     ) -> Receipt:
         """Create and store a new receipt."""
         receipt_id = _generate_receipt_id()
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
 
         # Build canonical data for signing
         sign_data = {
@@ -133,7 +133,7 @@ class ReceiptStore:
             replayable=True,
         )
 
-    def get_receipt(self, receipt_id: str) -> dict | None:
+    def get_receipt(self, receipt_id: str) -> dict[str, Any] | None:
         """Retrieve a receipt by ID."""
         cursor = self._conn.execute(
             "SELECT * FROM receipts WHERE id = ?", (receipt_id,)

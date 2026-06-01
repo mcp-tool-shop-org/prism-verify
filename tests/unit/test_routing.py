@@ -1,6 +1,5 @@
 """Tests for family-different routing (Lock 1)."""
 
-import time
 
 import pytest
 

@@ -3,7 +3,6 @@
 import pytest
 
 from prism.core.submodularity import (
-    DEFAULT_RHO_THRESHOLD,
     compute_pairwise_rho,
     jaccard_similarity,
 )
@@ -42,8 +41,8 @@ class TestComputePairwiseRho:
             model_id="gemini-2.5-pro",
             outcome=LensOutcome.FAIL,
             findings=[
-                Finding(file=f, line=l, category=c, evidence="test")
-                for f, l, c in findings
+                Finding(file=f, line=lineno, category=c, evidence="test")
+                for f, lineno, c in findings
             ],
             confidence=0.8,
         )

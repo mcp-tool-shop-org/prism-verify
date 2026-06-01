@@ -34,7 +34,8 @@ Respond with valid JSON matching this schema:
     {
       "file": "filename or null",
       "line": line_number_or_null,
-      "category": "pii_leak" | "unsanitized_input" | "secret_exposure" | "data_exfiltration" | "taint_propagation",
+      "category": "pii_leak" | "unsanitized_input" | "secret_exposure"
+                | "data_exfiltration" | "taint_propagation",
       "evidence": "specific description of the boundary violation",
       "severity": "critical" | "major" | "minor"
     }
@@ -70,7 +71,8 @@ class CrossBoundaryLens(Lens):
 {artifact.content}
 ```
 
-Analyze information flow. Any data crossing trust boundaries not explicitly permitted by the intent is a finding."""
+Analyze information flow. Any data crossing trust boundaries \
+not explicitly permitted by the intent is a finding."""
 
         start = time.monotonic()
         response = await provider.complete(

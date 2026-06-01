@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
 
-from prism.core.routing import FamilyRouter, RoutingError
+from prism.core.routing import FamilyRouter, RouteSelection, RoutingError
 from prism.core.stripping import StripVerificationError, strip_reasoning
 from prism.core.submodularity import compute_pairwise_rho
 from prism.core.types import (
+    Artifact,
     LensOutcome,
-    ReasoningVisibility,
+    LensResult,
     RefusalReason,
     Verdict,
     VerifyError,
@@ -178,11 +178,11 @@ class VerificationEngine:
     async def _run_lens(
         self,
         lens: Lens,
-        artifact: "Artifact",
+        artifact: Artifact,
         intent: str,
-        route: "RouteSelection",
+        route: RouteSelection,
         provider: ModelProvider,
-    ) -> "LensResult":
+    ) -> LensResult:
         """Run a single lens, handling provider errors gracefully."""
         from prism.core.types import Finding, LensOutcome, LensResult
 
@@ -214,7 +214,7 @@ class VerificationEngine:
             )
 
     def _aggregate_verdict(
-        self, lens_results: list["LensResult"]
+        self, lens_results: list[LensResult]
     ) -> tuple[Verdict, float, bool]:
         """Aggregate lens results into a single verdict.
 
@@ -225,7 +225,6 @@ class VerificationEngine:
         - All lenses PASS -> ACCEPT
         - Mixed -> lowest severity drives verdict
         """
-        from prism.core.types import LensResult
 
         has_critical = False
         has_major_fail = False

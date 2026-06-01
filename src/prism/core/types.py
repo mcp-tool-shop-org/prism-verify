@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 
-class ModelFamily(str, Enum):
+class ModelFamily(StrEnum):
     """Supported model families. Lock 1: caller family is excluded from verifier selection."""
 
     ANTHROPIC = "anthropic"
@@ -18,14 +18,14 @@ class ModelFamily(str, Enum):
     LOCAL = "local"
 
 
-class ArtifactType(str, Enum):
+class ArtifactType(StrEnum):
     """Artifact types supported in v1 (code/tool-call only)."""
 
     CODE = "code"
     TOOL_CALL = "tool_call"
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     """Four-value verdict enum (SagaLLM + Temporal doctrine)."""
 
     ACCEPT = "accept"
@@ -34,7 +34,7 @@ class Verdict(str, Enum):
     ESCALATE = "escalate"
 
 
-class LensOutcome(str, Enum):
+class LensOutcome(StrEnum):
     """Per-lens outcome before aggregation."""
 
     PASS = "pass"
@@ -42,14 +42,14 @@ class LensOutcome(str, Enum):
     UNCERTAIN = "uncertain"
 
 
-class ReasoningVisibility(str, Enum):
+class ReasoningVisibility(StrEnum):
     """Lock 2: reasoning-stripping mode."""
 
     STRIPPED = "stripped"
     CONSERVATIVE = "conservative"
 
 
-class RefusalReason(str, Enum):
+class RefusalReason(StrEnum):
     """Structured refusal codes returned instead of verdicts."""
 
     VERIFIER_UNAVAILABLE = "VERIFIER_UNAVAILABLE"

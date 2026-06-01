@@ -7,8 +7,12 @@ and returns a LensResult via an alt-family model.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from prism.core.types import Artifact, LensResult
+
+if TYPE_CHECKING:
+    from prism.providers.base import ModelProvider
 
 
 class Lens(ABC):
@@ -33,7 +37,7 @@ class Lens(ABC):
         intent: str,
         model_family: str,
         model_id: str,
-        provider: "ModelProvider",
+        provider: ModelProvider,
     ) -> LensResult:
         """Evaluate the artifact through this lens.
 
@@ -48,10 +52,3 @@ class Lens(ABC):
             LensResult with findings.
         """
         ...
-
-
-# Forward reference for type checking
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from prism.providers.base import ModelProvider

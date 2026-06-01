@@ -1,7 +1,5 @@
 """Tests for receipt store."""
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
