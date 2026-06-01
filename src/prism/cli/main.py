@@ -27,6 +27,11 @@ if TYPE_CHECKING:
     from prism.receipts.store import ReceiptStore
 
 
+# Opt-in (--gate) verdict-to-exit-code map for shell gating. Default (no --gate) stays exit 0 on
+# any successful verification, preserving the CLI contract.
+_GATE_EXIT_CODES = {"accept": 0, "revise": 10, "refuse": 20, "escalate": 30}
+
+
 @click.group()
 @click.version_option(package_name="prism-verify")
 def cli() -> None:
@@ -58,6 +63,11 @@ def cli() -> None:
 )
 @click.option("--max-latency-ms", default=5000, type=int, help="Latency budget in ms")
 @click.option("--provider", default="ollama", help="Provider to use (ollama, anthropic)")
+@click.option(
+    "--gate",
+    is_flag=True,
+    help="Exit by verdict for shell gating (0 accept, 10 revise, 20 refuse, 30 escalate).",
+)
 def verify(
     artifact: str,
     intent: str,
@@ -67,6 +77,7 @@ def verify(
     lenses: str,
     max_latency_ms: int,
     provider: str,
+    gate: bool,
 ) -> None:
     """Verify an artifact against intent through multi-lens adjudication."""
     # Load artifact from file if prefixed with @
@@ -107,8 +118,11 @@ def verify(
         output = {"error": result.model_dump()}
         click.echo(json.dumps(output, indent=2, default=str))
         sys.exit(1)
-    else:
-        click.echo(json.dumps(result.model_dump(), indent=2, default=str))
+
+    click.echo(json.dumps(result.model_dump(), indent=2, default=str))
+    if gate:
+        # Opt-in verdict-coded exit for shell gating; the default stays exit 0 on success.
+        sys.exit(_GATE_EXIT_CODES.get(result.verdict.value, 0))
 
 
 async def _run_verify(request: VerifyRequest, provider_name: str) -> VerifyResponse | VerifyError:

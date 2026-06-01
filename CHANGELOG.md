@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-01
+
+### Added
+- **`prism verify --gate`** — opt-in verdict-coded exit status for shell gating (`0` accept,
+  `10` revise, `20` refuse, `30` escalate). The default (no `--gate`) stays exit `0` on any
+  successful verification, preserving the CLI contract. Lets a shell/CI step — e.g. the role-os
+  citation-verification gate — branch on the verdict without parsing JSON.
+
 ## [0.3.1] - 2026-06-01
 
 A post-ship adversarial verification pass (3 decorrelated lenses over the v0.3.0 diff) found and

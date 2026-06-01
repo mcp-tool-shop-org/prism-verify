@@ -83,3 +83,59 @@ class TestReceiptCli:
         result = CliRunner().invoke(cli, ["receipt", "prune", "--older-than", "0s", "--yes"])
         assert result.exit_code == 0
         assert json.loads(result.output)["pruned"] == 1
+
+
+class TestVerifyGate:
+    """--gate maps the verdict to a shell exit code (opt-in; the default stays 0)."""
+
+    def _fake_response(self, verdict, tmp_path):
+        from prism.core.types import Verdict, VerifyResponse
+
+        store = ReceiptStore(db_path=tmp_path / "g.db", signing_secret=b"s")
+        receipt = store.create_receipt(
+            pre_strip_hash="a",
+            post_strip_hash="b",
+            verifier_models=["m"],
+            pairwise_rho={},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict=verdict,
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+        )
+        store.close()
+        return VerifyResponse(
+            verdict=Verdict(verdict),
+            confidence=0.9,
+            retryable=False,
+            lens_results=[],
+            pairwise_rho={},
+            receipt=receipt,
+        )
+
+    @pytest.mark.parametrize(
+        "verdict,code", [("accept", 0), ("revise", 10), ("refuse", 20), ("escalate", 30)]
+    )
+    def test_gate_exit_codes(self, verdict, code, tmp_path, monkeypatch):
+        from prism.cli import main as cli_main
+
+        resp = self._fake_response(verdict, tmp_path)
+
+        async def _fake(request, provider):
+            return resp
+
+        monkeypatch.setattr(cli_main, "_run_verify", _fake)
+        result = CliRunner().invoke(cli, ["verify", "-a", "x", "-i", "y", "--gate"])
+        assert result.exit_code == code
+
+    def test_no_gate_stays_zero_on_nonaccept(self, tmp_path, monkeypatch):
+        from prism.cli import main as cli_main
+
+        resp = self._fake_response("refuse", tmp_path)
+
+        async def _fake(request, provider):
+            return resp
+
+        monkeypatch.setattr(cli_main, "_run_verify", _fake)
+        result = CliRunner().invoke(cli, ["verify", "-a", "x", "-i", "y"])  # no --gate
+        assert result.exit_code == 0
