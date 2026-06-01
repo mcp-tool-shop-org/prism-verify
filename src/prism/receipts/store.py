@@ -10,7 +10,7 @@ import hashlib
 import hmac
 import json
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -261,6 +261,29 @@ class ReceiptStore:
         )
         expected = _compute_signature(sign_data, self._secret)
         return hmac.compare_digest(expected, data["signature"])
+
+    def delete_receipt(self, receipt_id: str) -> bool:
+        """Delete a single receipt by ID; returns True if a row was removed.
+
+        Named compensator for the receipt INSERT (design/03-compensators.md). Terminal:
+        a deleted receipt cannot be recovered — deletion is a GDPR/retention escape hatch,
+        not an undo for a wrong verdict.
+        """
+        cur = self._conn.execute("DELETE FROM receipts WHERE id = ?", (receipt_id,))
+        self._conn.commit()
+        return cur.rowcount > 0
+
+    def prune(self, older_than: timedelta) -> int:
+        """Delete receipts older than ``older_than``; returns the number removed.
+
+        Prunes on the signed UTC ``timestamp`` column (not the local ``created_at``), so
+        the cutoff is timezone-consistent. Irreversible — export before pruning if the
+        audit trail matters.
+        """
+        cutoff = (datetime.now(UTC) - older_than).isoformat()
+        cur = self._conn.execute("DELETE FROM receipts WHERE timestamp < ?", (cutoff,))
+        self._conn.commit()
+        return cur.rowcount
 
     def close(self) -> None:
         self._conn.close()

@@ -7,7 +7,7 @@ Required by NAMED_COMPENSATORS standard. Documents the reversibility strategy fo
 | Irreversible Action | Trigger Condition | Compensator | CLI / API Surface | Notes |
 |---------------------|-------------------|-------------|-------------------|-------|
 | SQLite receipt INSERT | Every successful `verify()` call | `prism receipt delete <receipt_id>` | CLI: `prism receipt delete <id>` / Python: `store.delete_receipt(id)` | Deletes the row. Cannot un-delete — but receipts are append-only evidence; deletion is an admin escape hatch, not a normal flow. |
-| SQLite receipt bulk accumulation | Retention exceeds policy | `prism receipt prune --older-than <duration>` | CLI: `prism receipt prune --older-than 90d` / Python: `store.prune(older_than=timedelta(days=90))` | Bulk removal by age. Irreversible — caller should export before pruning if audit trail matters. |
+| SQLite receipt bulk accumulation | Retention exceeds policy | `prism receipt prune --older-than <duration> --yes` | CLI: `prism receipt prune --older-than 90d --yes` / Python: `store.prune(older_than=timedelta(days=90))` | Bulk removal by age, gated behind `--yes`; prunes on the signed UTC `timestamp` column. Irreversible — export before pruning if audit trail matters. |
 | Webhook send (future, v1.5) | `verdict` dispatched to external endpoint | Cancel-event payload to same endpoint | HTTP POST with `{"event": "verdict_cancelled", "receipt_id": "..."}` | Semantic cancellation — cannot un-send the HTTP request, but can notify the receiver that the verdict is withdrawn. |
 | MCP state mutation (future) | Client caches a verdict from MCP tool response | Re-issue `verify()` with same inputs; client invalidates cache | MCP tool: `prism.reverify` | Compensates stale state in the caller's context. Not a true rollback — generates a new receipt that supersedes the old one. |
 
@@ -23,7 +23,12 @@ Required by NAMED_COMPENSATORS standard. Documents the reversibility strategy fo
 
 | Compensator | Status | Tracking |
 |-------------|--------|----------|
-| `receipt delete` | **Not yet implemented** | P1 — add before v0.2.0 |
-| `receipt prune` | **Not yet implemented** | P1 — add before v0.2.0 |
+| `receipt delete` | **Implemented (v0.2.0)** | `prism receipt delete <id>` · `store.delete_receipt(id)` — rowcount-backed bool |
+| `receipt prune` | **Implemented (v0.2.0)** | `prism receipt prune --older-than <dur> --yes` · `store.prune(older_than)` — UTC-timestamp, returns count |
 | Webhook cancel-event | Design only (v1.5) | Deferred |
 | MCP reverify | Design only (v1.5) | Deferred |
+
+`receipt delete` and `receipt prune` are the **terminal leaves** of the compensation tree:
+they undo the receipt INSERT and intentionally have no compensator of their own (a deleted
+receipt is gone). `prune` is gated behind `--yes` and keys off the signed UTC `timestamp`,
+never the local `created_at`, so the cutoff window is timezone-consistent.

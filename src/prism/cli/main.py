@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sys
+from datetime import timedelta
 from typing import Literal
 
 import click
@@ -161,6 +163,65 @@ def replay(receipt_id: str) -> None:
 
     click.echo(json.dumps(data, indent=2, default=str))
     store.close()
+
+
+def _parse_duration(value: str) -> timedelta:
+    """Parse a duration like 90d, 24h, 30m, 45s, 2w into a timedelta."""
+    match = re.fullmatch(r"\s*(\d+)\s*([smhdw])\s*", value.lower())
+    if not match:
+        raise click.BadParameter(
+            f"invalid duration {value!r}; use forms like 90d, 24h, 30m, 45s, 2w"
+        )
+    unit_seconds = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+    return timedelta(seconds=int(match.group(1)) * unit_seconds[match.group(2)])
+
+
+@cli.group()
+def receipt() -> None:
+    """Manage stored verification receipts (compensators for the receipt store)."""
+    pass
+
+
+@receipt.command("delete")
+@click.argument("receipt_id")
+def receipt_delete(receipt_id: str) -> None:
+    """Delete a single receipt by ID."""
+    from prism.receipts.store import ReceiptStore
+
+    store = ReceiptStore()
+    try:
+        removed = store.delete_receipt(receipt_id)
+    finally:
+        store.close()
+
+    if not removed:
+        click.echo(f"Receipt not found: {receipt_id}", err=True)
+        sys.exit(1)
+    click.echo(json.dumps({"deleted": receipt_id}, indent=2))
+
+
+@receipt.command("prune")
+@click.option("--older-than", required=True, help="Age threshold, e.g. 90d, 24h, 30m")
+@click.option("--yes", is_flag=True, help="Confirm the irreversible bulk deletion")
+def receipt_prune(older_than: str, yes: bool) -> None:
+    """Delete every receipt older than a duration (irreversible)."""
+    from prism.receipts.store import ReceiptStore
+
+    duration = _parse_duration(older_than)
+    if not yes:
+        click.echo(
+            f"Refusing to prune receipts older than {older_than} without --yes "
+            "(irreversible; export first if the audit trail matters).",
+            err=True,
+        )
+        sys.exit(1)
+
+    store = ReceiptStore()
+    try:
+        count = store.prune(duration)
+    finally:
+        store.close()
+    click.echo(json.dumps({"pruned": count, "older_than": older_than}, indent=2))
 
 
 if __name__ == "__main__":

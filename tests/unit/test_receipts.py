@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import sqlite3
+from datetime import timedelta
 
 import pytest
 
@@ -255,3 +256,40 @@ class TestSchemaMigration:
         assert legacy["schema_version"] == 1
         assert json.loads(legacy["lens_prompt_hashes"]) == {}
         store.close()
+
+
+class TestReceiptCompensators:
+    """receipt delete / prune — the named compensators for the receipt INSERT."""
+
+    def _mk(self, store, verdict="accept"):
+        return store.create_receipt(
+            pre_strip_hash="a",
+            post_strip_hash="b",
+            verifier_models=["m"],
+            pairwise_rho={},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict=verdict,
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+        )
+
+    def test_delete_existing_returns_true(self, store):
+        r = self._mk(store)
+        assert store.delete_receipt(r.id) is True
+        assert store.get_receipt(r.id) is None
+
+    def test_delete_missing_returns_false(self, store):
+        assert store.delete_receipt("prism-nope") is False
+
+    def test_prune_by_utc_timestamp_is_selective(self, store):
+        recent = self._mk(store, verdict="accept")
+        old = self._mk(store, verdict="refuse")
+        store._conn.execute(
+            "UPDATE receipts SET timestamp = ? WHERE id = ?",
+            ("2020-01-01T00:00:00+00:00", old.id),
+        )
+        store._conn.commit()
+        assert store.prune(timedelta(days=30)) == 1
+        assert store.get_receipt(old.id) is None
+        assert store.get_receipt(recent.id) is not None
