@@ -10,11 +10,11 @@ The most defensible v1 vertical slice is **a four-lens runtime adjudicator with 
 
 ### Lock 1: Family-different verifier (mandatory, no silent same-family fallback)
 
-The caller declares its model family in `/verify` and prism refuses to serve a same-family verifier even under provider outage — outage returns `VERIFIER_UNAVAILABLE`, never silent same-family. This is the load-bearing primitive. Justifications: **Report 1, Panickssery/Bowman/Feng (NeurIPS 2024, arXiv:2404.13076)** — self-recognition correlates *linearly* with self-preference, so partial blinding does not help; **Report 1, Li et al. (ICLR 2026, arXiv:2502.01534)** — same-lineage judges favor outputs even without identity disclosure; **Report 5, Wataoka et al. (2024, arXiv:2410.21819)** — self-preference bias is perplexity-driven (familiarity), not just identity-driven, making it a *correctness* regression to fall back same-family, not a routing one; **Report 2, Du et al. (ICML 2024, arXiv:2305.14325) + Goel et al. (2025, arXiv:2506.07962)** — same-family debate is gain-limited because errors correlate above chance.
+The caller declares its model family in `/verify` and prism refuses to serve a same-family verifier even under provider outage — outage returns `VERIFIER_UNAVAILABLE`, never silent same-family. This is the load-bearing primitive. Justifications: **Report 1, Panickssery/Bowman/Feng (NeurIPS 2024, arXiv:2404.13076)** — self-recognition correlates *linearly* with self-preference, so partial blinding does not help; **Report 1, Li et al. (ICLR 2026, arXiv:2502.01534)** — same-lineage judges favor outputs even without identity disclosure; **Report 5, Wataoka et al. (2024, arXiv:2410.21819)** — self-preference bias is perplexity-driven (familiarity), not just identity-driven, making it a *correctness* regression to fall back same-family, not a routing one; **Report 2, Du et al. (ICML 2024, arXiv:2305.14325) + Kim et al. (2025, arXiv:2506.07962)** — same-family debate is gain-limited because errors correlate above chance.
 
 ### Lock 2: Reasoning-stripped by contract (aggressive default, conservative mode opt-in only)
 
-The producer's chain-of-thought, scratchpads, `<thinking>` blocks, OpenAI reasoning summaries, and DeepSeek-R1 `<think>` tags are stripped from the artifact before it crosses the family boundary; the strip is verified by re-parsing the post-strip artifact and rejecting if known patterns reappear. Justifications: **Report 1, Mendes et al. (2026, arXiv:2601.14691)** — manipulated CoT inflates VLM-judge false positives by up to 90% with observations/actions held fixed, so the trace is the demonstrated attack surface; **Report 1, Arcuschin et al. (2025, arXiv:2503.08679)** — in-the-wild CoTs are post-hoc rationalizations uncorrelated with the actual decision path; **Report 1, Buçinca et al. (CHI 2025, arXiv:2410.04253; CSCW 2021, arXiv:2102.09692)** — withholding producer justification and forcing contrastive evaluation improves independent decision-making without accuracy loss.
+The producer's chain-of-thought, scratchpads, `<thinking>` blocks, OpenAI reasoning summaries, and DeepSeek-R1 `<think>` tags are stripped from the artifact before it crosses the family boundary; the strip is verified by re-parsing the post-strip artifact and rejecting if known patterns reappear. Justifications: **Report 1, Khalifa et al. (2026, arXiv:2601.14691)** — manipulated CoT inflates VLM-judge false positives by up to 90% with observations/actions held fixed, so the trace is the demonstrated attack surface; **Report 1, Arcuschin et al. (2025, arXiv:2503.08679)** — in-the-wild CoTs are post-hoc rationalizations uncorrelated with the actual decision path; **Report 1, Buçinca et al. (CHI 2025, arXiv:2410.04253; CSCW 2021, arXiv:2102.09692)** — withholding producer justification and forcing contrastive evaluation improves independent decision-making without accuracy loss.
 
 ### Lock 3: Multi-lens by default (four lenses, three minimum, ship-blocked below three)
 
@@ -151,7 +151,7 @@ The wedge is **partially confirmed and must be repositioned**. The simple claim 
 ## Sources cited (consolidated bibliography)
 
 ### Reasoning-stripping and judge-bias literature (Report 1)
-- Mendes et al. 2026, *Gaming the Judge: Unfaithful Chain-of-Thought Can Undermine Agent Evaluation*, https://arxiv.org/abs/2601.14691
+- Khalifa et al. 2026, *Gaming the Judge: Unfaithful Chain-of-Thought Can Undermine Agent Evaluation*, https://arxiv.org/abs/2601.14691
 - Arcuschin et al. 2025, *Chain-of-Thought Reasoning In The Wild Is Not Always Faithful*, https://arxiv.org/pdf/2503.08679
 - Li et al. ICLR 2026, *Preference Leakage: A Contamination Problem in LLM-as-a-judge*, https://arxiv.org/abs/2502.01534
 - Panickssery, Bowman & Feng NeurIPS 2024, *LLM Evaluators Recognize and Favor Their Own Generations*, https://arxiv.org/abs/2404.13076
@@ -170,7 +170,7 @@ The wedge is **partially confirmed and must be repositioned**. The simple claim 
 - Huang et al. DeepMind ICLR 2024, *LLMs Cannot Self-Correct Reasoning Yet*, https://arxiv.org/abs/2310.01798
 - Kambhampati et al. ICML 2024, *LLMs Can't Plan, But Can Help Planning (LLM-Modulo)*, https://arxiv.org/abs/2402.01817
 - Song et al. ACL 2024, *Revisiting Code Similarity with AST Edit Distance*, https://arxiv.org/abs/2404.08817
-- Goel et al. 2025, *Correlated Errors in Large Language Models*, https://arxiv.org/html/2506.07962v1
+- Kim et al. 2025, *Correlated Errors in Large Language Models*, https://arxiv.org/html/2506.07962v1
 - Galileo 2024-25, *Cohen's Kappa Metric for LLM Judge Calibration*, https://galileo.ai/blog/cohens-kappa-metric
 
 ### Lens taxonomy and verifier rubrics (Report 3)
