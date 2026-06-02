@@ -14,6 +14,12 @@ Install the `prism` CLI (and the HTTP service) on your PATH:
 uv tool install prism-verify        # or: pipx install prism-verify
 ```
 
+Zero Python? Use the npm launcher (downloads + SHA256-verifies a prebuilt binary):
+
+```bash
+npx @mcptoolshop/prism-verify verify --artifact @file.py --intent "..." --caller-family openai
+```
+
 Or add it as a library — extras: `[anthropic]` `[openai]` `[google]` `[mcp]` `[http]` `[all]`:
 
 ```bash

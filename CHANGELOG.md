@@ -37,6 +37,12 @@ adversarially verified (3 decorrelated lenses) — design in `design/05-http-and
 - **PyPI Trusted Publishing** (`.github/workflows/release.yml`) — OIDC, no long-lived token;
   builds with `uv build` and publishes via `pypa/gh-action-pypi-publish` (PEP 740 attestations on
   by default) on `release: published`. First publish uses a PyPI *pending publisher*.
+- **npm launcher** (`@mcptoolshop/prism-verify`) — zero-Python `npx @mcptoolshop/prism-verify` via
+  [`@mcptoolshop/npm-launcher`](https://github.com/mcp-tool-shop-org/npm-launcher): the release
+  builds PyInstaller binaries (linux-x64 / darwin-arm64 / win-x64) + a `checksums-<version>.txt`,
+  and the wrapper downloads + **SHA256-verifies** the platform binary at first run. Published via
+  npm Trusted Publishing (OIDC provenance). PyPI remains the primary, full-featured distribution
+  (hosted-provider SDKs + all extras); the npm binary bundles the CLI + local Ollama + HTTP + citations.
 
 ### Changed
 - MCP + HTTP now share one engine factory (`prism.core.setup.build_default_engine`) so the

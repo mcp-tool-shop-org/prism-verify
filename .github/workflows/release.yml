@@ -1,10 +1,17 @@
 name: Release
 
-# Publish to PyPI via Trusted Publishing (OIDC, no long-lived token) on a GitHub Release.
-# Org rule: publish workflows trigger on `release: published` only (never on push).
-# First publish requires a PyPI *pending publisher* configured for this repo + workflow + the
-# `pypi` environment (docs.pypi.org/trusted-publishers/creating-a-project-through-oidc); the name
-# is reserved only on first successful upload, so configure + tag + release in one session.
+# On a published GitHub Release this:
+#   1. publishes the Python package to PyPI via Trusted Publishing (OIDC, no token),
+#   2. builds PyInstaller binaries for each platform + uploads them (+ checksums) to the release,
+#   3. publishes the @mcptoolshop/prism-verify npm wrapper (the npm-launcher) via Trusted Publishing.
+#
+# Org rule: publish workflows fire on `release: published` only. This is the repo's 2nd (and last)
+# workflow file. The cross-OS binary matrix (macos/windows) is the explicit-request exception to the
+# "1 OS / no macos" rule — the npm launcher distributes platform binaries, which requires it.
+#
+# First PyPI publish needs a PyPI *pending publisher* (project prism-verify, workflow release.yml,
+# environment pypi). First npm publish needs a placeholder publish + a Trusted Publisher configured
+# on npmjs.com for @mcptoolshop/prism-verify (workflow release.yml).
 
 on:
   release:
@@ -13,7 +20,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC handshake for PyPI Trusted Publishing — the only auth needed
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,12 +27,14 @@ concurrency:
 
 jobs:
   pypi:
-    name: Build + publish to PyPI (Trusted Publishing)
+    name: Publish to PyPI (Trusted Publishing)
     runs-on: ubuntu-latest
     environment: pypi
+    permissions:
+      id-token: write # OIDC handshake for PyPI Trusted Publishing — the only auth needed
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5 # Node 24 runtime (not the npm template's v4.2.2 / Node 20)
+      - uses: actions/checkout@v5
 
       - name: Verify the tag matches pyproject version
         run: |
@@ -49,3 +57,121 @@ jobs:
       - name: Publish to PyPI
         # Trusted Publishing: no token. PEP 740 attestations are on by default (action >= v1.11.0).
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  build-binaries:
+    name: Build PyInstaller binary (${{ matrix.target }})
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+            ext: ""
+          - os: macos-latest
+            target: darwin-arm64
+            ext: ""
+          # darwin-x64 omitted: macos-13 is deprecated; the arm64 binary runs via Rosetta.
+          - os: windows-latest
+            target: win-x64
+            ext: ".exe"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12
+      - run: uv venv
+
+      - name: Install prism + PyInstaller
+        # Bundle the [http] extra so the binary covers the CLI + local (Ollama) verification + the
+        # HTTP service + citation verification. Hosted-provider SDKs come with the PyPI install.
+        run: uv pip install ".[http]" "pyinstaller>=6.9.0"
+
+      - name: Build binary
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          uv run pyinstaller --onefile --name prism --console \
+            --collect-submodules prism \
+            --collect-submodules pydantic \
+            src/prism/__main__.py
+          OUTNAME="prism-${VERSION}-${{ matrix.target }}${{ matrix.ext }}"
+          mv "dist/prism${{ matrix.ext }}" "dist/${OUTNAME}"
+          echo "ASSET_NAME=${OUTNAME}" >> "$GITHUB_ENV"
+
+      - name: Smoke-test the binary
+        shell: bash
+        run: dist/${{ env.ASSET_NAME }} --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.target }}
+          path: dist/${{ env.ASSET_NAME }}
+
+  release-binaries:
+    name: Upload binaries + checksums to the release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload assets to the release
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          cd artifacts
+          sha256sum * > "checksums-${VERSION}.txt"
+          cat "checksums-${VERSION}.txt"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+
+  npm:
+    name: Publish npm wrapper (Trusted Publishing)
+    needs: release-binaries # the wrapper is only useful once the binaries are on the release
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write # npm provenance via Sigstore OIDC
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verify the npm wrapper version matches the tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./npm/package.json').version")
+          echo "tag=${TAG} npm=${PKG}"
+          if [ "${TAG}" != "${PKG}" ]; then
+            echo "::error::release tag ${TAG} does not match npm/package.json version ${PKG}"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install npm >= 11.5 for OIDC trusted-publishing auth
+        run: |
+          # Node 22's bundled npm 10.9 races on an in-place `npm install -g npm@latest`
+          # (MODULE_NOT_FOUND: promise-retry). Install npm@latest into a sandbox and shadow it.
+          SANDBOX="$HOME/.npm-cli-sandbox"
+          mkdir -p "$SANDBOX"
+          pushd "$SANDBOX" >/dev/null
+          echo '{"name":"npm-cli-sandbox","version":"0.0.0","private":true}' > package.json
+          npm install --no-save --no-audit --no-fund --silent npm@latest
+          popd >/dev/null
+          echo "$SANDBOX/node_modules/.bin" >> "$GITHUB_PATH"
+          "$SANDBOX/node_modules/.bin/npm" --version
+
+      - name: Publish wrapper with provenance (OIDC trusted publisher)
+        working-directory: npm
+        run: |
+          npm install --no-save --no-audit --no-fund
+          npm publish --provenance --access public
