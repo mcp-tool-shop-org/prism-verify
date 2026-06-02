@@ -8,10 +8,18 @@ Runtime adjudication service for agent workflows. Family-different, reasoning-st
 
 ## Install
 
+Install the `prism` CLI (and the HTTP service) on your PATH:
+
+```bash
+uv tool install prism-verify        # or: pipx install prism-verify
+```
+
+Or add it as a library — extras: `[anthropic]` `[openai]` `[google]` `[mcp]` `[http]` `[all]`:
+
 ```bash
 uv add prism-verify
 # or
-pip install prism-verify[all]
+pip install "prism-verify[all]"
 ```
 
 ## Quick start
@@ -40,25 +48,57 @@ Prism enforces four architectural locks at the API contract:
 3. **Multi-lens** — at least 3 independent lenses run in parallel
 4. **Submodularity-aware** — refuses if lenses agree too much (collapsed signal)
 
-## Receipts & signing
+## HTTP service
 
-Every verification produces an HMAC-signed, replayable receipt in `~/.prism/receipts.db`.
-The signature covers the verdict, the pre/post-strip artifact hashes, the verifier model,
-the pairwise submodularity matrix, the per-lens prompt hashes (so a run is byte-for-byte
-replayable), and the caller-actionable `confidence`/`retryable` outputs.
-
-Set the signing secret before running anything that writes or verifies receipts:
+Run prism as an HTTP service (needs the `[http]` extra):
 
 ```bash
-export PRISM_SIGNING_SECRET="<a long random secret>"   # production
-# or, for local development only:
-export PRISM_DEV=1                                       # uses a public, INSECURE dev key
+prism serve --host 127.0.0.1 --port 8000      # OpenAPI docs at /docs
 ```
 
-Prism **refuses to start** the verify / replay / MCP paths if neither is set, rather than
-silently signing with a publicly known key. Receipts written by v0.1.0 under the old
-built-in dev key report `signature_valid: false` once you set a real `PRISM_SIGNING_SECRET`
-— that is expected (different key), not tampering.
+| Endpoint | What it does |
+|---|---|
+| `POST /verify` | Verify an artifact (same contract as the CLI). Blocks within the budget; `Prefer: respond-async` + a `webhook` URL → `202`, verdict delivered to the (signed) webhook. |
+| `GET /replay/{receipt_id}` | The signed receipt + `signature_valid`. |
+| `POST /verify-receipt` | Verify a standalone receipt (cross-tool). |
+| `GET /healthz` | Liveness + configured verifier families (no auth). |
+
+Set API keys (hashed at rest) — prism is **fail-closed**, so `/verify` is refused until keys
+are configured or you opt into local no-auth:
+
+```bash
+export PRISM_API_KEYS="<sha256(key1)>,<sha256(key2)>"   # callers send: Authorization: Bearer <key>
+export PRISM_WEBHOOK_SECRET="<random>"                  # to sign async/escalate webhook deliveries
+# local dev only:
+export PRISM_HTTP_ALLOW_NO_AUTH=1
+```
+
+Errors are RFC 9457 `application/problem+json`; `POST /verify` honours an `Idempotency-Key`
+header and a per-key rate limit (`429` + `Retry-After`). Async/escalate webhooks are
+Standard-Webhooks-signed, SSRF-guarded (no internal/metadata targets), retried, and carry a
+named cancel-event compensator.
+
+## Receipts & signing (Ed25519, verifiable by anyone)
+
+Every verification produces a signed, replayable receipt in `~/.prism/receipts.db`. v0.4 signs
+new receipts with **Ed25519 (RFC 8032)** by default, so **a different tool can verify a prism
+receipt with prism's public key — no shared secret**:
+
+```bash
+prism keygen --out ~/.prism/signing_key.pem    # generate an Ed25519 keypair
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem
+prism pubkey                                    # publish this public key + kid to consumers
+
+# a consumer (e.g. role-os) verifies a receipt with ONLY the public key:
+prism verify-receipt receipt.json --public-key prism-pub.pem
+```
+
+The signature covers the verdict, the pre/post-strip artifact hashes, the verifier model, the
+submodularity matrix, the per-lens prompt hashes (byte-for-byte replayable), the citation
+retrieval pins, and the signing `alg`/`kid`. Legacy **HMAC** receipts still verify (set
+`PRISM_SIGNING_SECRET`); `PRISM_DEV=1` mints a dev key for local play. Prism **refuses to start**
+the verify / replay / serve / MCP paths if no key is configured, rather than silently signing
+with a publicly known key.
 
 Manage stored receipts with the compensator commands:
 
@@ -72,9 +112,16 @@ prism receipt prune --older-than 90d --yes
 - **Threat model.** Prism reads the artifact + intent you pass and the verifier models'
   responses, and writes signed receipts to a local SQLite DB. It does **not** read your
   source tree, environment, or credentials beyond the provider API keys you supply via
-  environment variables. Receipt signatures are tamper-*evident* (local HMAC), not
-  tamper-*proof* — hold `PRISM_SIGNING_SECRET` outside the receipt host for a stronger
-  guarantee.
+  environment variables. Receipt signatures give **third-party verifiability** (Ed25519: a
+  consumer verifies with the public key, no shared secret) but are not tamper-*proof* against a
+  local-root attacker who can read the on-disk private key — that's the same ceiling as the HMAC
+  secret. For genuine tamper-resistance, hold the key in an HSM and anchor receipts in a
+  transparency log (the named hardening path).
+- **HTTP surface.** `prism serve` binds loopback by default, is **fail-closed** (no `/verify`
+  without API keys), hashes keys at rest, and **SSRF-guards** caller-supplied webhook URLs
+  (no internal/link-local/metadata targets). It runs caller-supplied artifacts through a model;
+  an artifact may *attempt* prompt injection but cannot change the verdict schema or exfiltrate
+  prism's provider keys.
 - **No telemetry.** Prism sends requests only to the model providers you configure
   (Anthropic / OpenAI / Google / local Ollama). Nothing else.
 - Full policy: [SECURITY.md](SECURITY.md).
