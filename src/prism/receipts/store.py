@@ -342,33 +342,37 @@ class ReceiptStore:
         return self._verify_row(receipt)
 
     def _verify_row(self, data: dict[str, Any]) -> bool:
-        schema_version = int(data.get("schema_version") or 1)
         alg = data.get("alg") or ALG_HMAC
         backend = self._verifiers.get(alg)
         if backend is None:
             # We hold no key for this algorithm — cannot verify (e.g. an Ed25519-only store asked
             # to verify a legacy HMAC receipt without the HMAC secret).
             return False
-        sign_data = _build_sign_data(
-            schema_version=schema_version,
-            receipt_id=data["id"],
-            pre_strip_hash=data["pre_strip_hash"],
-            post_strip_hash=data["post_strip_hash"],
-            timestamp=data["timestamp"],
-            verifier_models=json.loads(data["verifier_models"]),
-            pairwise_rho=json.loads(data["pairwise_rho"]),
-            verdict=data["verdict"],
-            reasoning_visibility_mode=data["reasoning_visibility_mode"],
-            confidence=data["confidence"],
-            retryable=bool(data["retryable"]),
-            lens_results_json=data["lens_results"],
-            lens_prompt_hashes=json.loads(data.get("lens_prompt_hashes") or "{}"),
-            artifact_type=data.get("artifact_type", "code"),
-            retrieval_pins=json.loads(data.get("retrieval_pins") or "[]"),
-            alg=alg,
-            kid=data.get("kid", ""),
-        )
-        return backend.verify(_canonical(sign_data), data["signature"])
+        try:
+            sign_data = _build_sign_data(
+                schema_version=int(data.get("schema_version") or 1),
+                receipt_id=data["id"],
+                pre_strip_hash=data["pre_strip_hash"],
+                post_strip_hash=data["post_strip_hash"],
+                timestamp=data["timestamp"],
+                verifier_models=json.loads(data["verifier_models"]),
+                pairwise_rho=json.loads(data["pairwise_rho"]),
+                verdict=data["verdict"],
+                reasoning_visibility_mode=data["reasoning_visibility_mode"],
+                confidence=data["confidence"],
+                retryable=bool(data["retryable"]),
+                lens_results_json=data["lens_results"],
+                lens_prompt_hashes=json.loads(data.get("lens_prompt_hashes") or "{}"),
+                artifact_type=data.get("artifact_type", "code"),
+                retrieval_pins=json.loads(data.get("retrieval_pins") or "[]"),
+                alg=alg,
+                kid=data.get("kid", ""),
+            )
+            signature = data["signature"]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            # A malformed / incomplete receipt is simply not validly signed — never a crash.
+            return False
+        return backend.verify(_canonical(sign_data), signature)
 
     def delete_receipt(self, receipt_id: str) -> bool:
         """Delete a single receipt by ID; returns True if a row was removed.
@@ -426,44 +430,52 @@ def verify_receipt_dict(
 
         backend = HmacBackend(signing_secret)
     elif alg != ALG_HMAC and public_key_pem is not None:
-        backend = Ed25519Backend.from_public_pem(public_key_pem)
+        try:
+            backend = Ed25519Backend.from_public_pem(public_key_pem)
+        except SigningSecretError:
+            return False  # an unparseable public key cannot verify anything
     if backend is None:
         return False
 
-    schema_version = int(receipt.get("schema_version") or 1)
-    verifier_models = receipt["verifier_models"]
-    if isinstance(verifier_models, str):
-        verifier_models = json.loads(verifier_models)
-    pairwise_rho = receipt["pairwise_rho"]
-    if isinstance(pairwise_rho, str):
-        pairwise_rho = json.loads(pairwise_rho)
-    lens_prompt_hashes = receipt.get("lens_prompt_hashes") or {}
-    if isinstance(lens_prompt_hashes, str):
-        lens_prompt_hashes = json.loads(lens_prompt_hashes)
-    retrieval_pins = receipt.get("retrieval_pins") or []
-    if isinstance(retrieval_pins, str):
-        retrieval_pins = json.loads(retrieval_pins)
-    lens_results = receipt.get("lens_results", "[]")
-    if not isinstance(lens_results, str):
-        lens_results = json.dumps(lens_results, default=str)
+    # A malformed / incomplete caller-supplied receipt is simply not validly signed — never crash
+    # (the HTTP /verify-receipt handler relies on this to keep its RFC 9457 contract).
+    try:
+        verifier_models = receipt["verifier_models"]
+        if isinstance(verifier_models, str):
+            verifier_models = json.loads(verifier_models)
+        pairwise_rho = receipt["pairwise_rho"]
+        if isinstance(pairwise_rho, str):
+            pairwise_rho = json.loads(pairwise_rho)
+        lens_prompt_hashes = receipt.get("lens_prompt_hashes") or {}
+        if isinstance(lens_prompt_hashes, str):
+            lens_prompt_hashes = json.loads(lens_prompt_hashes)
+        retrieval_pins = receipt.get("retrieval_pins") or []
+        if isinstance(retrieval_pins, str):
+            retrieval_pins = json.loads(retrieval_pins)
+        lens_results = receipt.get("lens_results", "[]")
+        if not isinstance(lens_results, str):
+            lens_results = json.dumps(lens_results, default=str)
 
-    sign_data = _build_sign_data(
-        schema_version=schema_version,
-        receipt_id=receipt["id"],
-        pre_strip_hash=receipt["pre_strip_hash"],
-        post_strip_hash=receipt["post_strip_hash"],
-        timestamp=receipt["timestamp"],
-        verifier_models=verifier_models,
-        pairwise_rho=pairwise_rho,
-        verdict=receipt["verdict"],
-        reasoning_visibility_mode=receipt["reasoning_visibility_mode"],
-        confidence=receipt["confidence"],
-        retryable=bool(receipt["retryable"]),
-        lens_results_json=lens_results,
-        lens_prompt_hashes=lens_prompt_hashes,
-        artifact_type=receipt.get("artifact_type", "code"),
-        retrieval_pins=retrieval_pins,
-        alg=alg,
-        kid=receipt.get("kid", ""),
-    )
-    return backend.verify(_canonical(sign_data), receipt["signature"])
+        sign_data = _build_sign_data(
+            schema_version=int(receipt.get("schema_version") or 1),
+            receipt_id=receipt["id"],
+            pre_strip_hash=receipt["pre_strip_hash"],
+            post_strip_hash=receipt["post_strip_hash"],
+            timestamp=receipt["timestamp"],
+            verifier_models=verifier_models,
+            pairwise_rho=pairwise_rho,
+            verdict=receipt["verdict"],
+            reasoning_visibility_mode=receipt["reasoning_visibility_mode"],
+            confidence=receipt["confidence"],
+            retryable=bool(receipt["retryable"]),
+            lens_results_json=lens_results,
+            lens_prompt_hashes=lens_prompt_hashes,
+            artifact_type=receipt.get("artifact_type", "code"),
+            retrieval_pins=retrieval_pins,
+            alg=alg,
+            kid=receipt.get("kid", ""),
+        )
+        signature = receipt["signature"]
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return False
+    return backend.verify(_canonical(sign_data), signature)

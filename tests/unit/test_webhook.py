@@ -37,9 +37,15 @@ class TestSigning:
         sig = sign_payload(b"whsec", "msg_1", 1000, "payload")
         assert verify_webhook(b"whsec", "msg_1", 1000, "TAMPERED", sig, now=1000) is False
 
-    def test_expired_timestamp_fails(self):
+    def test_future_skew_fails(self):
         sig = sign_payload(b"whsec", "msg_1", 1000, "p")
         assert verify_webhook(b"whsec", "msg_1", 1000, "p", sig, now=1000 + 400) is False
+
+    def test_past_skew_replay_fails(self):
+        # A delivery whose timestamp is far in the PAST (a replay of an old message) is rejected —
+        # the tolerance is two-sided, not just future skew.
+        sig = sign_payload(b"whsec", "msg_1", 1000, "p")
+        assert verify_webhook(b"whsec", "msg_1", 1000, "p", sig, now=1000 - 400) is False
 
     def test_wrong_secret_fails(self):
         sig = sign_payload(b"a", "msg_1", 1000, "p")
@@ -70,6 +76,7 @@ class TestSsrfGuard:
             "10.0.0.5",
             "192.168.1.1",
             "172.16.0.1",
+            "100.64.0.1",  # RFC 6598 carrier-grade NAT
             "169.254.169.254",
             "::1",
             "fd00::1",
@@ -182,6 +189,30 @@ class TestDelivery:
         )
         assert res.delivered is True
         assert res.attempts == 2
+
+    async def test_delivery_pins_to_the_validated_ip(self):
+        # Closes the resolve-vs-connect TOCTOU: the sender connects to the validated IP (not the
+        # hostname), with the original hostname carried in the Host header for TLS SNI/verification.
+        captured: dict[str, object] = {}
+
+        async def sender(url: str, headers: dict[str, str], body: str) -> int:
+            captured["url"] = url
+            captured["host"] = headers.get("host")
+            return 200
+
+        await deliver(
+            "https://hooks.example/x",
+            event="verdict",
+            receipt_id="r",
+            secret=b"s",
+            body={},
+            sender=sender,
+            resolver=lambda _h, _p: ["93.184.216.34"],
+            now=1000,
+        )
+        assert "93.184.216.34" in str(captured["url"])
+        assert "hooks.example" not in str(captured["url"])  # pinned to the IP, not re-resolvable
+        assert captured["host"] == "hooks.example"
 
     async def test_ssrf_blocks_before_any_send(self):
         async def sender(*_a: object) -> int:

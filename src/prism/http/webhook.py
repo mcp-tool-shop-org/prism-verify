@@ -8,8 +8,10 @@ dedups on the stable ``webhook-id``. The **cancel-event** is the NAMED COMPENSAT
 Garcia-Molina & Salem 1987). See ``design/05`` §C and ``design/03``.
 
 SSRF (the URL is caller-controlled): require https, resolve the host, reject any resolved IP in
-loopback / private / link-local / metadata ranges (v4 + v6), and connect with redirects disabled.
-The residual same-instant DNS-rebinding TOCTOU is the named v0.5 hardening (a pinned-IP transport).
+loopback / private / link-local / metadata ranges (v4 + v6), connect with redirects disabled, and
+**pin the connection to the validated IP** — send to the IP while carrying the original hostname in
+the Host header + TLS SNI, so the resolve-vs-connect DNS-rebinding TOCTOU is closed (httpx never
+re-resolves the host to a freshly-rebound internal address).
 """
 
 from __future__ import annotations
@@ -154,10 +156,23 @@ class DeliveryResult:
 Sender = Callable[[str, dict[str, str], str], Awaitable[int]]
 
 
+def _pinned_netloc(ip: str, port: int | None) -> str:
+    """Build a netloc for a validated IP, bracketing IPv6."""
+    host = f"[{ip}]" if ":" in ip else ip
+    return f"{host}:{port}" if port else host
+
+
 async def _httpx_sender(url: str, headers: dict[str, str], body: str) -> int:
-    # follow_redirects=False: a 3xx to an internal host must not be auto-followed past the guard.
+    # `url` is already pinned to the validated IP by deliver(); the original hostname rides in the
+    # Host header and drives TLS SNI + cert verification — so we verify the certificate for the
+    # hostname while connecting to the pre-validated IP, and httpx never re-resolves. Redirects are
+    # disabled so a 3xx to an internal host can never be followed past the guard.
+    host = headers.get("host")
+    extensions: dict[str, Any] = {"sni_hostname": host} if host else {}
     async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
-        resp = await client.post(url, headers=headers, content=body.encode())
+        resp = await client.post(
+            url, headers=headers, content=body.encode(), extensions=extensions
+        )
         return resp.status_code
 
 
@@ -202,13 +217,18 @@ async def deliver(
     On exhaustion the caller dead-letters (this returns ``delivered=False``). ``sender`` /
     ``resolver`` / ``retry_delays`` / ``now`` / ``sleep`` are injectable for tests.
     """
-    assert_safe_url(url, resolver=resolver)
+    safe_ips = assert_safe_url(url, resolver=resolver)
     send = sender or _httpx_sender
     do_sleep = sleep or asyncio.sleep
     ts = now if now is not None else int(time.time())
     _msg_id, headers, payload = build_delivery(
         event=event, receipt_id=receipt_id, secret=secret, body=body, timestamp=ts
     )
+    # Pin to the validated IP (close the resolve-vs-connect DNS-rebinding TOCTOU): send to the IP,
+    # carry the original Host so the sender verifies TLS against the hostname (see _httpx_sender).
+    parsed = urlparse(url)
+    headers = {**headers, "host": parsed.hostname or ""}
+    target = parsed._replace(netloc=_pinned_netloc(safe_ips[0], parsed.port)).geturl()
 
     attempts = 0
     last_status: int | None = None
@@ -217,7 +237,7 @@ async def deliver(
     for attempt_index in range(len(retry_delays) + 1):
         attempts += 1
         try:
-            status = await send(url, headers, payload)
+            status = await send(target, headers, payload)
         except Exception as exc:  # network/transport error — retry
             last_status, last_detail = None, f"transport error: {exc}"
         else:

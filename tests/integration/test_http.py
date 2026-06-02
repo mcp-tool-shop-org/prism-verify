@@ -121,6 +121,13 @@ class TestAuth:
         # third failure trips the stricter failed-auth limiter
         assert client.post("/verify", json=VERIFY_BODY, headers=bad).status_code == 429
 
+    def test_replay_and_verify_receipt_also_fail_closed(self, store):
+        # The whole authenticated family fails closed, not just /verify.
+        app = make_app(store, authenticator=Authenticator(set(), allow_no_auth=False))
+        client = TestClient(app)
+        assert client.get("/replay/prism-x").status_code == 401
+        assert client.post("/verify-receipt", json={"receipt": {}}).status_code == 401
+
 
 class TestBackPressure:
     def test_artifact_too_large(self, store):
@@ -270,3 +277,54 @@ class TestAsync:
             b"wh", headers["webhook-id"], ts, body, headers["webhook-signature"], now=ts
         )
         assert json.loads(body)["verdict"] == "escalate"
+
+    def test_async_idempotency_key_prevents_duplicate_delivery(self, store):
+        # Two identical async requests with the same Idempotency-Key must schedule ONE verification
+        # + ONE webhook delivery — a retry replays the 202, never double-spends a paid run.
+        calls: list[str] = []
+
+        async def sender(url: str, headers: dict[str, str], body: str) -> int:
+            calls.append(url)
+            return 200
+
+        app = make_app(
+            store,
+            verdict="escalate",
+            webhook_secret=b"wh",
+            webhook_sender=sender,
+            webhook_resolver=lambda _h, _p: ["93.184.216.34"],
+        )
+        headers = {"Prefer": "respond-async", "Idempotency-Key": "dup-1"}
+        body = {**VERIFY_BODY, "webhook": "https://hooks.example/x"}
+        with TestClient(app) as client:
+            r1 = client.post("/verify", json=body, headers=headers)
+            r2 = client.post("/verify", json=body, headers=headers)
+            assert r1.status_code == 202 and r2.status_code == 202
+        assert len(calls) == 1
+
+
+class TestFailureModes:
+    def test_idempotency_key_not_wedged_when_verify_raises(self, store):
+        # A non-VerifyError raise must clear the in-flight marker, or the key wedges at 409 forever.
+        class BoomEngine:
+            _providers = {"local": object()}
+
+            async def verify(self, _req: Any) -> Any:
+                raise RuntimeError("boom")
+
+        app = create_app(
+            engine=BoomEngine(), store=store, authenticator=Authenticator(set(), allow_no_auth=True)
+        )
+        client = TestClient(app, raise_server_exceptions=False)
+        headers = {"Idempotency-Key": "k-raise"}
+        assert client.post("/verify", json=VERIFY_BODY, headers=headers).status_code == 500
+        # A retry reaches the engine again (500), not a wedged 409.
+        assert client.post("/verify", json=VERIFY_BODY, headers=headers).status_code == 500
+
+    def test_verify_receipt_malformed_is_not_500(self, store):
+        # A malformed caller-supplied receipt must not 500 (that would escape the problem+json
+        # contract) — it's simply not validly signed.
+        client = TestClient(make_app(store))
+        resp = client.post("/verify-receipt", json={"receipt": {"id": "x", "nope": True}})
+        assert resp.status_code == 200
+        assert resp.json()["signature_valid"] is False
