@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-06-02
 
-Health-pass hardening (no API changes; receipt schema bumps in place), plus the Slice-1
-calibration pack.
+Stage-A security hardening (no API changes; receipt schema v5 in place) + the Slice-1 calibration
+pack (`prism eval`). First release that **measures** prism's locks on its own labeled data — and
+the benchmark's headline finding is that the runtime finding-set rho gate is blind to the
+decision-level lens correlation Cohen kappa reveals (see `eval/RESULTS.md`).
 
 ### Added
 - **`prism eval` + calibration pack (Slice 1)** — measures prism's lenses on a labeled corpus

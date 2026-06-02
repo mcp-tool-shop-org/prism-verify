@@ -42,11 +42,12 @@ pip install "prism-verify[all]"
 
 ## Démarrage rapide
 
-Prism effectue toujours une vérification avec une famille de modèles **différente** de celle de l’appelant (verrou 1). Configurez donc au moins un fournisseur de famille alternative. Définissez une clé de signature (ou `PRISM_DEV=1` pour une utilisation locale) afin que les reçus puissent être écrits :
+Prism vérifie toujours avec un modèle de famille **différent** de celui de l’appelant (Lock 1), il est donc important de configurer au moins un fournisseur de famille alternatif. Générez une clé de signature Ed25519 (la valeur par défaut ; les reçus peuvent être vérifiés par toute personne disposant de la clé publique) afin que les reçus puissent être écrits, ou utilisez `PRISM_DEV=1` pour une utilisation locale :
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -54,6 +55,8 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> Alternative ancienne : `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` signe les reçus avec HMAC (ils ne peuvent être vérifiés que par les détenteurs de ce secret partagé ; voir [Reçus](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Architecture
 
@@ -63,6 +66,17 @@ Prism applique quatre contraintes architecturales au niveau du contrat d’API 
 2. **Suppression du raisonnement** : le CoT du producteur est supprimé avant de franchir la limite de la famille.
 3. **Multi-niveaux** : au moins 3 niveaux indépendants fonctionnent en parallèle.
 4. **Connaissance de la sous-modularité** : refuse si les niveaux sont trop d’accord (signal affaibli).
+
+## Calibration et évaluation comparative (`prism eval`)
+
+Prism est conçu pour être **mesuré**, et pas seulement pour faire des affirmations. `prism eval` exécute les « lentilles » sur un corpus étiqueté et génère un rapport : sur les propres données de Prism, il indique la précision/le rappel/le MCC par « lentille », la matrice de diversité inter-lentilles (alpha de Krippendorff + kappa de Cohen par paires), le gain de couverture sous-modulaire, la précision de la décision et la calibration de la confiance (ECE/Brier), le tout avec un intervalle de confiance honnête.
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+L’exécution de la version 0.5 (locale `mistral-small:24b`) a révélé un réel problème dans un verrou principal : la métrique de sous-modularité d’exécution (indice de Jaccard du jeu de résultats ρ) affiche **0,0 pour chaque paire de lentilles**, tandis que le kappa de Cohen au niveau de la décision est de **0,73 à 0,81** ; la limite `ρ ≤ 0,25` *ignore la corrélation des lentilles que révèle le kappa*. Découvrir cela est le but principal de cette analyse ; les résultats complets et la méthode sont disponibles dans [`eval/RESULTS.md`](eval/RESULTS.md) et [`design/07`](design/07-slice1-calibration.md).
 
 ## Service HTTP
 

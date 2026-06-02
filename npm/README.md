@@ -1,4 +1,8 @@
 <p align="center">
+  <a href="README.ja.md">日本語</a> | <a href="README.zh.md">中文</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.hi.md">हिन्दी</a> | <a href="README.it.md">Italiano</a> | <a href="README.pt-BR.md">Português (BR)</a>
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/prism-verify/main/assets/prism-verify-logo.png" alt="prism-verify" width="500">
 </p>
 
@@ -29,8 +33,8 @@ Network access is HTTPS-only to GitHub; no telemetry, no credentials stored.
 **Prefer the Python package?** `uv tool install prism-verify` / `pipx install prism-verify`
 (PyPI, with PEP 740 provenance attestations). The npm wrapper exists for zero-Python `npx` use; the
 bundled binary covers the CLI + local (Ollama) verification + the HTTP service + citation
-verification. Hosted-provider verifiers (Anthropic / OpenAI / Google) and full extras come with the
-PyPI install.
+verification + the `prism eval` calibration benchmark. Hosted-provider verifiers (Anthropic /
+OpenAI / Google) and full extras come with the PyPI install.
 
 Full docs, security model, and source: <https://github.com/mcp-tool-shop-org/prism-verify>.
 

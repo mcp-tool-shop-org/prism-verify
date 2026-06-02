@@ -42,13 +42,12 @@ pip install "prism-verify[all]"
 
 ## Avvio rapido
 
-Prism esegue sempre la verifica con una famiglia di modelli **diversa** da quella del chiamante (Blocco 1), quindi
-configura almeno un provider con una famiglia di modelli alternativa. Imposta una chiave di firma (o `PRISM_DEV=1`
-per l'uso locale) in modo che le ricevute possano essere scritte:
+Prism verifica sempre, utilizzando un modello di famiglia **diverso** da quello del chiamante (Lock 1), quindi configurare almeno un fornitore di famiglia alternativo. Generare una chiave di firma Ed25519 (impostazione predefinita: le ricevute sono verificabili da chiunque disponga della chiave pubblica) in modo che le ricevute possano essere scritte, oppure utilizzare `PRISM_DEV=1` per l'esecuzione in locale:
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -56,6 +55,8 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> Alternativa legacy: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` firma le ricevute utilizzando HMAC (verificabili solo dai possessori di tale chiave segreta condivisa; vedere [Ricevute](#ricevute--firma-ed25519-verificabile-da-chiunque)).
 
 ## Architettura
 
@@ -65,6 +66,17 @@ Prism applica quattro blocchi architetturali al contratto API:
 2. **Senza ragionamento:** il CoT del produttore viene rimosso prima di attraversare il confine della famiglia.
 3. **Multi-lente:** almeno 3 lenti indipendenti vengono eseguite in parallelo.
 4. **Consapevole della submodularità:** rifiuta se le lenti sono troppo d'accordo (segnale collassato).
+
+## Calibrazione e test di performance (`prism eval`)
+
+Prism è progettato per essere **misurato**, non solo per fornire un'asserzione. `prism eval` esegue i modelli su un corpus etichettato e fornisce un rapporto, basato sui dati di Prism, sulla precisione/richiamo/MCC per ciascun modello, sulla matrice di diversità inter-modello (Krippendorff α + Cohen κ a coppie), sul guadagno di copertura submodulare, sull'accuratezza della decisione e sulla calibrazione della confidenza (ECE/Brier), il tutto con un intervallo di confidenza onesto.
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+L'esecuzione della versione 0.5 (in locale `mistral-small:24b`) ha evidenziato una reale lacuna in un blocco principale: la metrica di submodularità in fase di esecuzione (Jaccard ρ dell'insieme di risultati) restituisce **0,0 per ogni coppia di modelli**, mentre il Cohen κ a livello di decisione è **0,73–0,81**: il limite `ρ ≤ 0,25` è *insensibile alla correlazione tra i modelli, che invece viene rivelata da κ*. L'obiettivo di questa analisi è proprio quello di individuare questo aspetto; i risultati completi e la metodologia sono disponibili in [`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
 
 ## Servizio HTTP
 

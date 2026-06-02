@@ -16,7 +16,7 @@
 
 # prism-verify
 
-Servicio de validación en tiempo de ejecución para flujos de trabajo de agentes. Verificación con múltiples perspectivas, sin razonamiento y con comprobantes reproducibles, adaptada a diferentes familias. **[Página de destino y manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Servicio de validación en tiempo de ejecución para flujos de trabajo de agentes. Verificación con múltiples modelos, diferenciada por familia y sin razonamiento, con comprobantes que se pueden reproducir. **[Página de destino y manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Instalar
 
@@ -42,13 +42,14 @@ pip install "prism-verify[all]"
 
 ## Inicio rápido
 
-Prism siempre valida con una familia de modelos **diferente** a la del llamante (Bloqueo 1), por lo que
-configure al menos un proveedor de familia alternativa. Establezca una clave de firma (o `PRISM_DEV=1`
-para pruebas locales) para que se puedan escribir los comprobantes:
+Prism siempre realiza la validación con una familia de modelos **diferente** a la del llamante (Bloqueo 1), por lo que
+configure al menos un proveedor de familia alternativa. Genere una clave de firma Ed25519 (la predeterminada; los comprobantes pueden ser verificados por cualquier persona que tenga la clave pública) para que se puedan generar los comprobantes, o utilice
+`PRISM_DEV=1` para pruebas locales:
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -56,6 +57,9 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> Alternativa heredada: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` firma los comprobantes con
+> HMAC en su lugar (solo puede ser verificado por los titulares de ese secreto compartido; consulte [Comprobantes](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Arquitectura
 
@@ -65,6 +69,18 @@ Prism aplica cuatro bloqueos arquitectónicos en el contrato de la API:
 2. **Sin razonamiento:** se elimina el CoT del productor antes de cruzar el límite de la familia.
 3. **Múltiples lentes:** se ejecutan al menos 3 lentes independientes en paralelo.
 4. **Con conocimiento de la submodularidad:** se rechaza si los lentes están demasiado de acuerdo (señal colapsada).
+
+## Calibración y prueba de rendimiento (`prism eval`)
+
+Prism está diseñado para ser **medido**, no solo para hacer afirmaciones. `prism eval` ejecuta los modelos sobre un corpus etiquetado y genera informes —basados en los propios datos de Prism— sobre la precisión/exhaustividad/coeficiente de correlación de Matthews (MCC) por modelo, la matriz de diversidad entre modelos (alfa de Krippendorff + kappa de Cohen por pares), la ganancia de cobertura submodular, la precisión de la decisión y la calibración de la confianza (ECE/Brier), todo ello con un intervalo de confianza honesto.
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+La ejecución de la versión 0.5 (local `mistral-small:24b`) reveló una brecha real en un bloqueo central: la métrica de submodularidad en tiempo de ejecución (Jaccard ρ del conjunto de resultados) muestra **0.0 para cada par de modelos**, mientras que el kappa de Cohen a nivel de decisión es de **0.73–0.81**: la puerta de entrada `ρ ≤ 0.25` es *ciega a la correlación entre modelos que revela kappa*. Encontrar esto es el objetivo principal de la prueba; los resultados completos y el método se encuentran en
+[`eval/RESULTS.md`](eval/RESULTS.md) y [`design/07`](design/07-slice1-calibration.md).
 
 ## Servicio HTTP
 

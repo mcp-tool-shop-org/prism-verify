@@ -12,7 +12,7 @@ export const config: SiteConfig = {
     'MIT Licensed — built by <a href="https://github.com/mcp-tool-shop-org" style="color:var(--color-muted);text-decoration:underline">mcp-tool-shop-org</a>',
 
   hero: {
-    badge: 'Runtime verifier · v0.4',
+    badge: 'Runtime verifier · v0.5',
     headline: 'Verify what your agents produce —',
     headlineAccent: 'before it ships.',
     description:

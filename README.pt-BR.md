@@ -42,13 +42,15 @@ pip install "prism-verify[all]"
 
 ## Início rápido
 
-O Prism sempre verifica com uma família de modelos **diferente** da do chamador (Bloqueio 1), portanto,
-configure pelo menos um provedor de família alternativa. Defina uma chave de assinatura (ou `PRISM_DEV=1`
-para testes locais) para que os recibos possam ser gravados:
+O Prism sempre verifica com um modelo de família **diferente** do modelo que fez a chamada (Lock 1), portanto,
+configure pelo menos um provedor de família alternativo. Gere uma chave de assinatura Ed25519 (o padrão —
+os recibos podem ser verificados por qualquer pessoa que tenha a chave pública) para que os recibos possam ser gerados, ou use
+`PRISM_DEV=1` para testes locais:
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -56,6 +58,9 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> Alternativa legada: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` assina os recibos com
+> HMAC (verificáveis apenas pelos detentores desse segredo compartilhado — veja [Recibos](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Arquitetura
 
@@ -65,6 +70,18 @@ O Prism aplica quatro restrições arquiteturais no contrato da API:
 2. **Sem raciocínio** — o CoT do produtor é removido antes de atravessar a fronteira da família.
 3. **Múltiplas lentes** — pelo menos 3 lentes independentes são executadas em paralelo.
 4. **Consciência da submodularidade** — recusa se as lentes concordarem demais (sinal colapsado).
+
+## Calibração e teste de desempenho (`prism eval`)
+
+O Prism foi desenvolvido para ser **mensurado**, e não apenas para fazer afirmações. O comando `prism eval` executa as lentes em um corpus rotulado e gera relatórios — com base nos próprios dados do Prism — sobre a precisão/revocação/MCC por lente, a matriz de diversidade inter-lente (alfa de Krippendorff + kappa de Cohen por pares), o ganho de cobertura submodular, a precisão do veredicto e a calibração da confiança (ECE/Brier), cada um com um intervalo de confiança honesto.
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+A execução da versão 0.5 (localmente, `mistral-small:24b`) revelou uma lacuna real em um bloqueio central: a métrica de submodularidade em tempo de execução (Jaccard do conjunto de resultados, ρ) apresenta o valor **0,0 para cada par de lentes**, enquanto o kappa de Cohen no nível de decisão é de **0,73–0,81** — o limite `ρ ≤ 0,25` é *cego à correlação das lentes que o kappa revela*. Descobrir isso é o objetivo principal da análise; os resultados completos e o método estão em
+[`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
 
 ## Serviço HTTP
 

@@ -2,7 +2,7 @@
 title: Reference
 description: prism CLI commands, environment variables, verdicts, and refusal codes.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 ## CLI commands
@@ -16,6 +16,7 @@ sidebar:
 | `prism pubkey` | Print the configured Ed25519 public key + key id. |
 | `prism receipt delete <id>` · `prism receipt prune --older-than <dur> --yes` | Compensators for the receipt store. |
 | `prism serve [--host --port]` | Run the HTTP service (needs the `[http]` extra). |
+| `prism eval [--split --runs --offline --family-ab]` | Measure the lenses on the labeled corpus — per-lens P/R, diversity matrix, coverage-gain, calibration. See [Calibration & benchmark](../evaluation/). |
 
 `--gate` exit codes: `0` accept · `10` revise · `20` refuse · `30` escalate.
 
@@ -30,6 +31,7 @@ sidebar:
 | `PRISM_API_KEYS` | Comma-separated SHA-256 hashes of HTTP bearer API keys. |
 | `PRISM_HTTP_ALLOW_NO_AUTH=1` | Allow unauthenticated HTTP use (local dev only). |
 | `PRISM_WEBHOOK_SECRET` | Sign async/escalate webhook deliveries. |
+| `PRISM_TRUSTED_PROXIES` | Comma-separated CIDRs; honor `X-Forwarded-For` only from these peers (default empty = none). |
 | `PRISM_MAX_ARTIFACT_BYTES` | HTTP artifact size cap (default 256 KiB). |
 
 ## Verdicts

@@ -42,13 +42,12 @@ pip install "prism-verify[all]"
 
 ## 快速入门
 
-Prism 始终使用与调用者不同的模型族进行验证（锁定 1），因此
-配置至少一个备用模型族提供程序。设置签名密钥（或 `PRISM_DEV=1`
-用于本地测试），以便可以写入收据：
+Prism 始终会使用与调用方不同的模型系列进行验证（锁 1），因此请配置至少一个备用系列提供程序。生成一个 Ed25519 签名密钥（默认情况下，任何拥有公钥的人都可以验证收据），以便可以写入收据，或者使用 `PRISM_DEV=1` 进行本地测试：
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -56,6 +55,8 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> 传统替代方案：`export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` 使用 HMAC 对收据进行签名（只能由拥有该共享密钥的人进行验证——请参阅[收据](#receipts--signing-ed25519-verifiable-by-anyone)）。
 
 ## 架构
 
@@ -65,6 +66,17 @@ Prism 在 API 协议层面强制执行四个架构锁定：
 2. **去除推理过程**——在跨越模型族边界之前，去除生成模型的 CoT（思维链）。
 3. **多视角**——至少有 3 个独立的视角并行运行。
 4. **考虑子模性**——如果各个视角达成高度一致（信号崩溃），则拒绝。
+
+## 校准与基准测试 (`prism eval`)
+
+Prism 的设计目的是为了进行**测量**，而不仅仅是断言。`prism eval` 会在一个带有标签的语料库上运行各个“镜头”，并报告 Prism 自身数据中每个“镜头”的精确度/召回率/MCC，各个“镜头”之间的多样性矩阵（Krippendorff α + 成对 Cohen κ），子模覆盖增益，判决准确率和置信度校准（ECE/Brier），每个指标都附带一个真实的置信区间。
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+v0.5 版本的运行（本地 `mistral-small:24b`）揭示了一个核心锁中存在的实际差距：运行时子模度指标（查找集 Jaccard ρ）对于每个“镜头”对都显示为 **0.0**，而决策级别的 Cohen κ 为 **0.73–0.81**——`ρ ≤ 0.25` 阈值*忽略了“镜头”相关性 κ 所揭示的内容*。发现这一点正是本次测试的目的；完整结果和方法请参见 [`eval/RESULTS.md`](eval/RESULTS.md) 和 [`design/07`](design/07-slice1-calibration.md)。
 
 ## HTTP 服务
 

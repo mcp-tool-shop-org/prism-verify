@@ -71,6 +71,24 @@ Prism enforces four architectural locks at the API contract:
 3. **Multi-lens** — at least 3 independent lenses run in parallel
 4. **Submodularity-aware** — refuses if lenses agree too much (collapsed signal)
 
+## Calibration & benchmark (`prism eval`)
+
+prism is built to be **measured**, not just asserted. `prism eval` runs the lenses over a labeled
+corpus and reports — on prism's own data — per-lens precision/recall/MCC, the inter-lens diversity
+matrix (Krippendorff α + pairwise Cohen κ), submodular coverage-gain, verdict accuracy, and
+confidence calibration (ECE/Brier), each with an honest confidence interval.
+
+```bash
+prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
+prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
+```
+
+The v0.5 run (local `mistral-small:24b`) surfaced a real gap in a core lock: the runtime
+submodularity metric (finding-set Jaccard ρ) reads **0.0 for every lens pair** while decision-level
+Cohen κ is **0.73–0.81** — the `ρ ≤ 0.25` gate is *blind to the lens correlation κ reveals*. Finding
+that is the whole point of the slice; full results + method in
+[`eval/RESULTS.md`](eval/RESULTS.md) and [`design/07`](design/07-slice1-calibration.md).
+
 ## HTTP service
 
 Run prism as an HTTP service (needs the `[http]` extra):
