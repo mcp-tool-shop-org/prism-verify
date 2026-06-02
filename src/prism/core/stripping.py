@@ -4,7 +4,7 @@ Lock 2: Strip producer chain-of-thought before artifact crosses family boundary.
 Aggressive default — strips all known reasoning tag patterns.
 Post-strip re-parse verification rejects if patterns survive.
 
-Justification: Mendes et al. 2026 (arXiv:2601.14691) — manipulated CoT
+Justification: Khalifa et al. 2026 (arXiv:2601.14691) — manipulated CoT
 inflates VLM-judge false positives by up to 90%.
 
 Scope & limitation: stripping is pattern-based. It removes KNOWN reasoning markers —
@@ -16,7 +16,7 @@ survives raises ``StripVerificationError`` rather than leaking. It deliberately 
 ambiguous business keys (``analysis``/``rationale``/...) that are often legitimate output, and
 it cannot remove reasoning a producer disguises as ordinary content under a non-marker field
 (e.g. ``{"answer": "<the chain of thought>"}``) — no enumeration can. Lock 2 thus defends
-against standard CoT serializations biasing the verifier (the Mendes threat), not against an
+against standard CoT serializations biasing the verifier (the Khalifa threat), not against an
 adversarial producer hiding its trace in arbitrary fields.
 """
 
