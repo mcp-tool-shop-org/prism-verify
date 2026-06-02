@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-02
+
+prism becomes an **installable, HTTP-callable, independently-verifiable runtime service**.
+Research-grounded by a 5-agent study-swarm (`wf_f0f8b9c8-e2c`, 40 cited findings) and
+adversarially verified (3 decorrelated lenses) — design in `design/05-http-and-receipts.md`.
+
+### Added
+- **Ed25519 receipts (production default), version-aware.** Receipt **schema v4** adds `alg` +
+  `kid`; new receipts are signed with **Ed25519 (RFC 8032)** so a *different tool* verifies a
+  prism receipt with prism's **public key — no shared secret** (closes the cross-tool trust gap
+  role-os flagged). Legacy v1/v2/v3 **HMAC receipts still verify**, and the verifier **whitelists
+  `alg` per receipt** (downgrade / algorithm-confusion refused). HMAC stays for legacy + explicit
+  `PRISM_SIGNING_SECRET`; `PRISM_DEV=1` now mints a dev Ed25519 key.
+  - `prism verify-receipt <receipt.json> [--public-key <pem>]` — verify a standalone receipt
+    (the cross-tool path; Ed25519 needs only the public key). Also `POST /verify-receipt`.
+  - `prism keygen` (generate an Ed25519 keypair) and `prism pubkey` (publish the public key + kid).
+- **HTTP/FastAPI runtime surface** (`prism serve`, the `[http]` extra) — the same guarantees as
+  CLI/MCP over HTTP: `POST /verify` (sync; `Prefer: respond-async` → `202` + webhook delivery),
+  `GET /replay/{receipt_id}`, `POST /verify-receipt`, `GET /healthz`, OpenAPI 3.1 at `/docs`.
+  Bearer **API-key auth** (hashed at rest, constant-time, fail-closed), **RFC 9457
+  `application/problem+json`** errors, `Idempotency-Key` (replay / `409` in-flight / `422`
+  mismatch), and denial-of-wallet back-pressure (artifact size cap + per-key rate limit +
+  stricter failed-auth limiter).
+- **Signed-webhook escalate channel** — Standard-Webhooks HMAC over `id.timestamp.payload`
+  (300s tolerance, multi-signature rotation), an **SSRF guard** (https-only; rejects
+  loopback/RFC1918/link-local/metadata, v4+v6), bounded retry → dead-letter, and the
+  **`send_cancel_event()` compensator** (the named undo for the irreversible verdict POST).
+- **PyPI Trusted Publishing** (`.github/workflows/release.yml`) — OIDC, no long-lived token;
+  builds with `uv build` and publishes via `pypa/gh-action-pypi-publish` (PEP 740 attestations on
+  by default) on `release: published`. First publish uses a PyPI *pending publisher*.
+
+### Changed
+- MCP + HTTP now share one engine factory (`prism.core.setup.build_default_engine`) so the
+  transports cannot drift.
+- `cryptography` added as a core dependency (Ed25519 signing/verification).
+
+### Migration notes
+- A v0.3 `~/.prism/receipts.db` migrates to schema v4 in place (`alg` / `kid` columns added);
+  legacy rows backfill `alg=HMAC-SHA256` and keep their original signatures. To verify legacy
+  HMAC receipts after moving to Ed25519, keep `PRISM_SIGNING_SECRET` set alongside the new key.
+- The honest ceiling is disclosed: an on-disk private key is forgeable by a local-root attacker
+  (same as the HMAC secret) — Ed25519 buys **third-party verifiability**, not stronger
+  anti-forgery. HSM + a transparency log is the named hardening path.
+
+### Standards
+- workflow-standards stays **15/15**; each new surface (HTTP / webhook / receipt-signing) carries
+  its own compliance section and a NO-SKIP compensators table (`design/05`, `design/03`).
+
 ## [0.3.2] - 2026-06-01
 
 ### Added

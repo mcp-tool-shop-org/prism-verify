@@ -1,6 +1,9 @@
-# Standards Compliance — Prism v0.3.0
+# Standards Compliance — Prism v0.4.0
 
 Scored against the six workflow standards defined in `E:/AI/.claude/rules/workflow-standards.md`.
+The repo-level scores below hold at **15/15** through v0.4; the three new v0.4 surfaces (HTTP,
+signed-webhook, Ed25519 receipts) each carry their own per-surface compliance table in
+`design/05-http-and-receipts.md`, and the NO-SKIP irreversible-action table lives in `design/03`.
 
 | Standard | Score | Evidence |
 |----------|-------|----------|
@@ -15,6 +18,27 @@ Scored against the six workflow standards defined in `E:/AI/.claude/rules/workfl
 at v0.2.0 — **EXTERNAL_VERIFIER 1→3** and **NAMED_COMPENSATORS 2→3**, plus **BUDGET_EXCEEDED**
 enforced (ANDON), landed in the v0.3 dogfood pass alongside the citation-verification layer
 (`design/04-citation-verification.md`).
+
+### v0.4.0 — held at 15/15, reinforced
+
+v0.4 adds the HTTP/FastAPI surface, the signed-webhook escalate channel, and **Ed25519
+production-default receipts** without lowering any score (per-surface tables: `design/05`):
+
+- **EXTERNAL_VERIFIER** is materially strengthened — receipt verification moves from
+  symmetric-HMAC (only a secret-holder can verify) to **Ed25519**, so a *different tool* verifies
+  prism's receipt with prism's **public key, no shared secret**. This is what lets role-os finally
+  verify prism's receipt cryptographically (moves the research-grounded-advisor protocol's
+  EXTERNAL_VERIFIER 2→3 once `verify-receipt` is wired into its gate).
+- **NAMED_COMPENSATORS** — the webhook verdict POST is a new irreversible action; its
+  `send_cancel_event()` compensator is implemented + tested (`design/03`). The PyPI publish /
+  GitHub release / `gh repo edit` / Pages deploy get NO-SKIP compensator rows.
+- **ANDON_AUTHORITY** — the engine's refusals surface over HTTP as RFC 9457 problem+json; the SSRF
+  guard halts a webhook send to an internal address; oversize / over-budget requests are rejected
+  before any provider call.
+
+Test suite: 156 → **219** (Ed25519 signing + cross-tool verify, HTTP surface, webhook signing +
+SSRF + delivery + cancel-event). Local gate green: `ruff` + `mypy --strict` (36 src files) +
+`pytest`.
 
 ## UNCERTAINTY_GATED_HUMANS — skip justification
 

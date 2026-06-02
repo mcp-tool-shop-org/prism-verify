@@ -1,0 +1,51 @@
+name: Release
+
+# Publish to PyPI via Trusted Publishing (OIDC, no long-lived token) on a GitHub Release.
+# Org rule: publish workflows trigger on `release: published` only (never on push).
+# First publish requires a PyPI *pending publisher* configured for this repo + workflow + the
+# `pypi` environment (docs.pypi.org/trusted-publishers/creating-a-project-through-oidc); the name
+# is reserved only on first successful upload, so configure + tag + release in one session.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC handshake for PyPI Trusted Publishing — the only auth needed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # never cancel an in-flight publish
+
+jobs:
+  pypi:
+    name: Build + publish to PyPI (Trusted Publishing)
+    runs-on: ubuntu-latest
+    environment: pypi
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5 # Node 24 runtime (not the npm template's v4.2.2 / Node 20)
+
+      - name: Verify the tag matches pyproject version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "tag=${TAG} pyproject=${PKG}"
+          if [ "${TAG}" != "${PKG}" ]; then
+            echo "::error::release tag ${TAG} does not match pyproject version ${PKG}"
+            exit 1
+          fi
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Check distribution metadata
+        run: uvx twine check dist/*
+
+      - name: Publish to PyPI
+        # Trusted Publishing: no token. PEP 740 attestations are on by default (action >= v1.11.0).
+        uses: pypa/gh-action-pypi-publish@release/v1
