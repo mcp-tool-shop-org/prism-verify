@@ -144,6 +144,18 @@ class TestBackPressure:
         assert limited.status_code == 429
         assert "Retry-After" in limited.headers
 
+    def test_all_authenticated_endpoints_share_the_limiter(self, store):
+        # rpm=1: the single token is consumed by the first authenticated call; the next call on
+        # ANY authenticated endpoint is 429 — proving /replay and /verify-receipt meter too (the
+        # family-of-call-sites consistency). The rate check runs before the receipt lookup, so an
+        # exhausted /replay is 429 (not 404). /healthz is the only intended unmetered route.
+        auth = Authenticator(set(), allow_no_auth=True, requests_per_minute=1)
+        client = TestClient(make_app(store, authenticator=auth))
+        assert client.post("/verify", json=VERIFY_BODY).status_code == 200
+        assert client.get("/replay/prism-anything").status_code == 429
+        assert client.post("/verify-receipt", json={"receipt": {"id": "x"}}).status_code == 429
+        assert client.get("/healthz").status_code == 200  # unmetered, still ok
+
 
 class TestErrors:
     def test_verify_error_is_problem_json(self, store):

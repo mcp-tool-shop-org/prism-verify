@@ -162,10 +162,17 @@ def create_app(
     )
     install_problem_handler(app)
 
-    def _authn(request: Request) -> str:
-        return authenticator.authenticate(
+    def _authn(request: Request) -> dict[str, str]:
+        """Authenticate AND meter every protected endpoint (the shared dependency).
+
+        Returns RateLimit headers to attach to the response; raises 401/429 on auth/limit failure.
+        Folding auth→rate into one helper keeps the authenticated family ({/verify, /replay,
+        /verify-receipt}) consistently metered — /healthz is the only intended unmetered route.
+        """
+        identity = authenticator.authenticate(
             request.headers.get("authorization"), _client_ip(request)
         )
+        return authenticator.check_rate(identity)
 
     async def _deliver_async(body: VerifyHttpRequest, webhook_url: str) -> None:
         assert webhook_secret is not None  # checked before scheduling
@@ -202,8 +209,7 @@ def create_app(
 
     @app.post("/verify")
     async def verify(body: VerifyHttpRequest, request: Request, response: Response) -> Response:
-        identity = _authn(request)
-        rate_headers = authenticator.check_rate(identity)
+        rate_headers = _authn(request)
 
         if len(body.artifact.encode()) > max_bytes:
             raise ProblemError(
@@ -276,17 +282,17 @@ def create_app(
 
     @app.get("/replay/{receipt_id}")
     async def replay(receipt_id: str, request: Request) -> Response:
-        _authn(request)
+        rate_headers = _authn(request)
         row = store.get_receipt(receipt_id)
         if row is None:
             raise ProblemError(
                 404, "receipt-not-found", "Not Found", f"No receipt {receipt_id!r}."
             )
-        return _json(_replay_payload(row, store), {})
+        return _json(_replay_payload(row, store), rate_headers)
 
     @app.post("/verify-receipt")
     async def verify_receipt(body: VerifyReceiptHttpRequest, request: Request) -> Response:
-        _authn(request)
+        rate_headers = _authn(request)
         if body.public_key is not None:
             valid = verify_receipt_dict(body.receipt, public_key_pem=body.public_key)
         else:
@@ -297,7 +303,7 @@ def create_app(
                 "alg": body.receipt.get("alg", "HMAC-SHA256"),
                 "signature_valid": valid,
             },
-            {},
+            rate_headers,
         )
 
     return app
