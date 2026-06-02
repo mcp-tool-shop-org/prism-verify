@@ -8,8 +8,20 @@ Required by NAMED_COMPENSATORS standard. Documents the reversibility strategy fo
 |---------------------|-------------------|-------------|-------------------|-------|
 | SQLite receipt INSERT | Every successful `verify()` call | `prism receipt delete <receipt_id>` | CLI: `prism receipt delete <id>` / Python: `store.delete_receipt(id)` | Deletes the row. Cannot un-delete — but receipts are append-only evidence; deletion is an admin escape hatch, not a normal flow. |
 | SQLite receipt bulk accumulation | Retention exceeds policy | `prism receipt prune --older-than <duration> --yes` | CLI: `prism receipt prune --older-than 90d --yes` / Python: `store.prune(older_than=timedelta(days=90))` | Bulk removal by age, gated behind `--yes`; prunes on the signed UTC `timestamp` column. Irreversible — export before pruning if audit trail matters. |
-| Webhook send (future, v1.5) | `verdict` dispatched to external endpoint | Cancel-event payload to same endpoint | HTTP POST with `{"event": "verdict_cancelled", "receipt_id": "..."}` | Semantic cancellation — cannot un-send the HTTP request, but can notify the receiver that the verdict is withdrawn. |
+| Webhook verdict send (**v0.4**) | An async / `escalate` `verdict` POSTed to a caller endpoint | **`send_cancel_event()`** — a signed `verdict_cancelled` POST to the same endpoint | `prism.http.webhook.send_cancel_event(url, receipt_id=…, secret=…, reason=…)` | Sagas semantic cancellation (Garcia-Molina & Salem 1987): cannot un-send, but withdraws the verdict; same signing + SSRF guard + bounded-retry machinery, a distinct `webhook-id`. The escalate POST is the *last* irreversible step in the verify saga. Owner: prism HTTP runtime. |
 | MCP state mutation (future) | Client caches a verdict from MCP tool response | Re-issue `verify()` with same inputs; client invalidates cache | MCP tool: `prism.reverify` | Compensates stale state in the caller's context. Not a true rollback — generates a new receipt that supersedes the old one. |
+
+## Release-process compensators (v0.4 — NO-SKIP)
+
+v0.4 ships to PyPI + cuts a GitHub release + sets repo metadata. These are irreversible
+world-touching actions; each has a named compensator + owner (mirrors [[full-treatment]]).
+
+| Irreversible action | Compensator | Command / surface | Owner | Post-rollback state |
+|---|---|---|---|---|
+| PyPI publish (`prism-verify 0.4.0`) | **Yank** the release | pypi.org → project → release → *Yank* (or `--yank` via API) | release operator (director) | Hidden from new resolves; **already-pinned installs keep resolving it — yank ≠ unpublish/delete.** |
+| GitHub Release `v0.4.0` | **Delete** the release | `gh release delete v0.4.0 --yes` | release operator (director) | Release page gone; the **tag remains** (delete separately: `git push origin :refs/tags/v0.4.0`). |
+| `gh repo edit` (topics / homepage / description) | Re-set prior metadata | `gh repo edit --add-topic …` / `--homepage …` / `--description …` | release operator | Idempotent overwrite restores the prior values. |
+| GitHub Pages deploy (landing/handbook) | Re-deploy prior commit | revert the site commit + re-run Pages, or disable Pages in repo settings | release operator | Prior site (or no site) restored. |
 
 ## Read-only external actions (no compensator — documented)
 
@@ -34,8 +46,9 @@ document why, so the absence is a decision, not an omission.
 |-------------|--------|----------|
 | `receipt delete` | **Implemented (v0.2.0); undo proven end-to-end (v0.3.0)** | `prism receipt delete <id>` · `store.delete_receipt(id)` — rowcount-backed bool; the compensate-after-verify flow (`tests/integration/test_compensate_after_verify.py`) runs verify → signed receipt → delete → asserts the row is gone |
 | `receipt prune` | **Implemented (v0.2.0); undo proven end-to-end (v0.3.0)** | `prism receipt prune --older-than <dur> --yes` · `store.prune(older_than)` — UTC-timestamp, returns count; the same flow prunes a backdated post-verify receipt by age |
-| Webhook cancel-event | Design only (v1.5) | Deferred |
+| Webhook cancel-event | **Implemented (v0.4)** | `prism.http.webhook.send_cancel_event()` — signed `verdict_cancelled` POST; exercised by `tests/unit/test_webhook.py::TestDelivery::test_send_cancel_event_delivers_signed_compensator` |
 | MCP reverify | Design only (v1.5) | Deferred |
+| PyPI yank / GitHub-release delete / `gh repo edit` revert | Operator-run at release | See the Release-process compensators table above |
 
 `receipt delete` and `receipt prune` are the **terminal leaves** of the compensation tree:
 they undo the receipt INSERT and intentionally have no compensator of their own (a deleted
