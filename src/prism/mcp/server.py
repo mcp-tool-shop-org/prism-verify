@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import sys
 from typing import Any, Literal
 
 from prism.core.engine import VerificationEngine
+from prism.core.setup import build_default_engine
 from prism.core.types import (
     Artifact,
     ArtifactType,
@@ -17,52 +17,12 @@ from prism.core.types import (
     VerifyError,
     VerifyRequest,
 )
-from prism.lenses.boundary import CrossBoundaryLens
-from prism.lenses.contract import ContractCompletenessLens
-from prism.lenses.groundedness import GroundednessLens
-from prism.lenses.invariant import InvariantLens
-from prism.lenses.registry import register_lens
-from prism.providers.base import ModelProvider
 from prism.receipts.store import ReceiptStore
 
 
 def _setup_engine() -> VerificationEngine:
-    """Initialize the verification engine with available providers."""
-    # Register lenses
-    register_lens(ContractCompletenessLens())
-    register_lens(CrossBoundaryLens())
-    register_lens(InvariantLens())
-    register_lens(GroundednessLens())
-
-    providers: dict[str, ModelProvider] = {}
-
-    # Always try Ollama (local, free)
-    from prism.providers.ollama import OllamaProvider
-
-    providers["local"] = OllamaProvider()
-
-    # Anthropic if key available
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
-    if anthropic_key:
-        from prism.providers.anthropic import AnthropicProvider
-
-        providers["anthropic"] = AnthropicProvider(api_key=anthropic_key)
-
-    # OpenAI if key available
-    openai_key = os.environ.get("OPENAI_API_KEY")
-    if openai_key:
-        from prism.providers.openai import OpenAIProvider
-
-        providers["openai"] = OpenAIProvider(api_key=openai_key)
-
-    # Google if key available
-    google_key = os.environ.get("GOOGLE_API_KEY")
-    if google_key:
-        from prism.providers.google import GoogleProvider
-
-        providers["google"] = GoogleProvider(api_key=google_key)
-
-    return VerificationEngine(providers=providers)
+    """Initialize the verification engine with env-configured providers (shared factory)."""
+    return build_default_engine()
 
 
 def create_server() -> Any:
