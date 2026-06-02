@@ -15,11 +15,20 @@ import hmac
 import os
 import secrets
 import time
+from collections import OrderedDict
 from collections.abc import Callable
 
 from prism.http.errors import ProblemError
 
 API_KEY_PREFIX = "prism_"
+
+# Bound for the per-IP failed-auth bucket map. Keyed by attacker-controllable client IP, so it must
+# never grow without limit (memory exhaustion is reachable BEFORE auth succeeds). At capacity we
+# evict the least-recently-used bucket that is also idle past FAIL_BUCKET_IDLE_S — a still-active
+# attacker's bucket is preserved (eviction would reset its strike count). 4096 distinct hostile IPs
+# in a ~5-minute window is generous for a single-process v0.4 service.
+FAIL_BUCKET_MAX = 4096
+FAIL_BUCKET_IDLE_S = 300.0
 
 
 def hash_key(key: str) -> str:
@@ -100,8 +109,11 @@ class Authenticator:
         self._rpm = requests_per_minute
         self._fpm = failed_auth_per_minute
         self._clock = clock or time.monotonic
+        # _buckets is keyed by validated key-hashes (a closed, configured set) → naturally bounded.
         self._buckets: dict[str, TokenBucket] = {}
-        self._fail_buckets: dict[str, TokenBucket] = {}
+        # _fail_buckets is keyed by attacker-controllable client IP → must be bounded (SURF-A-002).
+        # OrderedDict gives us LRU ordering; insertion evicts idle buckets at capacity.
+        self._fail_buckets: OrderedDict[str, TokenBucket] = OrderedDict()
 
     def _bucket(self, store: dict[str, TokenBucket], key: str, rpm: int) -> TokenBucket:
         bucket = store.get(key)
@@ -109,6 +121,32 @@ class Authenticator:
             bucket = TokenBucket(capacity=rpm, refill_per_s=rpm / 60.0, clock=self._clock)
             store[key] = bucket
         return bucket
+
+    def _fail_bucket(self, client_ip: str) -> TokenBucket:
+        """Per-IP failed-auth bucket, bounded LRU with idle eviction (SURF-A-002).
+
+        At capacity, evict the oldest buckets that have been idle past ``FAIL_BUCKET_IDLE_S`` so an
+        attacker cannot exhaust memory with distinct source IPs. An active attacker's bucket (recent
+        ``_last``) is never evicted — that would reset its accumulated failure count.
+        """
+        bucket = self._fail_buckets.get(client_ip)
+        if bucket is not None:
+            self._fail_buckets.move_to_end(client_ip)  # mark most-recently-used
+            return bucket
+        if len(self._fail_buckets) >= FAIL_BUCKET_MAX:
+            self._evict_idle_fail_buckets()
+        bucket = TokenBucket(capacity=self._fpm, refill_per_s=self._fpm / 60.0, clock=self._clock)
+        self._fail_buckets[client_ip] = bucket
+        return bucket
+
+    def _evict_idle_fail_buckets(self) -> None:
+        now = self._clock()
+        # Walk LRU→MRU; drop buckets idle past the window. Stop once under capacity again.
+        for ip in list(self._fail_buckets):
+            if len(self._fail_buckets) < FAIL_BUCKET_MAX:
+                break
+            if now - self._fail_buckets[ip]._last >= FAIL_BUCKET_IDLE_S:
+                del self._fail_buckets[ip]
 
     def authenticate(self, authorization: str | None, client_ip: str) -> str:
         """Return the caller's key-hash (the rate-limit identity), or raise ``ProblemError``.
@@ -128,7 +166,7 @@ class Authenticator:
             )
 
         # Stricter failed-auth limiter (per IP) — a wrong/missing key must cost ~0 compute.
-        fail_bucket = self._bucket(self._fail_buckets, client_ip, self._fpm)
+        fail_bucket = self._fail_bucket(client_ip)
 
         if not authorization or not authorization.startswith("Bearer "):
             self._charge_failure(fail_bucket)

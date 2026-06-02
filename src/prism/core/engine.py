@@ -111,7 +111,9 @@ def _citation_as_lensresult(cr: CitationResult) -> LensResult:
         model_id="retrieval",
         outcome=outcome,
         findings=findings,
-        confidence=1.0,
+        # Carry the groundedness lens's parsed confidence when the verdict came from that
+        # probabilistic stage; deterministic existence outcomes leave it unset -> 1.0 (CORE-A-003).
+        confidence=cr.confidence if cr.confidence is not None else 1.0,
     )
 
 
@@ -422,7 +424,7 @@ class VerificationEngine:
         results: list[CitationResult] = []
         lens_results: list[LensResult] = []
         pins: list[dict[str, str]] = []
-        for citation in citations:
+        for i, citation in enumerate(citations):
             existence = await self._oracle.resolve(citation)
             pins.append(
                 {
@@ -433,7 +435,9 @@ class VerificationEngine:
                     "existence": existence.outcome.value,
                 }
             )
-            cr, lr = await self._adjudicate_citation(citation, existence, route, provider)
+            cr, lr = await self._adjudicate_citation(
+                i, citation, existence, route, provider
+            )
             results.append(cr)
             if lr is not None:
                 lens_results.append(lr)
@@ -479,12 +483,18 @@ class VerificationEngine:
 
     async def _adjudicate_citation(
         self,
+        index: int,
         citation: Citation,
         existence: ExistenceResult,
         route: RouteSelection,
         provider: ModelProvider,
     ) -> tuple[CitationResult, LensResult | None]:
-        """Map a citation's existence/numeric/groundedness outcome to a verdict + action."""
+        """Map a citation's existence/numeric/groundedness outcome to a verdict + action.
+
+        ``index`` is the citation's position in the artifact; it makes the groundedness
+        lens name unique even when two citations share an id/identifier, so the receipt's
+        lens_prompt_hashes never collide and drop a pin (CORE-A-002).
+        """
         cid, ident = citation.id, citation.identifier
 
         if existence.outcome == ExistenceOutcome.FABRICATED:
@@ -561,7 +571,7 @@ class VerificationEngine:
             citation.claim, existence.source_title or "", existence.source_abstract
         )
         prompt_hash = compute_prompt_hash(system, user)
-        lens_name = f"citation_groundedness:{cid or ident or '?'}"
+        lens_name = f"citation_groundedness:{index}:{cid or ident or '?'}"
         try:
             resp = await provider.complete(
                 CompletionRequest(
@@ -635,6 +645,7 @@ class VerificationEngine:
                 detail=detail,
                 source_title=existence.source_title,
                 supporting_span=span,
+                confidence=conf,
             ),
             lr,
         )

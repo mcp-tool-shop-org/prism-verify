@@ -72,11 +72,19 @@ class AnthropicProvider(ModelProvider):
             raise ProviderError(
                 f"Anthropic API error: {e.response.status_code}", retryable=retryable
             ) from e
-        except httpx.ConnectError as e:
+        except httpx.TimeoutException as e:
+            raise ProviderError("Anthropic API timed out", retryable=True) from e
+        except httpx.TransportError as e:
             raise ProviderError("Anthropic API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError as e:
+            raise ProviderError(
+                f"Anthropic returned a non-JSON body (HTTP {response.status_code})",
+                retryable=True,
+            ) from e
 
         content = ""
         for block in data.get("content", []):
@@ -95,16 +103,11 @@ class AnthropicProvider(ModelProvider):
 
     async def health_check(self) -> bool:
         try:
-            # Minimal request to check connectivity
-            response = await self._client.post(
-                "/v1/messages",
-                json={
-                    "model": self._default_model,
-                    "max_tokens": 1,
-                    "messages": [{"role": "user", "content": "ping"}],
-                },
-            )
-            return response.status_code in (200, 400)  # 400 = auth works, maybe bad request
+            # GET /v1/models is a non-generating (non-billable) probe; the old
+            # POST /v1/messages probe issued a real inference call. 200 = healthy;
+            # 401/403 = reachable but unauthorized (mirrors the other providers).
+            response = await self._client.get("/v1/models")
+            return response.status_code in (200, 401, 403)
         except httpx.HTTPError:
             return False
 

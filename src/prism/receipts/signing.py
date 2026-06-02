@@ -38,6 +38,15 @@ _DEV_ED25519_SEED = b"prism-dev-ed25519-seed-0123456\x00\x01"
 _DEV_HMAC_SECRET = b"prism-dev-secret"
 
 
+def prism_dev_enabled() -> bool:
+    """Whether the well-known dev key material is permitted (PRISM_DEV=1).
+
+    The single gate for both signing-with and trusting the dev key, so the verify path and the
+    resolver agree. Read live (not cached) so tests can toggle it via ``monkeypatch.setenv``.
+    """
+    return os.environ.get("PRISM_DEV") == "1"
+
+
 class SigningSecretError(RuntimeError):
     """Raised when no usable signing key/secret is configured."""
 
@@ -132,6 +141,12 @@ class Ed25519Backend(SigningBackend):
         if not isinstance(key, Ed25519PublicKey):
             raise SigningSecretError("public key is not an Ed25519 public key")
         return cls(private_key=None, public_key=key)
+
+
+# The kid of the well-known dev key — derivable by anyone from _DEV_ED25519_SEED (public source),
+# so a receipt bearing it is NON-AUTHENTIC by construction. Computed once at import; the verify
+# path refuses receipts with this kid unless PRISM_DEV=1 (see store.py + SECURITY.md).
+DEV_KID = Ed25519Backend.dev().kid
 
 
 def _read_key_material(value: str) -> bytes:

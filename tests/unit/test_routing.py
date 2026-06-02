@@ -1,9 +1,11 @@
 """Tests for family-different routing (Lock 1)."""
 
+import time
 
 import pytest
 
 from prism.core.routing import (
+    CIRCUIT_BREAKER_RESET_S,
     CIRCUIT_BREAKER_THRESHOLD,
     DEFAULT_ROUTING_MAP,
     CircuitState,
@@ -115,6 +117,31 @@ class TestFamilyRouter:
         assert route.family == ModelFamily.GOOGLE
         assert route.is_fallback is False
 
+    def test_tripped_circuit_auto_resets_after_cooldown_and_reselects(self):
+        """TEST-A-004: a tripped provider auto-recovers after CIRCUIT_BREAKER_RESET_S.
+
+        Trip the primary (Google) for an Anthropic caller — selection then falls back to OpenAI.
+        Back-date the open circuit past the cooldown; the next selection must return the RECOVERED
+        primary (Google) as the non-fallback route, proving the time-based auto-reset re-arms it.
+        """
+        router = FamilyRouter()
+        primary = router.select_verifier(ModelFamily.ANTHROPIC)
+        assert primary.family == ModelFamily.GOOGLE
+
+        for _ in range(CIRCUIT_BREAKER_THRESHOLD):
+            router.report_failure(primary.family, primary.model_id)
+        # While open, selection skips Google -> falls back to OpenAI.
+        assert router.select_verifier(ModelFamily.ANTHROPIC).family == ModelFamily.OPENAI
+
+        # Age the open circuit past the cooldown (deterministic — no real sleep).
+        circuit = router._get_circuit(f"{primary.family.value}:{primary.model_id}")
+        assert circuit.is_open is True
+        circuit.open_since = time.monotonic() - (CIRCUIT_BREAKER_RESET_S + 1)
+
+        recovered = router.select_verifier(ModelFamily.ANTHROPIC)
+        assert recovered.family == ModelFamily.GOOGLE  # primary re-armed
+        assert recovered.is_fallback is False
+
 
 def test_hosted_routing_ids_are_served_by_their_providers():
     """Guard the routing-map <-> provider drift the audit found, for the hosted families.
@@ -158,4 +185,19 @@ class TestCircuitState:
         assert cs.is_open is True
 
         cs.record_success()
+        assert cs.is_open is False
+
+    def test_time_based_auto_reset_clears_failures(self):
+        """TEST-A-004 (state level): reading is_open after the cooldown re-closes the breaker
+        AND clears the accumulated failures, so it takes a fresh THRESHOLD run to re-trip."""
+        cs = CircuitState()
+        for _ in range(CIRCUIT_BREAKER_THRESHOLD):
+            cs.record_failure()
+        assert cs.is_open is True
+
+        cs.open_since = time.monotonic() - (CIRCUIT_BREAKER_RESET_S + 1)
+        assert cs.is_open is False  # cooldown elapsed -> auto-reset
+        assert cs.failures == []  # failure window cleared by the reset
+        # One more failure must NOT immediately re-open (threshold counts from zero again).
+        cs.record_failure()
         assert cs.is_open is False

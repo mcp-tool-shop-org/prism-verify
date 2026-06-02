@@ -5,6 +5,54 @@ compensators can reference. v0.4 makes Ed25519 the production default so a DIFFE
 verify a receipt with prism's PUBLIC key (no shared secret); each receipt records its ``alg`` and
 ``kid`` and is verified against the algorithm it was signed with, so legacy HMAC receipts keep
 verifying after the migration (version-aware — see ``receipts/signing.py`` + ``design/05``).
+
+Canonical signed bytes (versioned — see ``_canonical``/``_canonical_v4``/``_canonical_v5``)
+---------------------------------------------------------------------------------------------
+The signature is computed over a CANONICAL byte serialization of the receipt's signed field-set.
+Verification reproduces those exact bytes; a single differing byte fails the check. Because the
+v0.4 headline is THIRD-PARTY verifiability (role-os, or any non-CPython tool, reproduces the bytes
+from only the public key), the canonical format is versioned and dispatched on the receipt's
+stored ``schema_version`` so already-issued receipts keep verifying:
+
+* **schema_version <= 4** → ``_canonical_v4``: ``json.dumps(sort_keys=True, separators=(",",":"))``
+  with Python defaults (``ensure_ascii=True`` → ``\\uXXXX`` escapes, Python float ``repr``). This is
+  the EXACT pre-v5 behavior, retained byte-for-byte so legacy v1/v2/v3/v4 receipts still verify.
+  It is Python-``json``-specific and is NOT recommended for cross-tool reproduction.
+
+* **schema_version == 5** → ``_canonical_v5``: an RFC 8785 (JCS)-style profile a non-Python tool
+  can reproduce. NEW receipts are signed at v5. The exact, language-agnostic byte rules are:
+
+  1. **Object keys** are sorted ascending by Unicode code point (UTF-16 code unit order, which for
+     the BMP-only keys prism emits equals code-point order), recursively at every nesting level.
+  2. **No insignificant whitespace.** Separators are exactly ``,`` between elements and ``:``
+     between a key and its value.
+  3. **Strings** use standard JSON escaping (RFC 8259 §7): ``"``, ``\\``, and the control chars
+     U+0000–U+001F are escaped (``\\n``, ``\\t``, ``\\r``, ``\\b``, ``\\f``, else ``\\u00XX``); ALL
+     other characters — including non-ASCII — are emitted as literal UTF-8 (``ensure_ascii=False``,
+     NOT ``\\uXXXX``). The whole document is UTF-8 with no BOM.
+  4. **Integers** (e.g. ``schema_version``) are emitted as their shortest decimal, no exponent,
+     no fraction (``5``, not ``5.0``). **Booleans** are ``true``/``false`` (NOT ``1``/``0``).
+  5. **Floats** (only ``confidence`` and each ``pairwise_rho`` value, all in ``[0, 1]``) are
+     emitted by this PRECISE rule, chosen for trivial cross-language reproduction:
+       a. reject non-finite values (NaN / ±Infinity) — they are not signable (ties RCPT-A-002);
+       b. normalize signed zero — IEEE-754 ``-0.0`` is collapsed to ``+0.0`` BEFORE formatting, so
+          it renders ``0.000000000000``. (Python's Decimal/repr render ``-0.0`` as
+          ``-0.000000000000`` while JS ``(-0).toFixed(12)`` yields ``0.000000000000``; SQLite's REAL
+          column also drops the sign bit, so a ``-0.0`` would sign one way and read back the other.
+          Normalizing first closes both the cross-tool and self-verify divergences.)
+       c. round the IEEE-754 double to **12 fractional decimal places** using **round-half-to-even**
+          (banker's rounding — IEEE 754 ``roundTiesToEven``, the default in JS/Go/Rust/Java);
+       d. emit a **plain decimal with EXACTLY 12 digits after the point** — never scientific
+          notation, never trailing-zero stripping. E.g. ``0.9`` → ``0.900000000000``; ``1/3`` →
+          ``0.333333333333``; ``0.30000000000000004`` → ``0.300000000000``; ``1.0`` →
+          ``1.000000000000``; ``0.0`` (and ``-0.0``) → ``0.000000000000``.
+     A third party reproduces (d) directly: JS ``x.toFixed(12)``, Go ``fmt.Sprintf("%.12f", x)``,
+     Rust ``format!("{:.12}", x)``, Python ``format(x, ".12f")`` — all agree for x in ``[0, 1]``
+     once signed zero is normalized per (b).
+  6. ``null`` is the literal ``null`` (prism does not currently emit it in signed fields).
+
+  The signed payload is itself valid strict JSON (parseable with ``allow_nan=False``), so a
+  consumer can both verify the signature AND parse the receipt with a standards-compliant reader.
 """
 
 from __future__ import annotations
@@ -12,9 +60,11 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import math
 import sqlite3
 import threading
 from datetime import UTC, datetime, timedelta
+from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
@@ -27,9 +77,11 @@ from prism.core.types import (
 )
 from prism.receipts.signing import (
     ALG_HMAC,
+    DEV_KID,
     Ed25519Backend,
     SigningBackend,
     SigningSecretError,
+    prism_dev_enabled,
     resolve_backends,
 )
 
@@ -71,23 +123,128 @@ CREATE INDEX IF NOT EXISTS idx_receipts_timestamp ON receipts(timestamp);
 # signs reasoning_visibility_mode, confidence, retryable, a hash of lens_results, and
 # lens_prompt_hashes (the PIN); v3 (citations) also signs artifact_type and a hash of
 # retrieval_pins; v4 (asymmetric receipts) also signs alg + kid (the signing algorithm and key id)
-# — plus the version itself, to block downgrade/algorithm-confusion attacks. Each version signs
-# only its own field-set, so legacy receipts still verify after a migration.
-CURRENT_SCHEMA_VERSION = 4
+# — plus the version itself, to block downgrade/algorithm-confusion attacks. v5 keeps the v4
+# field-set but switches the CANONICAL BYTE FORMAT to an RFC 8785-style profile (UTF-8, no \uXXXX
+# escapes, fixed-precision floats) that a non-Python tool can reproduce — the cross-tool verify
+# promise (see the module docstring). Each version signs its own field-set with its own
+# canonicalizer, and verification dispatches on the receipt's stored schema_version, so legacy
+# v1–v4 receipts still verify after the migration.
+CURRENT_SCHEMA_VERSION = 5
 
 
 def _generate_receipt_id() -> str:
     return f"prism-{ulid.new().str.lower()}"
 
 
-def _canonical(receipt_data: dict[str, Any]) -> bytes:
-    """The exact canonical byte representation that is signed/verified."""
+# Number of fractional decimal places the v5 canonicalizer rounds floats to (round-half-to-even),
+# then emits with EXACTLY this many digits after the point. confidence/pairwise_rho are in [0, 1],
+# so this never needs scientific notation. See the module docstring for the full byte rule.
+_V5_FLOAT_PLACES = 12
+_V5_QUANTUM = Decimal(1).scaleb(-_V5_FLOAT_PLACES)  # Decimal("1E-12")
+# Fixed precision for the v5 quantize, applied in a LOCAL context so the canonical bytes never
+# depend on the host's ambient Decimal precision (determinism is the cross-tool promise) and
+# quantize can never raise InvalidOperation on the verify path. A [0, 1]-with-12-places result
+# is at most 13 significant digits; 34 (IEEE 754 decimal128) is ample headroom.
+_V5_DECIMAL_PREC = 34
+
+
+def _canonical_v4(receipt_data: dict[str, Any]) -> bytes:
+    """schema_version <= 4 canonical bytes — Python-``json``-specific (ensure_ascii=True, Python
+    float repr). Retained BYTE-FOR-BYTE so already-issued v1–v4 receipts keep verifying. Do not
+    change: any tweak invalidates every signature ever written at v4 or below."""
     return json.dumps(receipt_data, sort_keys=True, separators=(",", ":")).encode()
 
 
+def _v5_number(value: float) -> str:
+    """Format a float per the v5 rule: reject non-finite, round-half-to-even to 12 fractional
+    places, emit a plain decimal with EXACTLY 12 digits after the point (no exponent, no stripping).
+
+    Reproducible in any language: JS ``x.toFixed(12)`` / Go ``%.12f`` / Rust ``{:.12}`` agree with
+    this for x in ``[0, 1]`` once signed zero is normalized (so ``-0.0`` → ``0.000000000000``,
+    matching ``toFixed``). ``Decimal(value)`` takes the exact IEEE-754 double, then quantize rounds
+    half-to-even — matching the platform default and ``format(value, ".12f")`` (asserted by the
+    unit tests)."""
+    if not math.isfinite(value):
+        # Non-finite floats are not signable: json.dumps would emit NaN/Infinity (invalid per
+        # RFC 8259), producing an unparseable signed payload (RCPT-A-002). Refuse at sign time.
+        raise ValueError(f"non-finite float cannot be signed/canonicalized: {value!r}")
+    if value == 0.0:
+        # Normalize signed zero: -0.0 is a finite double that passes the check above, but Python
+        # renders it "-0.000000000000" while JS (-0).toFixed(12) → "0.000000000000" (cross-tool
+        # byte divergence), and SQLite's REAL column drops the sign bit so a -0.0 confidence would
+        # sign as "-0..." yet read back +0.0 and fail prism's OWN verify. Collapse -0.0 → +0.0.
+        value = 0.0
+    with localcontext() as ctx:
+        ctx.prec = _V5_DECIMAL_PREC
+        quantized = Decimal(value).quantize(_V5_QUANTUM, rounding=ROUND_HALF_EVEN)
+    return f"{quantized:.{_V5_FLOAT_PLACES}f}"
+
+
+def _canonical_v5(receipt_data: dict[str, Any]) -> bytes:
+    """schema_version == 5 canonical bytes — an RFC 8785 (JCS)-style profile a NON-Python tool can
+    reproduce (the cross-tool verify promise). Full byte rules in the module docstring.
+
+    Hand-rolled (not ``json.dumps``) so floats use the fixed-precision rule while structural/string
+    escaping still follows RFC 8259 via ``json.dumps`` on each scalar string. ``bool`` is checked
+    before ``int`` (``bool`` subclasses ``int``) so ``retryable`` is ``true``/``false`` not 1/0."""
+
+    def enc(obj: Any) -> str:
+        if obj is None:
+            return "null"
+        if isinstance(obj, bool):
+            return "true" if obj else "false"
+        if isinstance(obj, float):
+            return _v5_number(obj)
+        if isinstance(obj, int):
+            return str(obj)
+        if isinstance(obj, str):
+            # RFC 8259 string escaping, but emit non-ASCII as literal UTF-8 (no \uXXXX).
+            return json.dumps(obj, ensure_ascii=False)
+        if isinstance(obj, dict):
+            # Keys sorted by Unicode code point (Python's default str ordering), recursively.
+            items = sorted(obj.items(), key=lambda kv: kv[0])
+            return "{" + ",".join(f"{enc(k)}:{enc(v)}" for k, v in items) + "}"
+        if isinstance(obj, list | tuple):
+            return "[" + ",".join(enc(v) for v in obj) + "]"
+        raise TypeError(f"value of type {type(obj).__name__!r} is not canonicalizable")
+
+    return enc(receipt_data).encode("utf-8")
+
+
+def _canonical_for(schema_version: int, receipt_data: dict[str, Any]) -> bytes:
+    """Dispatch to the canonicalizer for a receipt's schema version. v5 → v5 (cross-tool format);
+    everything at or below v4 (including unset/legacy) → v4. This is what keeps old receipts
+    verifying after the v5 cutover: a stored v4 receipt is re-canonicalized with v4 bytes."""
+    if schema_version >= 5:
+        return _canonical_v5(receipt_data)
+    return _canonical_v4(receipt_data)
+
+
 def _compute_signature(receipt_data: dict[str, Any], secret: bytes) -> str:
-    """HMAC-SHA256 over the canonical JSON representation (the legacy/HMAC signature)."""
-    return hmac.new(secret, _canonical(receipt_data), hashlib.sha256).hexdigest()
+    """HMAC-SHA256 over the v4 canonical representation (the legacy/HMAC test helper; v2/v3/v4
+    receipts are all v4-canonicalized). Used by the schema-migration tests to forge legacy
+    signatures over their own field-set."""
+    return hmac.new(secret, _canonical_v4(receipt_data), hashlib.sha256).hexdigest()
+
+
+def _reject_non_finite(name: str, value: float) -> None:
+    """Refuse a NaN / ±Infinity numeric input at the create boundary (RCPT-A-002).
+
+    confidence and pairwise_rho values are caller-influenced; a non-finite value would otherwise
+    serialize (under v4's ``json.dumps``) to the bare literals ``NaN``/``Infinity`` — invalid per
+    RFC 8259 — yielding a signed payload no standards-compliant verifier can parse."""
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError(f"{name} must be a finite number, got {value!r}")
+
+
+def _dev_kid_untrusted(kid: str | None) -> bool:
+    """Whether a receipt's ``kid`` is the WELL-KNOWN dev key and must NOT be trusted here.
+
+    The dev Ed25519 seed is public, so anyone can forge a receipt bearing ``DEV_KID``. Signing
+    with it is gated behind PRISM_DEV=1; this is the matching VERIFY-side guard (RCPT-A-003): a
+    receipt with the dev kid is refused unless PRISM_DEV=1, while prism→prism dev round-trips keep
+    working under PRISM_DEV=1. A non-dev kid (real key, or empty for HMAC) is unaffected."""
+    return bool(kid) and kid == DEV_KID and not prism_dev_enabled()
 
 
 def _build_sign_data(
@@ -233,7 +390,17 @@ class ReceiptStore:
         artifact_type: str = "code",
         retrieval_pins: list[dict[str, str]] | None = None,
     ) -> Receipt:
-        """Create and store a new receipt (always at the current schema version)."""
+        """Create and store a new receipt (always at the current schema version).
+
+        Raises ``ValueError`` if ``confidence`` or any ``pairwise_rho`` value is non-finite
+        (NaN / ±Infinity): such values would produce an invalid-JSON signed payload that no
+        standards-compliant verifier could parse (RCPT-A-002), so they are refused at the boundary
+        rather than silently signed.
+        """
+        _reject_non_finite("confidence", confidence)
+        for key, rho in pairwise_rho.items():
+            _reject_non_finite(f"pairwise_rho[{key!r}]", rho)
+
         receipt_id = _generate_receipt_id()
         timestamp = datetime.now(UTC)
         prompt_hashes = lens_prompt_hashes or {}
@@ -260,7 +427,7 @@ class ReceiptStore:
             alg=alg,
             kid=kid,
         )
-        signature = self._signer.sign(_canonical(sign_data))
+        signature = self._signer.sign(_canonical_for(CURRENT_SCHEMA_VERSION, sign_data))
 
         with self._lock:
             self._conn.execute(
@@ -326,10 +493,11 @@ class ReceiptStore:
     def verify_signature(self, receipt_id: str) -> bool:
         """Verify the signature of a stored receipt.
 
-        Reconstructs the signed payload at the receipt's own schema version and dispatches to the
-        backend matching the receipt's recorded ``alg`` (whitelisted — a receipt can never pick a
-        verifier path we do not hold a key for). Legacy v1/v2/v3 receipts (signed over their own
-        field-set, alg defaulting to HMAC) still verify after a v4 migration.
+        Reconstructs the signed payload at the receipt's own schema version (using that version's
+        canonicalizer) and dispatches to the backend matching the receipt's recorded ``alg``
+        (whitelisted — a receipt can never pick a verifier path we do not hold a key for). Legacy
+        v1–v4 receipts (signed over their own field-set with v4 canonical bytes, alg defaulting to
+        HMAC) still verify after the v5 cutover.
         """
         data = self.get_receipt(receipt_id)
         if data is None:
@@ -348,9 +516,13 @@ class ReceiptStore:
             # We hold no key for this algorithm — cannot verify (e.g. an Ed25519-only store asked
             # to verify a legacy HMAC receipt without the HMAC secret).
             return False
+        if _dev_kid_untrusted(data.get("kid")):
+            # Well-known dev key is forgeable by anyone; refuse it outside PRISM_DEV (RCPT-A-003).
+            return False
         try:
+            schema_version = int(data.get("schema_version") or 1)
             sign_data = _build_sign_data(
-                schema_version=int(data.get("schema_version") or 1),
+                schema_version=schema_version,
                 receipt_id=data["id"],
                 pre_strip_hash=data["pre_strip_hash"],
                 post_strip_hash=data["post_strip_hash"],
@@ -369,10 +541,12 @@ class ReceiptStore:
                 kid=data.get("kid", ""),
             )
             signature = data["signature"]
+            canonical = _canonical_for(schema_version, sign_data)
         except (KeyError, TypeError, ValueError, json.JSONDecodeError):
             # A malformed / incomplete receipt is simply not validly signed — never a crash.
+            # (Includes a v5 receipt whose float fields are non-finite — unparseable, so not valid.)
             return False
-        return backend.verify(_canonical(sign_data), signature)
+        return backend.verify(canonical, signature)
 
     def delete_receipt(self, receipt_id: str) -> bool:
         """Delete a single receipt by ID; returns True if a row was removed.
@@ -436,10 +610,14 @@ def verify_receipt_dict(
             return False  # an unparseable public key cannot verify anything
     if backend is None:
         return False
+    if _dev_kid_untrusted(receipt.get("kid")):
+        # The well-known dev key is forgeable by anyone; refuse it outside PRISM_DEV (RCPT-A-003).
+        return False
 
     # A malformed / incomplete caller-supplied receipt is simply not validly signed — never crash
     # (the HTTP /verify-receipt handler relies on this to keep its RFC 9457 contract).
     try:
+        schema_version = int(receipt.get("schema_version") or 1)
         verifier_models = receipt["verifier_models"]
         if isinstance(verifier_models, str):
             verifier_models = json.loads(verifier_models)
@@ -457,7 +635,7 @@ def verify_receipt_dict(
             lens_results = json.dumps(lens_results, default=str)
 
         sign_data = _build_sign_data(
-            schema_version=int(receipt.get("schema_version") or 1),
+            schema_version=schema_version,
             receipt_id=receipt["id"],
             pre_strip_hash=receipt["pre_strip_hash"],
             post_strip_hash=receipt["post_strip_hash"],
@@ -476,6 +654,8 @@ def verify_receipt_dict(
             kid=receipt.get("kid", ""),
         )
         signature = receipt["signature"]
+        canonical = _canonical_for(schema_version, sign_data)
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        # Includes a v5 receipt with non-finite floats — unparseable, hence not validly signed.
         return False
-    return backend.verify(_canonical(sign_data), signature)
+    return backend.verify(canonical, signature)

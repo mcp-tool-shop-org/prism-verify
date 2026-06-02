@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 
 import httpx
+import pytest
 import respx
 
 from prism.core.engine import VerificationEngine
@@ -120,6 +121,60 @@ async def test_resolved_and_supported_accepts(tmp_path):
     assert result.receipt.retrieval_pins[0]["source_sha256"]
     assert "export.arxiv.org" in result.receipt.retrieval_pins[0]["query"]
     assert store.verify_signature(result.receipt.id) is True
+    store.close()
+
+
+async def test_two_citations_same_identifier_keep_distinct_pins(tmp_path):
+    """CORE-A-002: two citations sharing ONE identifier (different claims) both ground, and the
+    receipt records TWO lens_prompt_hashes — the per-index lens name prevents a collision that
+    would overwrite/drop one pin (the PIN must survive duplicate identifiers)."""
+    engine, store = _engine(tmp_path, outcome="supported")
+    cits = [
+        {"id": "a", "claim": "LLMs cannot self-verify", "identifier": "2402.01817"},
+        {"id": "b", "claim": "self-correction needs a signal", "identifier": "2402.01817"},
+    ]
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(
+                200, text=_feed("A Paper", "We show LLMs cannot self-verify without an oracle.")
+            )
+        )
+        result = await engine.verify(_request(cits))
+
+    assert isinstance(result, VerifyResponse)
+    # Both citations reached the groundedness lens (RESOLVED + abstract present).
+    assert len(result.citation_results) == 2
+    assert all(cr.existence == ExistenceOutcome.RESOLVED for cr in result.citation_results)
+    # Two distinct lens prompt hashes are pinned — no collision/overwrite from the shared id.
+    assert len(result.receipt.lens_prompt_hashes) == 2
+    assert store.verify_signature(result.receipt.id) is True
+    store.close()
+
+
+async def test_resolved_groundedness_surfaces_real_lens_confidence(tmp_path):
+    """CORE-A-003: a RESOLVED + groundedness-driven verdict surfaces the lens's REAL confidence
+    (the provider returns 0.9), not a hardcoded 1.0. Deterministic existence outcomes leave
+    confidence unset (-> 1.0); a probabilistic groundedness verdict must carry the lens value."""
+    engine, store = _engine(tmp_path, outcome="supported")  # provider returns confidence 0.9
+    cits = [
+        {"id": "c1", "claim": "LLMs cannot self-verify", "identifier": "2402.01817"},
+    ]
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(
+                200, text=_feed("A Paper", "We show LLMs cannot self-verify.")
+            )
+        )
+        result = await engine.verify(_request(cits))
+
+    assert isinstance(result, VerifyResponse)
+    assert result.verdict == Verdict.ACCEPT
+    cr = result.citation_results[0]
+    # The per-citation result carries the groundedness lens's parsed confidence (0.9), not 1.0.
+    assert cr.confidence == pytest.approx(0.9)
+    # And the artifact-level confidence reflects it (min over the projected results), not 1.0.
+    assert result.confidence == pytest.approx(0.9)
+    assert result.confidence != 1.0
     store.close()
 
 

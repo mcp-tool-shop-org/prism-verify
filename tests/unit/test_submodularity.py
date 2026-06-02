@@ -71,18 +71,34 @@ class TestComputePairwiseRho:
         assert "L1,L2" in sub.collapsed_pairs
         assert sub.pairwise_rho["L1,L2"] == 1.0
 
-    def test_threshold_boundary(self):
-        """Rho exactly at threshold should pass (> not >=)."""
-        # Create findings that produce exactly 0.25 overlap
-        # 1 shared out of 4 total unique = 0.25
+    def test_rho_just_above_threshold_collapses(self):
+        """Rho strictly above the 0.25 threshold collapses (the just-over case)."""
+        # L1={(1,a),(2,b)}, L2={(1,a),(3,c)}: intersection=1, union=3 -> rho=0.333... > 0.25.
         results = [
             self._make_result("L1", [("f.py", 1, "a"), ("f.py", 2, "b")]),
             self._make_result("L2", [("f.py", 1, "a"), ("f.py", 3, "c")]),
             self._make_result("L3", [("f.py", 99, "z")]),
         ]
         sub = compute_pairwise_rho(results)
-        # L1,L2: intersection=1, union=3, rho=0.333... > 0.25 -> collapsed
+        assert sub.pairwise_rho["L1,L2"] == pytest.approx(1 / 3)
         assert sub.passed is False
+
+    def test_rho_exactly_at_threshold_passes(self):
+        """TEST-A-005: rho == EXACTLY 0.25 PASSES (the bound is `>`, not `>=`).
+
+        L1={(1,a),(2,b)}, L2={(1,a),(3,c),(4,d)}: intersection={(1,a)}=1, union=4 -> rho=0.25
+        exactly (1/4 is exact in IEEE-754). 0.25 > 0.25 is False, so the pair does NOT collapse.
+        A `>=` regression would flip this to a false LENS_COLLAPSE — this guards the boundary.
+        """
+        results = [
+            self._make_result("L1", [("f.py", 1, "a"), ("f.py", 2, "b")]),
+            self._make_result("L2", [("f.py", 1, "a"), ("f.py", 3, "c"), ("f.py", 4, "d")]),
+            self._make_result("L3", [("f.py", 99, "z")]),
+        ]
+        sub = compute_pairwise_rho(results)
+        assert sub.pairwise_rho["L1,L2"] == 0.25  # exact, not approx
+        assert sub.passed is True
+        assert "L1,L2" not in sub.collapsed_pairs
 
     def test_custom_thresholds(self):
         """Per-pair threshold overrides work."""

@@ -328,3 +328,109 @@ class TestFailureModes:
         resp = client.post("/verify-receipt", json={"receipt": {"id": "x", "nope": True}})
         assert resp.status_code == 200
         assert resp.json()["signature_valid"] is False
+
+
+class TestIdempotencyCacheBound:
+    """SURF-A-001: the idempotency cache is LRU-capped AND TTL'd — it cannot grow unbounded."""
+
+    def test_lru_overflow_evicts_oldest(self):
+        from prism.http.app import IdempotencyCache
+
+        cache = IdempotencyCache(max_entries=3, ttl_s=1000.0)
+        for i in range(10):  # drive 10 distinct keys past the cap of 3
+            cache.set(f"k{i}", f"fp{i}", {"i": i}, 200)
+        # The structure stays bounded at the documented cap, oldest entries evicted.
+        assert len(cache._store) == 3
+        assert cache.get("k0") is None and cache.get("k6") is None  # evicted
+        assert cache.get("k9") is not None  # newest retained
+        assert cache.get("k7") is not None and cache.get("k8") is not None
+
+    def test_expired_entries_evicted_on_insert(self):
+        from prism.http.app import IdempotencyCache
+
+        clock = {"t": 0.0}
+        cache = IdempotencyCache(max_entries=1000, ttl_s=600.0, clock=lambda: clock["t"])
+        cache.set("old", "fp", {"v": 1}, 200)
+        clock["t"] = 700.0  # advance past the TTL
+        assert cache.get("old") is None  # expired on read
+        cache.set("new", "fp2", {"v": 2}, 200)  # an insert opportunistically sweeps expired
+        assert "old" not in cache._store
+        assert len(cache._store) == 1
+
+
+class TestTrustedProxy:
+    """SURF-A-006: X-Forwarded-For is honored ONLY behind a configured trusted proxy."""
+
+    class _FakeClient:
+        def __init__(self, host: str) -> None:
+            self.host = host
+
+    class _FakeRequest:
+        def __init__(self, peer: str, xff: str | None) -> None:
+            self.client = TestTrustedProxy._FakeClient(peer)
+            self.headers = {"x-forwarded-for": xff} if xff is not None else {}
+
+    def test_no_trusted_proxies_uses_peer_ignores_xff(self):
+        # Default (empty PRISM_TRUSTED_PROXIES) → behavior unchanged: the peer IP is authoritative
+        # and a (spoofable) X-Forwarded-For from a raw peer is ignored.
+        from prism.http.app import _client_ip, _parse_trusted_proxies
+
+        trusted = _parse_trusted_proxies(None)
+        assert trusted == []
+        req = self._FakeRequest(peer="203.0.113.7", xff="1.2.3.4")
+        assert _client_ip(req, trusted) == "203.0.113.7"
+
+    def test_xff_honored_behind_trusted_proxy(self):
+        # Peer is within the trusted CIDR → read XFF and return the right-most UNtrusted hop.
+        from prism.http.app import _client_ip, _parse_trusted_proxies
+
+        trusted = _parse_trusted_proxies("10.0.0.0/8")
+        req = self._FakeRequest(peer="10.0.0.5", xff="9.9.9.9, 10.0.0.9")
+        # Right-most hop (10.0.0.9) is itself trusted; the real client is the next out (9.9.9.9).
+        assert _client_ip(req, trusted) == "9.9.9.9"
+
+    def test_xff_from_untrusted_peer_is_ignored(self):
+        # The direct peer is NOT in the trusted set → XFF is ignored entirely (anti-spoof), so the
+        # per-IP failed-auth limiter keys on the real peer, not an attacker-rotated header.
+        from prism.http.app import _client_ip, _parse_trusted_proxies
+
+        trusted = _parse_trusted_proxies("10.0.0.0/8")
+        req = self._FakeRequest(peer="203.0.113.7", xff="9.9.9.9")
+        assert _client_ip(req, trusted) == "203.0.113.7"
+
+
+class TestDeadLetterLogging:
+    """SURF-A-003: a failed async delivery is LOGGED (not silently buried in memory)."""
+
+    def test_failed_async_verify_is_dead_lettered_and_logged(self, store, caplog):
+        import logging
+
+        # The async path runs engine.verify(); a VerifyError there must be dead-lettered with a
+        # structured ERROR log AND counted in /healthz — never swallowed.
+        err = VerifyError(
+            reason=RefusalReason.VERIFIER_UNAVAILABLE, detail="all routes open", retryable=True
+        )
+        app = make_app(
+            store,
+            error=err,
+            webhook_secret=b"wh",
+            webhook_resolver=lambda _h, _p: ["93.184.216.34"],
+        )
+        with caplog.at_level(logging.ERROR, logger="prism.http"):
+            with TestClient(app) as client:  # context-manager drains the async task on shutdown
+                resp = client.post(
+                    "/verify",
+                    json={**VERIFY_BODY, "webhook": "https://hooks.example/x"},
+                    headers={"Prefer": "respond-async"},
+                )
+                assert resp.status_code == 202
+            # After lifespan shutdown the in-flight delivery has run and dead-lettered.
+            health = TestClient(make_app(store)).get("/healthz").json()  # fresh app: own counter
+        # The original app logged an ERROR for the dead-letter (assert via caplog, not memory).
+        assert any(
+            rec.levelno == logging.ERROR and "dead-lettered" in rec.getMessage()
+            for rec in caplog.records
+        )
+        assert "VERIFIER_UNAVAILABLE" in caplog.text
+        # Sanity: a clean /healthz still reports a numeric dead_letters counter.
+        assert isinstance(health["dead_letters"], int)

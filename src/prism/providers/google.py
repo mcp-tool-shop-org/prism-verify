@@ -79,20 +79,35 @@ class GoogleProvider(ModelProvider):
             raise ProviderError(
                 f"Gemini API error: {e.response.status_code}", retryable=retryable
             ) from e
-        except httpx.ConnectError as e:
+        except httpx.TimeoutException as e:
+            raise ProviderError("Gemini API timed out", retryable=True) from e
+        except httpx.TransportError as e:
             raise ProviderError("Gemini API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError as e:
+            raise ProviderError(
+                f"Gemini returned a non-JSON body (HTTP {response.status_code})",
+                retryable=True,
+            ) from e
 
-        # Extract text from Gemini response
-        candidates = data.get("candidates", [])
+        # Extract text from Gemini response. Guard the shape: a non-dict body, a
+        # missing/empty `candidates`, or a non-dict first element must not raise
+        # IndexError/AttributeError out of complete().
+        candidates = data.get("candidates") if isinstance(data, dict) else None
+        first = candidates[0] if isinstance(candidates, list) and candidates else None
         content = ""
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            content = "".join(p.get("text", "") for p in parts)
+        if isinstance(first, dict):
+            inner = first.get("content")
+            parts = inner.get("parts", []) if isinstance(inner, dict) else []
+            if isinstance(parts, list):
+                content = "".join(
+                    p.get("text", "") for p in parts if isinstance(p, dict)
+                )
 
-        usage = data.get("usageMetadata", {})
+        usage = data.get("usageMetadata", {}) if isinstance(data, dict) else {}
 
         return CompletionResponse(
             content=content,

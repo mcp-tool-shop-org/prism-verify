@@ -81,6 +81,12 @@ class TestSsrfGuard:
             "::1",
             "fd00::1",
             "fe80::1",
+            # TEST-A-003: IPv4-mapped IPv6 — the ::ffff:0:0/96 range that smuggles an internal v4
+            # address through a v6 literal. All three forms must be blocked (the metadata IP, a
+            # loopback, and a private v4), incl. the compressed-hex spelling of 127.0.0.1.
+            "::ffff:127.0.0.1",
+            "::ffff:10.0.0.1",
+            "::ffff:7f00:1",  # == ::ffff:127.0.0.1 in compressed-hex form
         ],
     )
     def test_blocks_internal_and_metadata(self, ip):

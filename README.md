@@ -43,12 +43,14 @@ pip install "prism-verify[all]"
 ## Quick start
 
 Prism always verifies with a model family **different** from the caller's (Lock 1), so
-configure at least one alternate-family provider. Set a signing secret (or `PRISM_DEV=1`
-for local play) so receipts can be written:
+configure at least one alternate-family provider. Generate an Ed25519 signing key (the default —
+receipts are verifiable by anyone with the public key) so receipts can be written, or use
+`PRISM_DEV=1` for local play:
 
 ```bash
-export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"
-export ANTHROPIC_API_KEY="sk-ant-..."   # alt-family verifier for an OpenAI-family caller
+prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
+export PRISM_SIGNING_KEY=~/.prism/signing_key.pem # or: export PRISM_DEV=1 (local play)
+export ANTHROPIC_API_KEY="sk-ant-..."             # alt-family verifier for an OpenAI-family caller
 
 prism verify \
   --artifact @myfile.py \
@@ -56,6 +58,9 @@ prism verify \
   --caller-family openai \
   --provider anthropic
 ```
+
+> Legacy alternative: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` signs receipts with
+> HMAC instead (verifiable only by holders of that shared secret — see [Receipts](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Architecture
 

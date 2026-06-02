@@ -10,9 +10,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import ipaddress
 import json
+import logging
 import os
-from collections.abc import AsyncIterator
+import time
+from collections import OrderedDict
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager, suppress
 from typing import Any, Literal
 
@@ -46,6 +50,71 @@ from prism.receipts.store import ReceiptStore, verify_receipt_dict
 
 DEFAULT_MAX_ARTIFACT_BYTES = 256 * 1024
 
+# Idempotency cache bounds (SURF-A-001). Idempotency only matters for the client retry window, so
+# completed entries expire after IDEMPOTENCY_TTL_S; the LRU ceiling caps memory even within the TTL
+# (a caller with a valid key could otherwise stream unbounded distinct Idempotency-Keys). 10k keys
+# over a 10-minute window is generous for a single-process v0.4 service.
+IDEMPOTENCY_MAX = 10_000
+IDEMPOTENCY_TTL_S = 600.0
+
+# Dead-letter ring bound (SURF-A-003) — most-recent async failures kept for /healthz visibility;
+# every append also emits a structured log so nothing is silently buried.
+DEAD_LETTER_MAX = 1000
+
+logger = logging.getLogger("prism.http")
+
+
+class IdempotencyCache:
+    """Bounded, TTL'd idempotency store (SURF-A-001).
+
+    Holds ``key -> (fingerprint, payload | None-while-in-flight, status, stored_at)`` so a replay
+    returns a byte-identical body at the original status (200 sync, 202 async). Entries expire
+    ``ttl_s`` after they are stored and the map is LRU-capped at ``max_entries`` — expired entries
+    are evicted opportunistically on every insert, and overflow drops the oldest.
+    """
+
+    def __init__(
+        self,
+        *,
+        max_entries: int = IDEMPOTENCY_MAX,
+        ttl_s: float = IDEMPOTENCY_TTL_S,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._max = max_entries
+        self._ttl = ttl_s
+        self._clock = clock
+        self._store: OrderedDict[str, tuple[str, dict[str, Any] | None, int, float]] = OrderedDict()
+
+    def get(self, key: str) -> tuple[str, dict[str, Any] | None, int] | None:
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        fingerprint, payload, status, stored_at = entry
+        if self._clock() - stored_at >= self._ttl:
+            del self._store[key]
+            return None
+        # NB: no move_to_end here — entries expire by store-time TTL regardless of access, so the
+        # map stays ordered by stored_at, which keeps _evict_expired's early-break correct.
+        return fingerprint, payload, status
+
+    def set(self, key: str, fingerprint: str, payload: dict[str, Any] | None, status: int) -> None:
+        self._evict_expired()
+        self._store[key] = (fingerprint, payload, status, self._clock())
+        self._store.move_to_end(key)
+        while len(self._store) > self._max:
+            self._store.popitem(last=False)  # drop the oldest (LRU overflow)
+
+    def pop(self, key: str) -> None:
+        self._store.pop(key, None)
+
+    def _evict_expired(self) -> None:
+        now = self._clock()
+        for k in list(self._store):
+            if now - self._store[k][3] >= self._ttl:
+                del self._store[k]
+            else:
+                break  # OrderedDict is insertion-ordered; the rest are newer
+
 
 class VerifyHttpRequest(BaseModel):
     """POST /verify body — mirrors the CLI/MCP verify arguments."""
@@ -73,8 +142,58 @@ class VerifyReceiptHttpRequest(BaseModel):
     )
 
 
-def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+_IpNetworks = list[ipaddress.IPv4Network | ipaddress.IPv6Network]
+
+
+def _parse_trusted_proxies(value: str | None) -> _IpNetworks:
+    """Parse ``PRISM_TRUSTED_PROXIES`` (comma-separated CIDRs) into networks.
+
+    Default/empty → an empty list = today's exact behavior (no ``X-Forwarded-For`` trust). A bare
+    address (``10.0.0.1``) is accepted and treated as a /32 (or /128). Unparseable entries are
+    skipped so one typo cannot silently disable the limiter for every other configured proxy.
+    """
+    if not value:
+        return []
+    networks: _IpNetworks = []
+    for part in value.split(","):
+        cidr = part.strip()
+        if not cidr:
+            continue
+        with suppress(ValueError):
+            networks.append(ipaddress.ip_network(cidr, strict=False))
+    return networks
+
+
+def _is_trusted(ip_str: str, trusted: _IpNetworks) -> bool:
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    return any(ip in net for net in trusted)
+
+
+def _client_ip(request: Request, trusted_proxies: _IpNetworks) -> str:
+    """Resolve the rate-limit client IP, honoring ``X-Forwarded-For`` ONLY behind a trusted proxy.
+
+    The direct TCP peer (``request.client.host``) is authoritative. When (and only when) that peer
+    is within a configured ``PRISM_TRUSTED_PROXIES`` CIDR do we read ``X-Forwarded-For`` and return
+    the right-most hop NOT in the trusted set — the real client just beyond our trusted proxy tier.
+    XFF from an untrusted peer is IGNORED: trusting it would let an attacker rotate the header per
+    request to dodge the per-IP failed-auth limiter. With no trusted proxies configured (default),
+    this is exactly ``request.client.host``.
+    """
+    peer = request.client.host if request.client else "unknown"
+    if not trusted_proxies or not _is_trusted(peer, trusted_proxies):
+        return peer
+    forwarded = request.headers.get("x-forwarded-for")
+    if not forwarded:
+        return peer
+    # Walk hops right-to-left; the first one outside the trusted set is the real client.
+    for hop in reversed([h.strip() for h in forwarded.split(",") if h.strip()]):
+        if not _is_trusted(hop, trusted_proxies):
+            return hop
+    # Every listed hop is itself trusted (a chain of our own proxies) → fall back to the peer.
+    return peer
 
 
 def _to_core_request(body: VerifyHttpRequest) -> VerifyRequest:
@@ -137,13 +256,29 @@ def create_app(
     max_bytes = max_artifact_bytes or int(
         os.environ.get("PRISM_MAX_ARTIFACT_BYTES", DEFAULT_MAX_ARTIFACT_BYTES)
     )
+    # Opt-in trusted-proxy CIDRs (SURF-A-006). Default empty → X-Forwarded-For is never trusted, so
+    # the per-IP failed-auth limiter keys on the real peer. Only when the direct peer is within one
+    # of these CIDRs do we honor XFF (see _client_ip), preventing a shared-proxy IP from collapsing
+    # every client into one bucket while never trusting attacker-supplied headers from a raw peer.
+    trusted_proxies = _parse_trusted_proxies(os.environ.get("PRISM_TRUSTED_PROXIES"))
 
-    # In-memory state (single-process v0.4): idempotency cache + async task set + dead-letter list.
-    # The cache holds (request-fingerprint, response-payload | None-while-in-flight, status) so a
-    # replay returns a byte-identical body at the original status (200 sync, 202 async).
-    idempotency: dict[str, tuple[str, dict[str, Any] | None, int]] = {}
+    # In-memory state (single-process v0.4): idempotency cache + async task set + dead-letter ring.
+    # The cache is bounded + TTL'd (SURF-A-001); the dead-letter ring is bounded and every append
+    # is logged (SURF-A-003) so async failures reach the operator log pipeline, not just memory.
+    idempotency = IdempotencyCache()
     background: set[asyncio.Task[Any]] = set()
     dead_letter: list[dict[str, Any]] = []
+
+    def record_dead_letter(entry: dict[str, Any]) -> None:
+        """Log a structured ERROR and append to the bounded dead-letter ring (SURF-A-003).
+
+        Every append emits an ERROR so failures reach the operator log pipeline rather than being
+        silently buried in memory; the in-memory ring is capped at the most recent DEAD_LETTER_MAX.
+        """
+        logger.error("async delivery dead-lettered: %s", json.dumps(entry, default=str))
+        dead_letter.append(entry)
+        if len(dead_letter) > DEAD_LETTER_MAX:
+            del dead_letter[:-DEAD_LETTER_MAX]
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -171,7 +306,7 @@ def create_app(
         /verify-receipt}) consistently metered — /healthz is the only intended unmetered route.
         """
         identity = authenticator.authenticate(
-            request.headers.get("authorization"), _client_ip(request)
+            request.headers.get("authorization"), _client_ip(request, trusted_proxies)
         )
         return authenticator.check_rate(identity)
 
@@ -179,7 +314,7 @@ def create_app(
         assert webhook_secret is not None  # checked before scheduling
         result = await engine.verify(_to_core_request(body))
         if isinstance(result, VerifyError):
-            dead_letter.append({"reason": result.reason.value, "detail": result.detail})
+            record_dead_letter({"reason": result.reason.value, "detail": result.detail})
             return
         row = store.get_receipt(result.receipt.id) or {}
         outcome = await deliver(
@@ -192,7 +327,7 @@ def create_app(
             resolver=webhook_resolver,
         )
         if not outcome.delivered:
-            dead_letter.append(
+            record_dead_letter(
                 {
                     "receipt_id": result.receipt.id,
                     "detail": outcome.detail,
@@ -206,10 +341,11 @@ def create_app(
             "status": "ok",
             "version": __version__,
             "families": sorted(engine._providers.keys()),  # configured verifier families
+            "dead_letters": len(dead_letter),  # async deliveries that failed (also logged at ERROR)
         }
 
     @app.post("/verify")
-    async def verify(body: VerifyHttpRequest, request: Request, response: Response) -> Response:
+    async def verify(body: VerifyHttpRequest, request: Request) -> Response:
         rate_headers = _authn(request)
 
         if len(body.artifact.encode()) > max_bytes:
@@ -265,29 +401,29 @@ def create_app(
             # retry replays it (via the check above) instead of double-spending a paid verification
             # + double-delivering the webhook (a fresh receipt id would dodge consumer dedup).
             if idem_key is not None:
-                idempotency[idem_key] = (fingerprint, async_body, 202)
+                idempotency.set(idem_key, fingerprint, async_body, 202)
             task = asyncio.create_task(_deliver_async(body, body.webhook))
             background.add(task)
             task.add_done_callback(background.discard)
             return _json(async_body, rate_headers, status=202)
 
         if idem_key is not None:
-            idempotency[idem_key] = (fingerprint, None, 200)  # in-flight
+            idempotency.set(idem_key, fingerprint, None, 200)  # in-flight
         try:
             result = await engine.verify(_to_core_request(body))
         except Exception:
             # Any failure (incl. a non-VerifyError raise) must clear the in-flight marker, or the
             # key wedges permanently at 409 and every retry is refused.
             if idem_key is not None:
-                idempotency.pop(idem_key, None)
+                idempotency.pop(idem_key)
             raise
         if isinstance(result, VerifyError):
             if idem_key is not None:
-                idempotency.pop(idem_key, None)  # do not cache a refusal as a committed result
+                idempotency.pop(idem_key)  # do not cache a refusal as a committed result
             return verify_error_response_with_headers(result, rate_headers)
         payload = _jsonable(result.model_dump())
         if idem_key is not None:
-            idempotency[idem_key] = (fingerprint, payload, 200)
+            idempotency.set(idem_key, fingerprint, payload, 200)
         return _json(payload, rate_headers)
 
     @app.get("/replay/{receipt_id}")

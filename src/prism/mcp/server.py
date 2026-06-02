@@ -78,7 +78,7 @@ def create_server() -> Any:
                         },
                         "caller_model": {
                             "type": "string",
-                            "description": "Caller's model ID",
+                            "description": "Caller's model ID (optional; defaults to 'unknown')",
                         },
                         "lenses": {
                             "type": "string",
@@ -86,7 +86,10 @@ def create_server() -> Any:
                             "description": "Comma-separated lens names or 'auto'",
                         },
                     },
-                    "required": ["artifact", "intent", "caller_family", "caller_model"],
+                    # caller_model is omitted: the handler defaults it to "unknown" (CLI/HTTP do
+                    # too), so it is not genuinely required. artifact/intent/caller_family DO
+                    # KeyError if absent — those stay required.
+                    "required": ["artifact", "intent", "caller_family"],
                 },
             ),
             Tool(

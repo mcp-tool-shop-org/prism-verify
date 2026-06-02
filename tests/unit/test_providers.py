@@ -10,9 +10,11 @@ from __future__ import annotations
 import json
 
 import httpx
+import pytest
 import respx
 
-from prism.providers.base import CompletionRequest
+from prism.providers.anthropic import AnthropicProvider
+from prism.providers.base import CompletionRequest, ProviderError
 from prism.providers.google import GoogleProvider
 from prism.providers.ollama import OllamaProvider
 from prism.providers.openai import OpenAIProvider
@@ -20,6 +22,54 @@ from prism.providers.openai import OpenAIProvider
 
 def _req(model_id: str) -> CompletionRequest:
     return CompletionRequest(system_prompt="s", user_prompt="u", model_id=model_id)
+
+
+# (provider_factory, completion_endpoint_url, model_id) per provider — the endpoint each
+# provider's complete() POSTs to, for driving a ReadTimeout / non-JSON body against it.
+_GEMINI_URL = "http://g/v1beta/models/gemini-2.5-pro:generateContent"
+_PROVIDER_CASES = [
+    (
+        lambda: AnthropicProvider(api_key="k", base_url="http://a"),
+        "http://a/v1/messages",
+        "claude-haiku-4-5-20251001",
+    ),
+    (lambda: GoogleProvider(api_key="k", base_url="http://g"), _GEMINI_URL, "gemini-2.5-pro"),
+    (
+        lambda: OpenAIProvider(api_key="k", base_url="http://o"),
+        "http://o/v1/chat/completions",
+        "gpt-5.4-mini",
+    ),
+    (lambda: OllamaProvider(base_url="http://ol"), "http://ol/api/chat", "mistral-small:24b"),
+]
+
+
+@pytest.mark.parametrize("factory,url,model_id", _PROVIDER_CASES)
+async def test_read_timeout_maps_to_retryable_provider_error(factory, url, model_id):
+    """PROV-A-004 / PROV-A-001/002: a ReadTimeout on the completion endpoint surfaces as a
+    ProviderError(retryable=True), never a raw httpx.ReadTimeout escaping complete()."""
+    provider = factory()
+    with respx.mock:
+        respx.post(url).mock(side_effect=httpx.ReadTimeout("read timed out"))
+        with pytest.raises(ProviderError) as exc:
+            await provider.complete(_req(model_id))
+    assert exc.value.retryable is True
+    await provider.close()
+
+
+@pytest.mark.parametrize("factory,url,model_id", _PROVIDER_CASES)
+async def test_non_json_200_body_maps_to_provider_error(factory, url, model_id):
+    """PROV-A-001/002: a 200 with an HTML/non-JSON body (a captive portal / proxy error page)
+    surfaces as a structured ProviderError, not a raw json.JSONDecodeError escaping complete()."""
+    provider = factory()
+    with respx.mock:
+        respx.post(url).mock(
+            return_value=httpx.Response(
+                200, text="<html>nope</html>", headers={"content-type": "text/html"}
+            )
+        )
+        with pytest.raises(ProviderError):
+            await provider.complete(_req(model_id))
+    await provider.close()
 
 
 async def test_google_sends_key_in_header_not_url():

@@ -5,8 +5,11 @@ name: Release
 #   2. builds PyInstaller binaries for each platform + uploads them (+ checksums) to the release,
 #   3. publishes the @mcptoolshop/prism-verify npm wrapper (the npm-launcher) via Trusted Publishing.
 #
-# Org rule: publish workflows fire on `release: published` only. This is the repo's 2nd (and last)
-# workflow file. The cross-OS binary matrix (macos/windows) is the explicit-request exception to the
+# Org rule: publish workflows fire on `release: published` only. The repo has three workflow files
+# — ci.yml + this release.yml (the org 2-workflow CI/publish pair), plus pages.yml. pages.yml is the
+# accepted GitHub-Pages-deploy exception to the 2-workflow cap: a site deploy is a recognized
+# pattern and it is paths-gated to `site/**`, so it does not count against the CI/publish budget.
+# The cross-OS binary matrix (macos/windows) is the explicit-request exception to the
 # "1 OS / no macos" rule — the npm launcher distributes platform binaries, which requires it.
 #
 # First PyPI publish needs a PyPI *pending publisher* (project prism-verify, workflow release.yml;

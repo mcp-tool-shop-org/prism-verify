@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+Health-pass hardening (no API changes; receipt schema bumps in place).
+
+### Security
+- **SECURITY.md rewritten to the v0.4 surface** — Ed25519-by-default receipts (HMAC legacy/opt-in)
+  with the honest integrity ceiling (on-disk key is forgeable by local-root → third-party
+  verifiability, not anti-forgery; HSM + transparency log / Sigstore-keyless as the hardening
+  path), a new **HTTP surface** section (fail-closed auth, hashed keys, SSRF-guarded webhooks,
+  loopback-by-default, RFC 9457 errors, rate limit + Idempotency-Key), a receipt-canonicalization
+  note, and a full environment-variable table. Supported-versions table updated to `0.4.x`.
+- **Opt-in trusted-proxy support** (`PRISM_TRUSTED_PROXIES`) — `X-Forwarded-For` is honored only
+  when the immediate peer is within a configured trusted-proxy CIDR (default empty = no XFF trust),
+  so a client cannot spoof its rate-limit identity behind a reverse proxy.
+
+### Fixed
+- **Lock-2 strip-bypass** — reasoning-stripping no longer admits a partially-stripped artifact past
+  the family boundary.
+- **Provider robustness** — provider timeouts and non-JSON / malformed responses are handled
+  (no bare crash) with circuit-breaking so a flapping provider degrades cleanly.
+- **Receipt canonical JSON (schema v5)** — signatures cover a deterministic canonical JSON with
+  **non-finite floats (`NaN` / `Infinity`) rejected**, and a dev-key (`kid`) verify guard so a
+  dev-signed receipt is not silently trusted in production.
+- **Bounded back-pressure state** — the HTTP idempotency cache and per-IP failed-auth buckets are
+  bounded, and exhausted-retry webhook deliveries surface via a dead-letter path.
+
 ## [0.4.2] - 2026-06-02
 
 ### Added

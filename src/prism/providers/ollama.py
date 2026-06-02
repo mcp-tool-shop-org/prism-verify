@@ -74,13 +74,19 @@ class OllamaProvider(ModelProvider):
                 f"Ollama API error: {e.response.status_code}",
                 retryable=e.response.status_code >= 500,
             ) from e
-        except httpx.ConnectError as e:
-            raise ProviderError(
-                f"Ollama not reachable at {self._base_url}", retryable=True
-            ) from e
+        except httpx.TimeoutException as e:
+            raise ProviderError("Ollama API timed out", retryable=True) from e
+        except httpx.TransportError as e:
+            raise ProviderError("Ollama API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError as e:
+            raise ProviderError(
+                f"Ollama returned a non-JSON body (HTTP {response.status_code})",
+                retryable=True,
+            ) from e
 
         if isinstance(data, dict) and data.get("error"):
             raise ProviderError(f"Ollama API error: {data['error']}", retryable=False)

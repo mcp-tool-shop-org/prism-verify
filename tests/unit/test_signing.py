@@ -12,6 +12,7 @@ from prism.core.types import ReasoningVisibility
 from prism.receipts.signing import (
     ALG_ED25519,
     ALG_HMAC,
+    DEV_KID,
     Ed25519Backend,
     SigningSecretError,
     generate_keypair,
@@ -105,6 +106,30 @@ class TestCrossToolVerification:
         assert verify_receipt_dict(row, signing_secret=b"wrong") is False
         _priv, pub, _ = generate_keypair()
         assert verify_receipt_dict(row, public_key_pem=pub) is False
+
+    def test_negative_zero_verifies_cross_tool_via_public_key(self, tmp_path):
+        """Second-hardening regression: a receipt with ``-0.0`` floats verifies on the cross-tool
+        public-key path. The signed v5 bytes normalize ``-0.0`` -> ``0.000000000000``, which a
+        JS/Go/Rust verifier reproduces with ``toFixed`` / ``%.12f`` / ``{:.12}``. If the signer
+        stopped normalizing, the public-key verify (which re-canonicalizes) would desync -> False.
+        """
+        priv_pem, pub_pem, _kid = generate_keypair()
+        store = ReceiptStore(db_path=tmp_path / "e.db", signing_key=priv_pem)
+        r = store.create_receipt(
+            pre_strip_hash="a",
+            post_strip_hash="b",
+            verifier_models=["m"],
+            pairwise_rho={"L1,L2": -0.0},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict="accept",
+            confidence=-0.0,
+            retryable=False,
+            lens_results_json="[]",
+        )
+        row = store.get_receipt(r.id)
+        store.close()
+        # Only the published public key — no secret, no database (the role-os cross-tool path).
+        assert verify_receipt_dict(row, public_key_pem=pub_pem) is True
 
 
 class TestVersionAwareAndDowngrade:
@@ -241,3 +266,105 @@ class TestSigningCli:
         )
         assert result.exit_code == 1
         assert json.loads(result.output)["signature_valid"] is False
+
+
+class TestDevKidRejectedInProduction:
+    """RCPT-A-003: the well-known dev kid is forgeable, so a production verifier refuses it.
+
+    The dev Ed25519 seed is public source — anyone can derive its key + ``kid`` and forge a
+    receipt bearing ``DEV_KID``. Signing with it is gated behind PRISM_DEV=1; the verify side
+    must REFUSE a dev-kid receipt unless PRISM_DEV=1 too, while genuine prism->prism dev
+    round-trips keep working under PRISM_DEV=1.
+    """
+
+    def _dev_receipt_row(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PRISM_SIGNING_SECRET", raising=False)
+        monkeypatch.delenv("PRISM_SIGNING_KEY", raising=False)
+        monkeypatch.setenv("PRISM_DEV", "1")  # zero-config dev signs with the dev Ed25519 key
+        store = ReceiptStore(db_path=tmp_path / "dev.db")
+        r = _mk(store)
+        assert r.kid == DEV_KID  # the dev seed produces the well-known kid
+        row = store.get_receipt(r.id)
+        store.close()
+        return row
+
+    def test_store_refuses_dev_kid_receipt_without_prism_dev(self, tmp_path, monkeypatch):
+        row = self._dev_receipt_row(tmp_path, monkeypatch)
+        # Now stand up a PRODUCTION verifier (real key, PRISM_DEV unset).
+        monkeypatch.delenv("PRISM_DEV", raising=False)
+        priv_pem, _pub, _kid = generate_keypair()
+        prod = ReceiptStore(db_path=tmp_path / "prod.db", signing_key=priv_pem)
+        # Even though the dev backend isn't registered here, the kid guard refuses it outright.
+        assert prod.verify_receipt(row) is False
+        prod.close()
+
+    def test_public_key_path_refuses_dev_kid_without_prism_dev(self, tmp_path, monkeypatch):
+        row = self._dev_receipt_row(tmp_path, monkeypatch)
+        dev_pub = Ed25519Backend.dev().public_key_pem()  # the (public) dev verifying key
+        monkeypatch.delenv("PRISM_DEV", raising=False)
+        # Production cross-tool verify with the genuine dev public key STILL refuses (forgeable).
+        assert verify_receipt_dict(row, public_key_pem=dev_pub) is False
+
+    def test_dev_kid_receipt_accepted_only_under_prism_dev(self, tmp_path, monkeypatch):
+        row = self._dev_receipt_row(tmp_path, monkeypatch)
+        dev_pub = Ed25519Backend.dev().public_key_pem()
+        # Same signature, same public key — but with PRISM_DEV=1 the dev round-trip verifies.
+        monkeypatch.setenv("PRISM_DEV", "1")
+        assert verify_receipt_dict(row, public_key_pem=dev_pub) is True
+
+
+class TestCrossVersionDispatch:
+    """RCPT-A-001: a hand-built v4 receipt with a v4 HMAC signature still verifies after v5."""
+
+    def test_v4_receipt_with_v4_signature_verifies_in_v5_store(self, tmp_path):
+        from prism.receipts.store import _build_sign_data, _compute_signature
+
+        secret = b"shared-cross-version"
+        # Build a v4 signed field-set and sign it with the v4 canonicalizer (Python json defaults).
+        sign = _build_sign_data(
+            schema_version=4,
+            receipt_id="prism-v4-handbuilt",
+            pre_strip_hash="aa",
+            post_strip_hash="bb",
+            timestamp="2026-05-20T00:00:00+00:00",
+            verifier_models=["gemini-2.5-pro"],
+            pairwise_rho={"L1,L2": 0.1},
+            verdict="accept",
+            reasoning_visibility_mode="stripped",
+            confidence=0.9,
+            retryable=False,
+            lens_results_json="[]",
+            lens_prompt_hashes={"contract": "abc123"},
+            alg=ALG_HMAC,
+            kid="",
+        )
+        sig = _compute_signature(sign, secret)  # HMAC over the v4 canonical bytes
+        row = {
+            "id": "prism-v4-handbuilt",
+            "pre_strip_hash": "aa",
+            "post_strip_hash": "bb",
+            "timestamp": "2026-05-20T00:00:00+00:00",
+            "verifier_models": json.dumps(["gemini-2.5-pro"]),
+            "pairwise_rho": json.dumps({"L1,L2": 0.1}),
+            "reasoning_visibility_mode": "stripped",
+            "verdict": "accept",
+            "confidence": 0.9,
+            "retryable": 0,
+            "lens_results": "[]",
+            "lens_prompt_hashes": json.dumps({"contract": "abc123"}),
+            "artifact_type": "code",
+            "retrieval_pins": "[]",
+            "alg": ALG_HMAC,
+            "kid": "",
+            "schema_version": 4,
+            "signature": sig,
+        }
+        # A v5-default store (it would SIGN new receipts at v5) still verifies this v4 receipt,
+        # because verification dispatches the canonicalizer on the receipt's own schema_version.
+        store = ReceiptStore(db_path=tmp_path / "mix.db", signing_secret=secret)
+        assert store.verify_receipt(row) is True
+        # Flipping schema_version to 5 (without re-signing) must NOT verify — the v5 canonicalizer
+        # produces different bytes, proving the dispatch is real and not a no-op.
+        row_wrong = {**row, "schema_version": 5}
+        assert store.verify_receipt(row_wrong) is False
+        store.close()

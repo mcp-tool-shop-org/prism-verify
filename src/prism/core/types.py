@@ -210,3 +210,9 @@ class CitationResult(BaseModel):
     detail: str
     source_title: str | None = None
     supporting_span: str | None = None
+    # Set only when a verdict is driven by the groundedness LLM lens (RESOLVED +
+    # supported/contradicted/not_addressed): carries that lens's parsed confidence so the
+    # artifact-level VerifyResponse.confidence reflects the probabilistic stage. Left None
+    # for deterministic existence outcomes (FABRICATED/UNRESOLVABLE/numeric mismatch), which
+    # the projection then treats as full confidence (1.0). (CORE-A-003)
+    confidence: float | None = None
