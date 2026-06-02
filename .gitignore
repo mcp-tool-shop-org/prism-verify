@@ -18,3 +18,4 @@ venv/
 *.sqlite3
 .coverage
 htmlcov/
+.polyglot-cache.json
