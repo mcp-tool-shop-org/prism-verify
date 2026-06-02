@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Literal
 
 import click
 
+from prism import __version__
 from prism.core.types import (
     Artifact,
     ArtifactType,
@@ -33,7 +34,7 @@ _GATE_EXIT_CODES = {"accept": 0, "revise": 10, "refuse": 20, "escalate": 30}
 
 
 @click.group()
-@click.version_option(package_name="prism-verify")
+@click.version_option(version=__version__, prog_name="prism")  # static — works in the frozen binary
 def cli() -> None:
     """Prism — runtime adjudication for agent workflows."""
     pass

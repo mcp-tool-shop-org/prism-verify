@@ -61,6 +61,7 @@ jobs:
   build-binaries:
     name: Build PyInstaller binary (${{ matrix.target }})
     strategy:
+      fail-fast: false # one OS's failure must not cancel the others
       matrix:
         include:
           - os: ubuntu-latest
@@ -93,6 +94,7 @@ jobs:
           uv run pyinstaller --onefile --name prism --console \
             --collect-submodules prism \
             --collect-submodules pydantic \
+            --copy-metadata prism-verify \
             src/prism/__main__.py
           OUTNAME="prism-${VERSION}-${{ matrix.target }}${{ matrix.ext }}"
           mv "dist/prism${{ matrix.ext }}" "dist/${OUTNAME}"

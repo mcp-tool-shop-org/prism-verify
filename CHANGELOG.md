@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-02
+
+### Fixed
+- **`prism --version` in the PyInstaller binary.** The CLI used `click.version_option(package_name=
+  "prism-verify")`, which resolves the version via `importlib.metadata` — fine for a pip/uv install,
+  but a frozen `--onefile` binary carries no dist-info, so the binary's `--version` raised
+  `'prism-verify' is not installed`. The v0.4.0 release's `--version` smoke test correctly caught
+  this and **skipped the npm publish** (no broken wrapper shipped). Now uses the static
+  `prism.__version__`, which works in the binary, pip, and uv installs alike. (PyPI 0.4.0 was
+  unaffected — pip installs have the metadata.)
+
+### Changed
+- `release.yml`: the binary matrix is `fail-fast: false` (one OS's failure no longer cancels the
+  others) and the PyInstaller build `--copy-metadata prism-verify` (defense-in-depth for any other
+  metadata lookups). This is what unblocks the **npm launcher** (`@mcptoolshop/prism-verify`) — its
+  binaries + wrapper now publish on the v0.4.1 release.
+
 ## [0.4.0] - 2026-06-02
 
 prism becomes an **installable, HTTP-callable, independently-verifiable runtime service**.
