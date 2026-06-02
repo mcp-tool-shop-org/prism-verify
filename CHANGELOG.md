@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Health-pass hardening (no API changes; receipt schema bumps in place).
+Health-pass hardening (no API changes; receipt schema bumps in place), plus the Slice-1
+calibration pack.
+
+### Added
+- **`prism eval` + calibration pack (Slice 1)** — measures prism's lenses on a labeled corpus
+  instead of only asserting their behavior: per-lens precision/recall/MCC, the inter-lens diversity
+  matrix (Krippendorff alpha + pairwise Cohen kappa), submodular coverage-gain, confidence
+  calibration (ECE/Brier), and a data-driven submodularity-threshold (rho) sweep — with the honest
+  finding that **0.25 is Rajan's observed correlation ceiling, not a validated refusal gate** (the
+  runtime default is unchanged; the sweep is meant to inform a future, evidence-based change).
+  Includes an authored lens-targeted corpus (`eval/corpus/`, v1; real-bug ingestion is the v1.1
+  upgrade), an optional same-family A/B that demonstrates Lock 1, an ANDON corpus-integrity gate, a
+  signed run-receipt, and an `--offline` deterministic mock for CI. Research grounding in
+  `design/07-slice1-calibration.md`. Pure-Python metrics (no new dependencies).
 
 ### Security
 - **SECURITY.md rewritten to the v0.4 surface** — Ed25519-by-default receipts (HMAC legacy/opt-in)

@@ -1,0 +1,32 @@
+{
+  "schema": "prism-eval-corpus/v1",
+  "splits": [
+    "public",
+    "fresh"
+  ],
+  "classes": [
+    "code",
+    "tool_call",
+    "citations"
+  ],
+  "counts_by_split_class": {
+    "public": {
+      "code": 20,
+      "tool_call": 12,
+      "citations": 9
+    },
+    "fresh": {
+      "code": 8,
+      "tool_call": 6,
+      "citations": 6
+    }
+  },
+  "positives_per_lens": {
+    "contract_completeness": 4,
+    "invariant": 6,
+    "groundedness": 4,
+    "cross_boundary": 9,
+    "citation": 10
+  },
+  "note": "v1 authored/lens-targeted corpus. Counts are below the >=100/lens stability bar; the report pairs every rate with a Wilson interval. Real-bug ingestion (BugsInPy) is v1.1."
+}

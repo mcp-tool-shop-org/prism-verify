@@ -25,6 +25,10 @@ from prism.core.types import (
 from prism.providers.base import ModelProvider
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from prism.core.engine import VerificationEngine
+    from prism.eval.report import ReportData
     from prism.receipts.store import ReceiptStore
 
 
@@ -388,6 +392,226 @@ def serve(host: str, port: int) -> None:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
     uvicorn.run(app, host=host, port=port)
+
+
+def _build_eval_engine(
+    offline: bool, out_dir: Path
+) -> tuple[VerificationEngine, str, ReceiptStore]:
+    """Construct the engine for an eval run. Offline -> a deterministic mock verifier; real ->
+    env-configured providers. Receipts go to a dedicated DB under --out (not the user's store).
+    Returns the store too, so the caller can sign a run-level receipt and close it."""
+    from prism.core.engine import VerificationEngine
+    from prism.core.setup import build_providers_from_env, register_default_lenses
+    from prism.receipts.store import ReceiptStore
+
+    register_default_lenses()
+    db = out_dir / "eval-receipts.db"
+    if offline:
+        from prism.eval.runner import MockProvider
+
+        store = ReceiptStore(db_path=db, signing_secret=b"eval-offline-secret")
+        engine = VerificationEngine(providers={"local": MockProvider()}, receipt_store=store)
+        return engine, "offline-mock", store
+
+    providers = build_providers_from_env()
+    store = ReceiptStore(db_path=db)  # resolves a signing key from the env (refuses if none)
+    label = "+".join(sorted(providers)) or "(no providers)"
+    return VerificationEngine(providers=providers, receipt_store=store), label, store
+
+
+def _write_run_receipt(
+    store: ReceiptStore, report: ReportData, corpus_dir: Path, out_dir: Path
+) -> None:
+    """Sign a run-level receipt pinning the eval config + headline metrics, then export it
+    (PIN_PER_STEP: the published numbers trace to a signed, replayable run)."""
+    import hashlib
+
+    from prism.core.types import ReasoningVisibility
+
+    manifest = corpus_dir / "MANIFEST.json"
+    corpus_hash = (
+        hashlib.sha256(manifest.read_bytes()).hexdigest()
+        if manifest.exists()
+        else "no-corpus-manifest"
+    )
+    summary = {
+        "verifier": report.verifier_label,
+        "caller_family": report.caller_family,
+        "n_runs": report.n_runs,
+        "n_samples": report.n_samples,
+        "verdict_accuracy": report.verdict_accuracy_overall,
+        "krippendorff_alpha": report.krippendorff_alpha,
+        "coverage_gain": report.coverage_gain,
+        "ece": report.ece,
+    }
+    receipt = store.create_receipt(
+        pre_strip_hash=corpus_hash,
+        post_strip_hash=corpus_hash,
+        verifier_models=[report.verifier_label],
+        pairwise_rho={},
+        reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+        verdict="accept",
+        confidence=report.verdict_accuracy_overall,
+        retryable=False,
+        lens_results_json=json.dumps(summary),
+        artifact_type="eval_run",
+    )
+    row = store.get_receipt(receipt.id)
+    if row is not None:
+        row["signature_valid"] = store.verify_signature(receipt.id)
+        (out_dir / "run-receipt.json").write_text(
+            json.dumps(row, indent=2, default=str), encoding="utf-8"
+        )
+
+
+def _build_same_family_control(
+    offline: bool, out_dir: Path, caller_family: str
+) -> VerificationEngine:
+    """A same-family control engine for the Lock-1 A/B: route the caller family back to itself
+    (the default router forbids this; that's Lock 1's point - the control measures its cost)."""
+    from prism.core.engine import VerificationEngine
+    from prism.core.routing import FamilyRouter
+    from prism.core.setup import build_providers_from_env, register_default_lenses
+    from prism.core.types import ModelFamily
+    from prism.receipts.store import ReceiptStore
+
+    register_default_lenses()
+    fam = ModelFamily(caller_family)
+    db = out_dir / "eval-control-receipts.db"
+    router = FamilyRouter(routing_map={fam: [(fam, f"{caller_family}-control")]})
+    if offline:
+        from prism.eval.runner import MockProvider
+
+        providers: dict[str, ModelProvider] = {
+            caller_family: MockProvider(family=fam, model_id=f"{caller_family}-control")
+        }
+        store = ReceiptStore(db_path=db, signing_secret=b"eval-offline-secret")
+    else:
+        configured = build_providers_from_env()
+        if caller_family not in configured:
+            raise click.ClickException(
+                f"--family-ab needs a provider for the caller family '{caller_family}' "
+                "(set its API key) to run the same-family control."
+            )
+        providers = {caller_family: configured[caller_family]}
+        store = ReceiptStore(db_path=db)
+    return VerificationEngine(providers=providers, router=router, receipt_store=store)
+
+
+@cli.command("eval")
+@click.option("--corpus", "corpus_dir", default="eval/corpus", help="Corpus directory")
+@click.option(
+    "--split", type=click.Choice(["public", "fresh", "all"]), default="public", help="Corpus split"
+)
+@click.option("--runs", default=3, type=int, help="Runs per sample (variance control; N>=3)")
+@click.option(
+    "--caller-family",
+    type=click.Choice(["anthropic", "openai", "google", "local"]),
+    default="anthropic",
+    help="Caller family (excluded from the verifier per Lock 1)",
+)
+@click.option("--report", "report_fmt", type=click.Choice(["md", "json"]), default="md")
+@click.option("--out", "out_dir", default="eval/report", help="Directory for the report output")
+@click.option(
+    "--offline",
+    is_flag=True,
+    help="Use a deterministic MOCK verifier (smoke/CI; numbers are NOT a real measurement)",
+)
+@click.option(
+    "--family-ab",
+    "family_ab_flag",
+    is_flag=True,
+    help="Also run a same-family control to A/B-test Lock 1 (delta meaningful on real models)",
+)
+@click.option(
+    "--build-corpus", "do_build", is_flag=True, help="(Re)generate the corpus to --corpus and exit"
+)
+def eval_cmd(
+    corpus_dir: str,
+    split: str,
+    runs: int,
+    caller_family: str,
+    report_fmt: str,
+    out_dir: str,
+    offline: bool,
+    family_ab_flag: bool,
+    do_build: bool,
+) -> None:
+    """Measure prism's lenses on the labeled calibration corpus (Slice 1).
+
+    Emits per-lens precision/recall, the inter-lens diversity matrix, submodular coverage-gain,
+    verdict accuracy, and confidence calibration. `--offline` runs a deterministic mock for a
+    no-cost smoke; a real measurement needs configured providers (Ollama or a hosted family key).
+    """
+    from pathlib import Path
+
+    from prism.eval.corpus import build_corpus, check_corpus_integrity, load_corpus
+
+    if do_build:
+        manifest = build_corpus(Path(corpus_dir))
+        click.echo(json.dumps(manifest, indent=2))
+        return
+
+    if offline and caller_family == "local":
+        click.echo(
+            "Error: --offline uses a LOCAL mock verifier, so the caller family cannot also be "
+            "'local' (Lock 1 would exclude the only provider). Use --caller-family anthropic.",
+            err=True,
+        )
+        sys.exit(1)
+
+    try:
+        samples = load_corpus(Path(corpus_dir), split)
+    except FileNotFoundError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+    if not samples:
+        click.echo(f"Error: no samples for split={split!r} in {corpus_dir}", err=True)
+        sys.exit(1)
+
+    problems = check_corpus_integrity(samples)
+    if problems:
+        click.echo("Corpus integrity check FAILED (ANDON halt) - refusing to report:", err=True)
+        for problem in problems[:10]:
+            click.echo(f"  - {problem}", err=True)
+        sys.exit(1)
+
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    from prism.eval.report import render_json, render_markdown, summarize
+    from prism.eval.runner import run_eval
+    from prism.receipts.store import SigningSecretError
+
+    try:
+        engine, label, store = _build_eval_engine(offline, out)
+    except SigningSecretError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    run = asyncio.run(
+        run_eval(engine, samples, caller_family=caller_family, n_runs=runs, verifier_label=label)
+    )
+    report = summarize(run)
+    if family_ab_flag:
+        from prism.eval.calibrate import family_ab as compute_family_ab
+
+        control = _build_same_family_control(offline, out, caller_family)
+        control_run = asyncio.run(
+            run_eval(
+                control,
+                samples,
+                caller_family=caller_family,
+                n_runs=runs,
+                verifier_label="same-family-control",
+            )
+        )
+        report.family_ab = compute_family_ab(run, control_run)
+    (out / "report.md").write_text(render_markdown(report), encoding="utf-8")
+    (out / "report.json").write_text(render_json(report), encoding="utf-8")
+    _write_run_receipt(store, report, Path(corpus_dir), out)
+    store.close()
+    click.echo(render_markdown(report) if report_fmt == "md" else render_json(report))
 
 
 if __name__ == "__main__":

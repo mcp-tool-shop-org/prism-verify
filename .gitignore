@@ -21,3 +21,4 @@ htmlcov/
 .polyglot-cache.json
 node_modules/
 site/.astro/
+eval/report/
