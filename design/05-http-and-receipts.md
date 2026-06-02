@@ -252,11 +252,12 @@ Director decision (2026-06-02): **Ed25519 becomes the production default**, vers
 ### E. PyPI Trusted Publishing
 
 - **Pending publisher** for `prism-verify` (owner `mcp-tool-shop-org`, workflow `release.yml`,
-  environment `pypi`) — configured on pypi.org by the operator (USER action). No placeholder publish.
-- **`.github/workflows/release.yml`** — `on: release: { types: [published] }`, single job,
-  `environment: pypi`, `permissions: { id-token: write }`, `uv build` →
-  `pypa/gh-action-pypi-publish@release/v1` (PEP 740 attestations on by default, no token).
-  `actions/checkout@v5` (Node 24 — not the npm template's v4.2.2 / Node 20).
+  environment left `(Any)` per the org convention) — configured on pypi.org by the operator
+  (USER action). No placeholder publish needed.
+- **`.github/workflows/release.yml`** — `on: release: { types: [published] }`,
+  `permissions: { id-token: write }` (no GH environment declared, matching the `(Any)` publisher),
+  `uv build` → `pypa/gh-action-pypi-publish@release/v1` (PEP 740 attestations on by default, no
+  token). `actions/checkout@v5` (Node 24 — not the npm template's v4.2.2 / Node 20).
 - Name reserved only on first upload → TP-config + tag + publish in one session.
 
 ---

@@ -9,9 +9,10 @@ name: Release
 # workflow file. The cross-OS binary matrix (macos/windows) is the explicit-request exception to the
 # "1 OS / no macos" rule — the npm launcher distributes platform binaries, which requires it.
 #
-# First PyPI publish needs a PyPI *pending publisher* (project prism-verify, workflow release.yml,
-# environment pypi). First npm publish needs a placeholder publish + a Trusted Publisher configured
-# on npmjs.com for @mcptoolshop/prism-verify (workflow release.yml).
+# First PyPI publish needs a PyPI *pending publisher* (project prism-verify, workflow release.yml;
+# environment left "(Any)" — these jobs declare no GH environment). First npm publish needs a
+# placeholder publish + a Trusted Publisher on npmjs.com for @mcptoolshop/prism-verify
+# (workflow release.yml).
 
 on:
   release:
@@ -29,7 +30,6 @@ jobs:
   pypi:
     name: Publish to PyPI (Trusted Publishing)
     runs-on: ubuntu-latest
-    environment: pypi
     permissions:
       id-token: write # OIDC handshake for PyPI Trusted Publishing — the only auth needed
     timeout-minutes: 15
@@ -135,7 +135,6 @@ jobs:
     name: Publish npm wrapper (Trusted Publishing)
     needs: release-binaries # the wrapper is only useful once the binaries are on the release
     runs-on: ubuntu-latest
-    environment: npm
     permissions:
       id-token: write # npm provenance via Sigstore OIDC
     timeout-minutes: 15
