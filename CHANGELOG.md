@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   successful verification, preserving the CLI contract. Lets a shell/CI step — e.g. the role-os
   citation-verification gate — branch on the verdict without parsing JSON.
 
+### Fixed
+- **Citation retrieval oracle hardening** (surfaced by the role-os citation-gate dogfood). The
+  arXiv existence check now uses `https://export.arxiv.org` directly (the `http://` endpoint
+  301-redirects, which broke the lookup), sends a descriptive `User-Agent`, follows redirects, and
+  **retries transient `429`/`5xx` with backoff** — arXiv rate-limits anonymous bursts, so a burst
+  of citations was previously escalating instead of resolving (the gap the v0.3 study-swarm's Q1
+  predicted). `CitationOracle(retry_delays=...)` is injectable; tests pass `()` for no sleeps.
+
 ## [0.3.1] - 2026-06-01
 
 A post-ship adversarial verification pass (3 decorrelated lenses over the v0.3.0 diff) found and

@@ -15,6 +15,7 @@ a different claimed title cannot inherit a sibling's verdict.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import re
 from dataclasses import dataclass
@@ -24,9 +25,12 @@ import httpx
 
 from prism.core.types import Citation, ExistenceOutcome
 
-ARXIV_BASE = "http://export.arxiv.org/api/query"
+ARXIV_BASE = "https://export.arxiv.org/api/query"
 CROSSREF_BASE = "https://api.crossref.org/works"
 DEFAULT_MAILTO = "verify@prism-verify.dev"
+# arXiv 301-redirects http -> https and rate-limits anonymous bursts; use https directly and
+# identify ourselves (arXiv asks API clients to send a descriptive User-Agent).
+_USER_AGENT = "prism-verify (citation verifier; +https://github.com/mcp-tool-shop-org/prism-verify)"
 
 _ATOM = "{http://www.w3.org/2005/Atom}"
 
@@ -97,12 +101,28 @@ class CitationOracle:
         crossref_base: str = CROSSREF_BASE,
         mailto: str = DEFAULT_MAILTO,
         client: httpx.AsyncClient | None = None,
+        retry_delays: tuple[float, ...] = (1.0, 3.0),
     ) -> None:
         self._arxiv_base = arxiv_base
         self._crossref_base = crossref_base.rstrip("/")
         self._mailto = mailto
-        self._client = client or httpx.AsyncClient(timeout=15.0)
+        self._retry_delays = retry_delays
+        self._client = client or httpx.AsyncClient(
+            timeout=15.0,
+            follow_redirects=True,
+            headers={"User-Agent": _USER_AGENT},
+        )
         self._cache: dict[str, _Record] = {}
+
+    async def _get(self, url: str, params: dict[str, str]) -> httpx.Response:
+        """GET with light retry on transient rate-limit / 5xx (arXiv asks ~3s between calls)."""
+        resp = await self._client.get(url, params=params)
+        for delay in self._retry_delays:
+            if resp.status_code not in (429, 500, 502, 503):
+                return resp
+            await asyncio.sleep(delay)
+            resp = await self._client.get(url, params=params)
+        return resp
 
     async def resolve(self, citation: Citation) -> ExistenceResult:
         ident = (citation.identifier or "").strip()
@@ -153,7 +173,7 @@ class CitationOracle:
     async def _resolve_arxiv(self, arxiv_id: str) -> _Record:
         intended = f"{self._arxiv_base}?id_list={arxiv_id}"
         try:
-            resp = await self._client.get(self._arxiv_base, params={"id_list": arxiv_id})
+            resp = await self._get(self._arxiv_base, {"id_list": arxiv_id})
             resp.raise_for_status()
         except httpx.HTTPError as e:
             return _Record(
@@ -190,7 +210,7 @@ class CitationOracle:
         try:
             # mailto travels as a real query param (not f-string concatenation), so an
             # attacker-shaped identifier cannot shadow or inject query parameters.
-            resp = await self._client.get(intended, params={"mailto": self._mailto})
+            resp = await self._get(intended, {"mailto": self._mailto})
         except httpx.HTTPError as e:
             return _Record(
                 "unresolvable",

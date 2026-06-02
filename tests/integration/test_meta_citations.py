@@ -37,7 +37,7 @@ from prism.providers.base import CompletionRequest, CompletionResponse, ModelPro
 from prism.receipts.store import ReceiptStore
 from prism.retrieval.oracle import CitationOracle
 
-ARXIV = "http://export.arxiv.org/api/query"
+ARXIV = "https://export.arxiv.org/api/query"
 _EMPTY = '<feed xmlns="http://www.w3.org/2005/Atom"></feed>'
 
 # A representative subset of prism's OWN design-doc citations (real arXiv ids + faithful
@@ -103,7 +103,7 @@ def _meta_engine(tmp_path):
         routing_map={ModelFamily.ANTHROPIC: [(ModelFamily.LOCAL, "mistral-small:24b")]}
     )
     store = ReceiptStore(db_path=tmp_path / "meta.db", signing_secret=b"meta-secret")
-    oracle = CitationOracle(client=httpx.AsyncClient(timeout=5.0))
+    oracle = CitationOracle(client=httpx.AsyncClient(timeout=5.0), retry_delays=())
     engine = VerificationEngine(
         providers={"local": _DifferentFamilyVerifier()},
         router=router,

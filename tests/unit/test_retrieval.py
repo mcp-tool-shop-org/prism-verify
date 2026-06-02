@@ -12,7 +12,7 @@ import respx
 from prism.core.types import Citation, ExistenceOutcome
 from prism.retrieval.oracle import CitationOracle
 
-ARXIV = "http://export.arxiv.org/api/query"
+ARXIV = "https://export.arxiv.org/api/query"
 CROSSREF = "https://api.crossref.org/works"
 
 _RESOLVED_FEED = """<?xml version="1.0" encoding="UTF-8"?>
@@ -29,7 +29,7 @@ _EMPTY_FEED = '<feed xmlns="http://www.w3.org/2005/Atom"></feed>'
 
 
 def _oracle() -> CitationOracle:
-    return CitationOracle(client=httpx.AsyncClient(timeout=5.0))
+    return CitationOracle(client=httpx.AsyncClient(timeout=5.0), retry_delays=())
 
 
 async def test_arxiv_resolved_carries_abstract():
@@ -199,4 +199,18 @@ async def test_doi_pin_query_is_the_actual_request_url():
     assert r.outcome == ExistenceOutcome.RESOLVED
     assert r.query == captured["url"]
     assert "mailto=" in r.query
+    await oracle.aclose()
+
+
+async def test_arxiv_retries_then_resolves_on_transient_429():
+    # arXiv rate-limits anonymous bursts with 429; a transient 429 must retry, not escalate.
+    oracle = CitationOracle(client=httpx.AsyncClient(timeout=5.0), retry_delays=(0.0, 0.0))
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            side_effect=[httpx.Response(429), httpx.Response(200, text=_RESOLVED_FEED)]
+        )
+        r = await oracle.resolve(
+            Citation(claim="x", identifier="2402.01817", title="LLMs Cannot Self-Verify")
+        )
+    assert r.outcome == ExistenceOutcome.RESOLVED  # 429 retried -> 200
     await oracle.aclose()
