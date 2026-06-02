@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-06-02
+
+### Added
+- **Landing page + Starlight handbook** at <https://mcp-tool-shop-org.github.io/prism-verify/>
+  (site-theme + GitHub Pages) — 5 handbook pages (overview / getting-started / http-service /
+  receipts / reference) wired to the landing; the repo homepage now points to it.
+
+### Docs
+- Logo + PyPI/npm badges on the **npm wrapper README** (was missing) — now visible on npmjs.com.
+- Landing-page + handbook badges on the main README (the README↔landing connection contract);
+  re-translated across all 8 locales.
+
+(Docs/branding only — no code or API changes from 0.4.1.)
+
 ## [0.4.1] - 2026-06-02
 
 ### Fixed

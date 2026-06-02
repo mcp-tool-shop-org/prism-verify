@@ -6,9 +6,17 @@
   <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/prism-verify/main/assets/prism-verify-logo.png" alt="prism-verify logo" width="500">
 </p>
 
+<p align="center">
+  <a href="https://pypi.org/project/prism-verify/"><img src="https://img.shields.io/pypi/v/prism-verify" alt="PyPI"></a>
+  <a href="https://www.npmjs.com/package/@mcptoolshop/prism-verify"><img src="https://img.shields.io/npm/v/@mcptoolshop/prism-verify" alt="npm"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/"><img src="https://img.shields.io/badge/Landing_Page-live-22d3ee" alt="Landing Page"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/handbook/"><img src="https://img.shields.io/badge/Handbook-docs-22d3ee" alt="Handbook"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+</p>
+
 # प्रिज़्म-सत्यापन
 
-एजेंट वर्कफ़्लो के लिए रनटाइम निर्णय सेवा। परिवार-भिन्न, तर्क-मुक्त, बहु-लेंस सत्यापन जिसमें दोबारा चलाए जा सकने वाले रसीद शामिल हैं।
+एजेंट वर्कफ़्लो के लिए रनटाइम पर निर्णय लेने वाली सेवा। परिवार-विशिष्ट, तर्क-मुक्त, बहु-दृष्टिकोण सत्यापन, जिसमें दोबारा देखे जा सकने वाले रसीद शामिल हैं। **[लैंडिंग पृष्ठ और मार्गदर्शिका →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## स्थापित करें
 

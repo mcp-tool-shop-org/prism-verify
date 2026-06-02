@@ -6,11 +6,19 @@
   <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/prism-verify/main/assets/prism-verify-logo.png" alt="prism-verify logo" width="500">
 </p>
 
+<p align="center">
+  <a href="https://pypi.org/project/prism-verify/"><img src="https://img.shields.io/pypi/v/prism-verify" alt="PyPI"></a>
+  <a href="https://www.npmjs.com/package/@mcptoolshop/prism-verify"><img src="https://img.shields.io/npm/v/@mcptoolshop/prism-verify" alt="npm"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/"><img src="https://img.shields.io/badge/Landing_Page-live-22d3ee" alt="Landing Page"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/handbook/"><img src="https://img.shields.io/badge/Handbook-docs-22d3ee" alt="Handbook"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+</p>
+
 # prism-verify
 
-Service d’évaluation en temps réel pour les flux de travail des agents. Vérification à plusieurs niveaux, avec des familles différentes, sans raisonnement, et avec des reçus rejouables.
+Service d’évaluation en temps réel pour les flux de travail des agents. Vérification à plusieurs niveaux, avec des familles différentes, sans raisonnement explicite et avec des reçus rejouables. **[Page d’accueil et manuel →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
-## Installer
+## Installation
 
 Installez l’interface en ligne de commande `prism` (et le service HTTP) dans votre PATH :
 
@@ -24,7 +32,7 @@ Pas de Python ? Utilisez le lanceur npm (télécharge et vérifie avec SHA256 u
 npx @mcptoolshop/prism-verify verify --artifact @file.py --intent "..." --caller-family openai
 ```
 
-Ou ajoutez-le comme bibliothèque : options supplémentaires : `[anthropic]` `[openai]` `[google]` `[mcp]` `[http]` `[all]` :
+Ou ajoutez-le en tant que bibliothèque : options supplémentaires : `[anthropic]` `[openai]` `[google]` `[mcp]` `[http]` `[all]` :
 
 ```bash
 uv add prism-verify
@@ -80,11 +88,11 @@ export PRISM_WEBHOOK_SECRET="<random>"                  # to sign async/escalate
 export PRISM_HTTP_ALLOW_NO_AUTH=1
 ```
 
-Les erreurs sont au format RFC 9457 `application/problem+json` ; `POST /verify` prend en charge un en-tête `Idempotency-Key` et une limite de débit par clé (`429` + `Retry-After`). Les webhooks asynchrones/d’escalade sont signés selon la norme Standard-Webhooks, protégés contre le SSRF (pas de cibles internes/métadonnées), sont réessayés et contiennent un compensateur d’événement d’annulation nommé.
+Les erreurs sont au format RFC 9457 `application/problem+json` ; `POST /verify` prend en charge un en-tête `Idempotency-Key` et une limite de débit par clé (`429` + `Retry-After`). Les webhooks asynchrones/d’escalade sont signés selon la norme Standard-Webhooks, protégés contre le SSRF (aucune cible interne/métadonnée), sont réessayés et contiennent un compensateur d’événement d’annulation nommé.
 
 ## Reçus et signature (Ed25519, vérifiable par n’importe qui)
 
-Chaque vérification produit un reçu signé et rejouable dans `~/.prism/receipts.db`. La version 0.4 signe par défaut les nouveaux reçus avec **Ed25519 (RFC 8032)**, de sorte qu’un **outil différent peut vérifier un reçu Prism avec la clé publique de Prism : pas de clé secrète partagée** :
+Chaque vérification produit un reçu signé et rejouable dans `~/.prism/receipts.db`. La version 0.4 signe les nouveaux reçus avec **Ed25519 (RFC 8032)** par défaut, de sorte qu’un **outil différent peut vérifier un reçu Prism avec la clé publique de Prism : aucune clé secrète partagée** :
 
 ```bash
 prism keygen --out ~/.prism/signing_key.pem    # generate an Ed25519 keypair
@@ -95,7 +103,7 @@ prism pubkey                                    # publish this public key + kid 
 prism verify-receipt receipt.json --public-key prism-pub.pem
 ```
 
-La signature couvre le résultat, les hachages des artefacts pré/post-suppression, le modèle de vérification, la matrice de sous-modularité, les hachages des invites par niveau (rejouables octet par octet), les références de récupération des citations et l’algorithme/l’identifiant de signature (`alg`/`kid`). Les anciens reçus **HMAC** sont toujours valides (définissez `PRISM_SIGNING_SECRET`) ; `PRISM_DEV=1` crée une clé de développement pour une utilisation locale. Prism **refuse de démarrer** les chemins de vérification/relecture/service/MCP si aucune clé n’est configurée, plutôt que de signer silencieusement avec une clé connue publiquement.
+La signature couvre le résultat, les hachages des artefacts pré/post-suppression, le modèle de vérification, la matrice de sous-modularité, les hachages des invites par niveau (rejouables octet par octet), les références de récupération et l’algorithme/l’identifiant de signature (`alg`/`kid`). Les anciens reçus **HMAC** sont toujours valides (définissez `PRISM_SIGNING_SECRET`) ; `PRISM_DEV=1` crée une clé de développement pour une utilisation locale. Prism **refuse de démarrer** les chemins de vérification/relecture/service/MCP si aucune clé n’est configurée, plutôt que de signer silencieusement avec une clé connue publiquement.
 
 Gérez les reçus stockés à l’aide des commandes du compensateur :
 
@@ -106,8 +114,8 @@ prism receipt prune --older-than 90d --yes
 
 ## Sécurité et confidentialité
 
-- **Modèle de menace.** Prism lit l’artefact + l’intention que vous transmettez et les réponses des modèles de vérification, et écrit des reçus signés dans une base de données SQLite locale. Il ne lit **pas** votre arborescence de code source, votre environnement ou vos informations d’identification, à l’exception des clés d’API des fournisseurs que vous fournissez via les variables d’environnement. Les signatures des reçus offrent une **vérifiabilité par un tiers** (Ed25519 : un consommateur vérifie avec la clé publique, pas de clé secrète partagée), mais ne sont pas inviolables contre un attaquant disposant d’un accès root local qui peut lire la clé privée stockée sur le disque : c’est le même niveau de sécurité que la clé secrète HMAC. Pour une véritable résistance à la falsification, stockez la clé dans un HSM et ancrez les reçus dans un journal de transparence (le chemin d’amélioration spécifié).
-- **Surface HTTP.** `prism serve` se lie par défaut à l’adresse de bouclage, est **par défaut en mode sécurisé** (pas de `/verify` sans clés d’API), hache les clés au repos et **protège contre le SSRF** les URL de webhook fournies par l’appelant (pas de cibles internes/locales/métadonnées). Il exécute les artefacts fournis par l’appelant dans un modèle ; un artefact peut *tenter* une injection d’invite, mais ne peut pas modifier le schéma du résultat ou extraire les clés des fournisseurs de Prism.
+- **Modèle de menace.** Prism lit l’artefact + l’intention que vous transmettez et les réponses des modèles de vérification, et écrit des reçus signés dans une base de données SQLite locale. Il **ne** lit **pas** votre arborescence de code source, votre environnement ou vos informations d’identification, au-delà des clés d’API des fournisseurs que vous fournissez via les variables d’environnement. Les signatures des reçus offrent une **vérifiabilité par un tiers** (Ed25519 : un consommateur vérifie avec la clé publique, aucune clé secrète partagée), mais ne sont pas inviolables contre un attaquant disposant d’un accès root local qui peut lire la clé privée stockée sur le disque : c’est le même niveau de sécurité que la clé secrète HMAC. Pour une véritable résistance à la falsification, conservez la clé dans un HSM et ancrez les reçus dans un journal de transparence (le chemin d’amélioration spécifié).
+- **Surface HTTP.** `prism serve` se lie par défaut à l’adresse de bouclage, est **par défaut en mode sécurisé** (pas de `/verify` sans clés d’API), hache les clés au repos et **protège contre le SSRF** les URL de webhook fournies par l’appelant (aucune cible interne/locale/métadonnée). Il exécute les artefacts fournis par l’appelant dans un modèle ; un artefact peut *tenter* une injection d’invite, mais ne peut pas modifier le schéma du résultat ou exfiltrer les clés des fournisseurs de Prism.
 - **Pas de télémétrie.** Prism envoie des requêtes uniquement aux fournisseurs de modèles que vous configurez (Anthropic / OpenAI / Google / Ollama local). Rien d’autre.
 - Politique complète : [SECURITY.md](SECURITY.md).
 

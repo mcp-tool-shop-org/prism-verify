@@ -6,9 +6,17 @@
   <img src="https://raw.githubusercontent.com/mcp-tool-shop-org/prism-verify/main/assets/prism-verify-logo.png" alt="prism-verify logo" width="500">
 </p>
 
+<p align="center">
+  <a href="https://pypi.org/project/prism-verify/"><img src="https://img.shields.io/pypi/v/prism-verify" alt="PyPI"></a>
+  <a href="https://www.npmjs.com/package/@mcptoolshop/prism-verify"><img src="https://img.shields.io/npm/v/@mcptoolshop/prism-verify" alt="npm"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/"><img src="https://img.shields.io/badge/Landing_Page-live-22d3ee" alt="Landing Page"></a>
+  <a href="https://mcp-tool-shop-org.github.io/prism-verify/handbook/"><img src="https://img.shields.io/badge/Handbook-docs-22d3ee" alt="Handbook"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+</p>
+
 # prism-verify
 
-Serviço de avaliação em tempo de execução para fluxos de trabalho de agentes. Verificação com múltiplas lentes, com famílias diferentes, sem raciocínio e com recibos reproduzíveis.
+Serviço de avaliação em tempo real para fluxos de trabalho de agentes. Verificação com múltiplas perspectivas, que considera as diferenças entre famílias, elimina o raciocínio complexo e permite a reprodução dos resultados. **[Página inicial e manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Instalar
 
@@ -134,4 +142,4 @@ as chaves do provedor do Prism.
 
 ## Licença
 
-MIT
+Licença MIT.
