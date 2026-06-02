@@ -99,7 +99,7 @@ class TestReceiptSigningScope:
             "contract_completeness": "deadbeef",
             "invariant": "cafef00d",
         }
-        assert r.schema_version == 3
+        assert r.schema_version == 4
         fetched = store.get_receipt(r.id)
         assert json.loads(fetched["lens_prompt_hashes"]) == r.lens_prompt_hashes
         assert store.verify_signature(r.id) is True
@@ -272,7 +272,7 @@ class TestSchemaMigration:
             lens_results_json="[]",
             lens_prompt_hashes={"contract": "abc123"},
         )
-        assert r.schema_version == 3
+        assert r.schema_version == 4
         assert store.verify_signature(r.id) is True
         # Legacy row reads back with backfilled defaults.
         legacy = store.get_receipt("prism-legacy-1")

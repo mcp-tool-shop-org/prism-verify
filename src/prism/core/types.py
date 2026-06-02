@@ -156,7 +156,9 @@ class Receipt(BaseModel):
     lens_prompt_hashes: dict[str, str] = Field(default_factory=dict)
     artifact_type: str = "code"
     retrieval_pins: list[dict[str, str]] = Field(default_factory=list)
-    schema_version: int = 3
+    alg: str = "HMAC-SHA256"  # "Ed25519" (v0.4 default) or "HMAC-SHA256" (legacy)
+    kid: str = ""  # key id (Ed25519 public-key fingerprint); empty for HMAC
+    schema_version: int = 4
     signature: str
     replayable: bool = True
 

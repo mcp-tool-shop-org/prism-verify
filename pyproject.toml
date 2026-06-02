@@ -24,6 +24,9 @@ dependencies = [
     "httpx>=0.27",
     "click>=8.0",
     "ulid-py>=1.1",
+    # Ed25519 receipt signatures (v0.4): a different tool verifies a prism receipt with prism's
+    # PUBLIC key, no shared secret. Core (not an extra) so `prism verify-receipt` always works.
+    "cryptography>=42.0",
 ]
 
 [project.optional-dependencies]
