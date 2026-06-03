@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 Service d’évaluation en temps réel pour les flux de travail des agents. Vérification à plusieurs niveaux, avec des familles différentes, sans raisonnement explicite et avec des reçus rejouables. **[Page d’accueil et manuel →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
@@ -42,7 +42,7 @@ pip install "prism-verify[all]"
 
 ## Démarrage rapide
 
-Prism vérifie toujours avec un modèle de famille **différent** de celui de l’appelant (Lock 1), il est donc important de configurer au moins un fournisseur de famille alternatif. Générez une clé de signature Ed25519 (la valeur par défaut ; les reçus peuvent être vérifiés par toute personne disposant de la clé publique) afin que les reçus puissent être écrits, ou utilisez `PRISM_DEV=1` pour une utilisation locale :
+Prism vérifie toujours avec une famille de modèles **différente** de celle de l’appelant (Lock 1), donc configurez au moins un fournisseur de famille de modèles alternatif. Générez une clé de signature Ed25519 (la valeur par défaut : les reçus sont vérifiables par toute personne disposant de la clé publique) afin que les reçus puissent être écrits, ou utilisez `PRISM_DEV=1` pour une utilisation locale :
 
 ```bash
 prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
@@ -56,7 +56,7 @@ prism verify \
   --provider anthropic
 ```
 
-> Alternative ancienne : `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` signe les reçus avec HMAC (ils ne peuvent être vérifiés que par les détenteurs de ce secret partagé ; voir [Reçus](#receipts--signing-ed25519-verifiable-by-anyone)).
+> Alternative ancienne : `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` signe les reçus avec HMAC (vérifiables uniquement par les détenteurs de ce secret partagé — voir [Reçus](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Architecture
 
@@ -67,16 +67,23 @@ Prism applique quatre contraintes architecturales au niveau du contrat d’API 
 3. **Multi-niveaux** : au moins 3 niveaux indépendants fonctionnent en parallèle.
 4. **Connaissance de la sous-modularité** : refuse si les niveaux sont trop d’accord (signal affaibli).
 
+Pour les artefacts de **citation**, un niveau de vérification est appliqué avant l’analyse de la pertinence du LLM : chaque étape déterministe rejette ce qu’elle peut *prouver*, sinon elle s’abstient :
+
+- **Niveau de vérification de l’existence** : récupération en direct à partir d’arXiv/Crossref ; un identifiant fabriqué est rejeté, et non analysé.
+- **Niveau de vérification numérique/unitaire** : une permutation de pourcentage, une erreur d’échelle unitaire (42 milli- par rapport à micro-arcsecondes), ou une fausseté de direction de comparaison (5,0 < 5,8 ≠ « dépassé ») sont détectées arithmétiquement.
+- **Analyse de la pertinence** : vérification par la famille de modèles différente, sans raisonnement, par rapport au résumé récupéré.
+- **Niveau de vérification NLI orthogonal** *(facultatif, `PRISM_NLI_FLOOR`)* : un encodeur NLI croisé rejette une affirmation que le LLM a donnée, mais qu’un modèle mécaniquement différent ne confirme pas.
+
 ## Calibration et évaluation comparative (`prism eval`)
 
-Prism est conçu pour être **mesuré**, et pas seulement pour faire des affirmations. `prism eval` exécute les « lentilles » sur un corpus étiqueté et génère un rapport : sur les propres données de Prism, il indique la précision/le rappel/le MCC par « lentille », la matrice de diversité inter-lentilles (alpha de Krippendorff + kappa de Cohen par paires), le gain de couverture sous-modulaire, la précision de la décision et la calibration de la confiance (ECE/Brier), le tout avec un intervalle de confiance honnête.
+Prism est conçu pour être **mesuré**, et non pas seulement pour faire des affirmations. `prism eval` exécute les analyses sur un corpus étiqueté et génère un rapport : sur les propres données de Prism, il indique la précision/le rappel/le MCC par analyse, la matrice de diversité inter-analyses (alpha de Krippendorff + kappa de Cohen par paires), le gain de couverture sous-modulaire, la précision de la décision et l’étalonnage de la confiance (ECE/Brier), le tout avec un intervalle de confiance honnête.
 
 ```bash
 prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-L’exécution de la version 0.5 (locale `mistral-small:24b`) a révélé un réel problème dans un verrou principal : la métrique de sous-modularité d’exécution (indice de Jaccard du jeu de résultats ρ) affiche **0,0 pour chaque paire de lentilles**, tandis que le kappa de Cohen au niveau de la décision est de **0,73 à 0,81** ; la limite `ρ ≤ 0,25` *ignore la corrélation des lentilles que révèle le kappa*. Découvrir cela est le but principal de cette analyse ; les résultats complets et la méthode sont disponibles dans [`eval/RESULTS.md`](eval/RESULTS.md) et [`design/07`](design/07-slice1-calibration.md).
+L’exécution de la version 0.5 (locale `mistral-small:24b`) a révélé un réel problème dans un verrou principal : la métrique de sous-modularité en temps d’exécution (Jaccard ρ de l’ensemble de résultats) indique **0,0 pour chaque paire d’analyses**, tandis que le kappa de Cohen au niveau de la décision est de **0,73 à 0,81** : la limite `ρ ≤ 0,25` est *aveugle à la corrélation entre les analyses que révèle κ*. Découvrir cela est tout l’intérêt de cette analyse ; les résultats complets et la méthode sont disponibles dans [`eval/RESULTS.md`](eval/RESULTS.md) et [`design/07`](design/07-slice1-calibration.md).
 
 ## Service HTTP
 
@@ -135,4 +142,4 @@ prism receipt prune --older-than 90d --yes
 
 ## Licence
 
-MIT
+Licence MIT

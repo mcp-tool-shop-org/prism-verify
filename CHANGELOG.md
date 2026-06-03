@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-06-03
+
+Two more deterministic/orthogonal layers for the citation path, both precision-biased (neither can
+introduce a false-confirm) and measured on a 56-case labeled set (tensor-engine-knowledge waves 10–14).
+
+### Added
+- **Generalized numeric/unit floor** (`numeric_unit_mismatch`) — the deterministic numeric guard now
+  catches two more contradiction classes a reasoning-stripped lens is structurally blind to, beyond
+  the existing percentage check: a **unit-scale mismatch** (a claim's "42 milliarcseconds" where the
+  source says "42 micro-arcseconds") and a **comparison-direction falsehood** (a claim that the
+  observed "5.0σ exceeded" the expected "5.8σ" when 5.0 < 5.8). Refute-or-abstain: it flags a
+  contradiction only on a *provable* one, else falls through to the groundedness lens — 0 false-
+  refutes across the labeled set. Runs before the LLM lens in `_adjudicate_citation`. Additive.
+- **Optional orthogonal NLI floor** (`prism.lenses.nli`, opt-in) — a mechanistically-different
+  encoder NLI cross-encoder (DeBERTa-v3 NLI) as a **veto** on the groundedness lens's `supported`:
+  two LLMs share correlated blind spots, but a discriminative classifier fails differently, so it
+  catches a class of false-confirm the LLM shares. **Opt-in and optional**: it needs the new `nli`
+  extra (`pip install prism-verify[nli]` — torch + transformers) and is gated by `PRISM_NLI_FLOOR`;
+  when the extra or the model is absent it abstains and prism behaves exactly as before, so the
+  default install stays lightweight and CI is unchanged. Env: `PRISM_NLI_FLOOR`, `PRISM_NLI_MODEL`,
+  `PRISM_NLI_TAU`.
+
+Consumers that shell the `prism` CLI (e.g. role-os's `verify-citations`) gain the numeric/unit floor
+automatically on upgrade; the NLI floor is opt-in via `PRISM_NLI_FLOOR`.
+
 ## [1.0.0] - 2026-06-03
 
 **First stable release.** prism graduates from its 0.x line. The architecture proven across the

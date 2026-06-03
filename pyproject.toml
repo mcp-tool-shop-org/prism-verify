@@ -1,6 +1,6 @@
 [project]
 name = "prism-verify"
-version = "1.0.0"
+version = "1.1.0"
 description = "Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts."
 readme = "README.md"
 license = "MIT"
@@ -35,6 +35,9 @@ openai = ["openai>=1.50"]
 google = ["google-genai>=1.0"]
 mcp = ["mcp>=1.0"]
 http = ["fastapi>=0.115", "uvicorn>=0.30"]
+# Orthogonal NLI floor (opt-in): an encoder NLI cross-encoder vetoes a "supported" the LLM
+# groundedness lens gave but a mechanistically-different model does not corroborate. Heavy; opt-in.
+nli = ["torch>=2.0", "transformers>=4.40", "sentencepiece>=0.2"]
 all = [
     "anthropic>=0.40",
     "openai>=1.50",
@@ -42,6 +45,9 @@ all = [
     "mcp>=1.0",
     "fastapi>=0.115",
     "uvicorn>=0.30",
+    "torch>=2.0",
+    "transformers>=4.40",
+    "sentencepiece>=0.2",
 ]
 dev = [
     "pytest>=8.0",

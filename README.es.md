@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 Servicio de validación en tiempo de ejecución para flujos de trabajo de agentes. Verificación con múltiples modelos, diferenciada por familia y sin razonamiento, con comprobantes que se pueden reproducir. **[Página de destino y manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
@@ -69,6 +69,13 @@ Prism aplica cuatro bloqueos arquitectónicos en el contrato de la API:
 2. **Sin razonamiento:** se elimina el CoT del productor antes de cruzar el límite de la familia.
 3. **Múltiples lentes:** se ejecutan al menos 3 lentes independientes en paralelo.
 4. **Con conocimiento de la submodularidad:** se rechaza si los lentes están demasiado de acuerdo (señal colapsada).
+
+Para los artefactos de **citación**, se utiliza una capa de verificación antes de la lente de fundamentación del LLM; cada etapa determinista rechaza aquello que puede *demostrar*, y, en caso contrario, se abstiene:
+
+- **Capa de existencia**: recuperación en tiempo real de arXiv/Crossref; se descarta un identificador fabricado, sin realizarse ningún razonamiento al respecto.
+- **Capa numérica/de unidades**: se detecta aritméticamente un cambio de porcentaje, un error en la escala de unidades (42 mili- frente a micro-arcosegundos) o una falsedad en la dirección de la comparación (5,0 < 5,8 ≠ "superado").
+- **Lente de fundamentación**: se realiza una comprobación del LLM, desprovisto de razonamiento y diferente en su familia, con el resumen recuperado.
+- **Capa NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)*: un codificador NLI (inferencia del lenguaje natural) actúa como filtro y rechaza una afirmación "respaldada" por el LLM, pero que un modelo mecánicamente diferente no corrobora.
 
 ## Calibración y prueba de rendimiento (`prism eval`)
 

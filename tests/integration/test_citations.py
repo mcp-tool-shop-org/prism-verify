@@ -250,6 +250,46 @@ async def test_numeric_mismatch_revises_before_lens(tmp_path):
     store.close()
 
 
+async def test_nli_floor_vetoes_supported_when_enabled(tmp_path, monkeypatch):
+    # The LLM groundedness lens says "supported", but the opt-in orthogonal NLI floor refutes it,
+    # so the verdict is downgraded to ESCALATE (the wave-10 veto), never a silent accept.
+    import prism.core.engine as eng
+
+    monkeypatch.setattr(eng, "nli_floor_enabled", lambda: True)
+    monkeypatch.setattr(eng, "nli_groundedness", lambda claim, source: "refuted")
+    engine, store = _engine(tmp_path, outcome="supported")
+    cits = [{"id": "c1", "claim": "X holds", "identifier": "2402.01817", "title": "A Paper"}]
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(200, text=_feed("A Paper", "We show that X holds."))
+        )
+        result = await engine.verify(_request(cits))
+
+    assert result.verdict == Verdict.ESCALATE
+    cr = result.citation_results[0]
+    assert cr.action == "VERIFY: ORTHOGONAL NLI DISAGREES"
+    assert "NLI" in (cr.detail or "")
+    store.close()
+
+
+async def test_nli_floor_absent_keeps_accept(tmp_path, monkeypatch):
+    # Floor enabled but the optional NLI extra is unavailable (None) -> the lens accept stands.
+    import prism.core.engine as eng
+
+    monkeypatch.setattr(eng, "nli_floor_enabled", lambda: True)
+    monkeypatch.setattr(eng, "nli_groundedness", lambda claim, source: None)
+    engine, store = _engine(tmp_path, outcome="supported")
+    cits = [{"id": "c1", "claim": "X holds", "identifier": "2402.01817", "title": "A Paper"}]
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(200, text=_feed("A Paper", "We show that X holds."))
+        )
+        result = await engine.verify(_request(cits))
+
+    assert result.verdict == Verdict.ACCEPT
+    store.close()
+
+
 async def test_oracle_down_escalates(tmp_path):
     engine, store = _engine(tmp_path)
     cits = [{"id": "down", "claim": "x holds", "identifier": "2402.01817"}]

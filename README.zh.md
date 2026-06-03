@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 用于代理工作流程的运行时仲裁服务。不同模型族、去除推理过程、多视角验证，并提供可重放的收据。**[登录页面和手册 →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
@@ -42,7 +42,7 @@ pip install "prism-verify[all]"
 
 ## 快速入门
 
-Prism 始终会使用与调用方不同的模型系列进行验证（锁 1），因此请配置至少一个备用系列提供程序。生成一个 Ed25519 签名密钥（默认情况下，任何拥有公钥的人都可以验证收据），以便可以写入收据，或者使用 `PRISM_DEV=1` 进行本地测试：
+Prism 始终会使用与调用方不同的模型系列来验证（锁 1），因此请配置至少一个备用系列提供程序。生成一个 Ed25519 签名密钥（默认设置——任何拥有公钥的人都可以验证收据），以便可以写入收据，或者使用 `PRISM_DEV=1` 进行本地测试：
 
 ```bash
 prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
@@ -56,7 +56,7 @@ prism verify \
   --provider anthropic
 ```
 
-> 传统替代方案：`export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` 使用 HMAC 对收据进行签名（只能由拥有该共享密钥的人进行验证——请参阅[收据](#receipts--signing-ed25519-verifiable-by-anyone)）。
+> 传统替代方案：`export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` 使用 HMAC 对收据进行签名（只能由拥有该共享密钥的人验证——请参阅[收据](#receipts--signing-ed25519-verifiable-by-anyone)）。
 
 ## 架构
 
@@ -67,16 +67,23 @@ Prism 在 API 协议层面强制执行四个架构锁定：
 3. **多视角**——至少有 3 个独立的视角并行运行。
 4. **考虑子模性**——如果各个视角达成高度一致（信号崩溃），则拒绝。
 
-## 校准与基准测试 (`prism eval`)
+对于**引用**工件，在 LLM 基础性检查之前，会先进行分层检查——每个确定性阶段都会拒绝其能够*证明*的内容，否则会避免处理：
 
-Prism 的设计目的是为了进行**测量**，而不仅仅是断言。`prism eval` 会在一个带有标签的语料库上运行各个“镜头”，并报告 Prism 自身数据中每个“镜头”的精确度/召回率/MCC，各个“镜头”之间的多样性矩阵（Krippendorff α + 成对 Cohen κ），子模覆盖增益，判决准确率和置信度校准（ECE/Brier），每个指标都附带一个真实的置信区间。
+- **存在性检查**——实时检索 arXiv/Crossref；如果检测到伪造的标识符，则会将其丢弃，不会对其进行推理。
+- **数值/单位检查**——检测百分比交换、单位比例错误（42 毫弧秒与微弧秒）、或比较方向错误（5.0 < 5.8 ≠“超过”），并进行算术验证。
+- **基础性检查**——使用与检索到的摘要进行比较的不同模型系列，并去除推理过程。
+- **正交 NLI 检查**（可选，`PRISM_NLI_FLOOR`）——一个编码器 NLI 交叉编码器会否决 LLM 给出的“支持”结果，但一个机械上不同的模型不会证实该结果。
+
+## 校准和基准测试 (`prism eval`)
+
+Prism 的设计目的是为了能够**进行测量**，而不仅仅是进行断言。`prism eval` 会在一个标记的语料库上运行各个检查模块，并报告——基于 Prism 自身的数据——每个检查模块的精确度/召回率/MCC，各个检查模块之间的多样性矩阵（Krippendorff α + 成对 Cohen κ），子模覆盖增益，判决准确性，以及置信度校准（ECE/Brier），每个指标都附带一个诚实的置信区间。
 
 ```bash
 prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-v0.5 版本的运行（本地 `mistral-small:24b`）揭示了一个核心锁中存在的实际差距：运行时子模度指标（查找集 Jaccard ρ）对于每个“镜头”对都显示为 **0.0**，而决策级别的 Cohen κ 为 **0.73–0.81**——`ρ ≤ 0.25` 阈值*忽略了“镜头”相关性 κ 所揭示的内容*。发现这一点正是本次测试的目的；完整结果和方法请参见 [`eval/RESULTS.md`](eval/RESULTS.md) 和 [`design/07`](design/07-slice1-calibration.md)。
+v0.5 版本的运行（本地 `mistral-small:24b`）揭示了一个核心锁中的实际差距：运行时子模度指标（查找集 Jaccard ρ）对于每个检查模块对都显示为**0.0**，而决策级别的 Cohen κ 为**0.73–0.81**——`ρ ≤ 0.25` 门限*忽略了检查模块之间的相关性 κ 所揭示的内容*。发现这一点正是该切片分析的全部目的；完整结果和方法请参见 [`eval/RESULTS.md`](eval/RESULTS.md) 和 [`design/07`](design/07-slice1-calibration.md)。
 
 ## HTTP 服务
 

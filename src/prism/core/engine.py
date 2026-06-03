@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from prism.core.citations import (
     build_citation_groundedness_prompts,
     numeric_mismatch,
+    numeric_unit_mismatch,
     parse_citation_groundedness,
     parse_citations,
 )
@@ -39,6 +40,7 @@ from prism.core.types import (
     VerifyResponse,
 )
 from prism.lenses.base import Lens, compute_prompt_hash
+from prism.lenses.nli import nli_floor_enabled, nli_groundedness
 from prism.lenses.registry import resolve_lenses
 from prism.providers.base import CompletionRequest, ModelProvider, ProviderError
 from prism.receipts.store import ReceiptStore
@@ -553,6 +555,22 @@ class VerificationEngine:
                 ),
                 None,
             )
+        unit_bad, unit_detail = numeric_unit_mismatch(citation.claim, source_text)
+        if unit_bad:
+            return (
+                CitationResult(
+                    citation_id=cid,
+                    identifier=ident,
+                    existence=ExistenceOutcome.RESOLVED,
+                    finding_match=FindingMatch.CONTRADICTED,
+                    verdict=Verdict.REVISE,
+                    action="FIX TO MATCH SOURCE",
+                    detail=unit_detail,
+                    source_title=existence.source_title,
+                    source_abstract=existence.source_abstract,
+                ),
+                None,
+            )
         if not (existence.source_abstract and existence.source_abstract.strip()):
             return (
                 CitationResult(
@@ -627,12 +645,34 @@ class VerificationEngine:
             )
             detail = "claim is not addressed in the title+abstract"
             lens_outcome = LensOutcome.UNCERTAIN
+        # Orthogonal NLI floor (opt-in, PRISM_NLI_FLOOR): a mechanistically-different encoder-NLI
+        # check vetoes a "supported" the LLM lens gave but a different mechanism does not
+        # corroborate (wave-10). Abstains (no-op) when the optional `nli` extra is absent.
+        nli_findings: list[Finding] = []
+        if verdict == Verdict.ACCEPT and nli_floor_enabled():
+            nli_verdict = nli_groundedness(citation.claim, source_text)
+            if nli_verdict is not None and nli_verdict != "supported":
+                fmatch = FindingMatch.NOT_ADDRESSED
+                verdict = Verdict.ESCALATE
+                action = "VERIFY: ORTHOGONAL NLI DISAGREES"
+                detail = (
+                    "the LLM lens found the claim supported, but a mechanistically-orthogonal "
+                    f"NLI check returned '{nli_verdict}'"
+                )
+                lens_outcome = LensOutcome.UNCERTAIN
+                nli_findings = [
+                    Finding(
+                        category="nli_floor",
+                        evidence=f"orthogonal NLI verdict: {nli_verdict}",
+                        severity="major",
+                    )
+                ]
         lr = LensResult(
             lens=lens_name,
             model_family=route.family.value,
             model_id=route.model_id,
             outcome=lens_outcome,
-            findings=[],
+            findings=nli_findings,
             confidence=conf,
             prompt_hash=prompt_hash,
         )

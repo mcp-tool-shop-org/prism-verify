@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 Servizio di verifica in tempo reale per i flussi di lavoro degli agenti. Verifica multi-lente, con famiglie diverse e senza ragionamento, con ricevute riproducibili. **[Pagina di destinazione e manuale →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
@@ -42,7 +42,7 @@ pip install "prism-verify[all]"
 
 ## Avvio rapido
 
-Prism verifica sempre, utilizzando un modello di famiglia **diverso** da quello del chiamante (Lock 1), quindi configurare almeno un fornitore di famiglia alternativo. Generare una chiave di firma Ed25519 (impostazione predefinita: le ricevute sono verificabili da chiunque disponga della chiave pubblica) in modo che le ricevute possano essere scritte, oppure utilizzare `PRISM_DEV=1` per l'esecuzione in locale:
+Prism verifica sempre, utilizzando un modello, una famiglia **diversa** da quella del chiamante (Lock 1), quindi configurare almeno un fornitore di famiglia alternativa. Generare una chiave di firma Ed25519 (impostazione predefinita: le ricevute sono verificabili da chiunque disponga della chiave pubblica) in modo che le ricevute possano essere scritte, oppure utilizzare `PRISM_DEV=1` per l'esecuzione locale:
 
 ```bash
 prism keygen --out ~/.prism/signing_key.pem      # Ed25519 keypair (default signing)
@@ -56,7 +56,7 @@ prism verify \
   --provider anthropic
 ```
 
-> Alternativa legacy: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` firma le ricevute utilizzando HMAC (verificabili solo dai possessori di tale chiave segreta condivisa; vedere [Ricevute](#ricevute--firma-ed25519-verificabile-da-chiunque)).
+> Alternativa legacy: `export PRISM_SIGNING_SECRET="$(openssl rand -hex 32)"` firma le ricevute utilizzando HMAC (verificabili solo dai possessori di tale segreto condiviso — vedere [Ricevute](#receipts--signing-ed25519-verifiable-by-anyone)).
 
 ## Architettura
 
@@ -67,16 +67,23 @@ Prism applica quattro blocchi architetturali al contratto API:
 3. **Multi-lente:** almeno 3 lenti indipendenti vengono eseguite in parallelo.
 4. **Consapevole della submodularità:** rifiuta se le lenti sono troppo d'accordo (segnale collassato).
 
-## Calibrazione e test di performance (`prism eval`)
+Per gli artefatti di **citazione**, viene eseguito un livello di controllo prima della lente di verifica della coerenza con i dati di base: ogni fase deterministica rifiuta ciò che può *dimostrare*, altrimenti si astiene:
 
-Prism è progettato per essere **misurato**, non solo per fornire un'asserzione. `prism eval` esegue i modelli su un corpus etichettato e fornisce un rapporto, basato sui dati di Prism, sulla precisione/richiamo/MCC per ciascun modello, sulla matrice di diversità inter-modello (Krippendorff α + Cohen κ a coppie), sul guadagno di copertura submodulare, sull'accuratezza della decisione e sulla calibrazione della confidenza (ECE/Brier), il tutto con un intervallo di confidenza onesto.
+- **Livello di esistenza:** recupero in tempo reale da arXiv/Crossref; un identificatore fabbricato viene scartato, senza ulteriori analisi.
+- **Livello numerico/di unità:** viene rilevata aritmeticamente una sostituzione di percentuale, un errore nella scala delle unità (42 milli- rispetto a micro-arcosecondi) o una falsità nella direzione del confronto (5,0 < 5,8 ≠ "superato").
+- **Lente di verifica della coerenza con i dati di base:** verifica, rispetto all'abstract recuperato, da parte di un modello LLM diverso e privo di capacità di ragionamento.
+- **Livello di inferenza del linguaggio naturale ortogonale** *(opzionale, `PRISM_NLI_FLOOR`)*: un encoder NLI (Natural Language Inference) esegue un controllo incrociato e rifiuta una risposta "supportata" fornita dal modello LLM, ma non confermata da un modello meccanicamente diverso.
+
+## Calibrazione e test di riferimento (`prism eval`)
+
+Prism è progettato per essere **misurato**, non solo per fornire asserzioni. `prism eval` esegue i controlli su un corpus etichettato e fornisce un rapporto, basato sui dati di Prism, sulla precisione/richiamo/MCC per ogni lente, sulla matrice di diversità tra le lenti (alfa di Krippendorff + kappa di Cohen a coppie), sul guadagno di copertura submodulare, sull'accuratezza delle decisioni e sulla calibrazione della confidenza (ECE/Brier), il tutto con un intervallo di confidenza onesto.
 
 ```bash
 prism eval --split public --runs 3     # measure against the bundled corpus (needs a verifier)
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-L'esecuzione della versione 0.5 (in locale `mistral-small:24b`) ha evidenziato una reale lacuna in un blocco principale: la metrica di submodularità in fase di esecuzione (Jaccard ρ dell'insieme di risultati) restituisce **0,0 per ogni coppia di modelli**, mentre il Cohen κ a livello di decisione è **0,73–0,81**: il limite `ρ ≤ 0,25` è *insensibile alla correlazione tra i modelli, che invece viene rivelata da κ*. L'obiettivo di questa analisi è proprio quello di individuare questo aspetto; i risultati completi e la metodologia sono disponibili in [`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
+L'esecuzione della versione 0.5 (locale `mistral-small:24b`) ha evidenziato una lacuna reale in un controllo fondamentale: la metrica di submodularità in fase di esecuzione (Jaccard ρ dell'insieme di risultati) è pari a **0.0 per ogni coppia di lenti**, mentre il kappa di Cohen a livello di decisione è compreso tra **0.73 e 0.81**: il limite `ρ ≤ 0.25` è *insensibile alla correlazione tra le lenti, che invece viene rivelata dal kappa*. Individuare questo è l'obiettivo principale del test; i risultati completi e la metodologia sono disponibili in [`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
 
 ## Servizio HTTP
 

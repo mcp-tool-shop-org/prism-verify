@@ -71,6 +71,16 @@ Prism enforces four architectural locks at the API contract:
 3. **Multi-lens** — at least 3 independent lenses run in parallel
 4. **Submodularity-aware** — refuses if lenses agree too much (collapsed signal)
 
+For **citation** artifacts, a layered floor runs before the LLM groundedness lens — each
+deterministic stage refuses what it can *prove*, else abstains:
+
+- **Existence floor** — live arXiv/Crossref retrieval; a fabricated identifier is dropped, not reasoned about.
+- **Numeric/unit floor** — a percentage swap, a unit-scale slip (42 milli- vs micro-arcsec), or a
+  comparison-direction falsehood (5.0 < 5.8 ≠ "exceeded") is caught arithmetically.
+- **Groundedness lens** — the family-different, reasoning-stripped LLM check against the retrieved abstract.
+- **Orthogonal NLI floor** *(opt-in, `PRISM_NLI_FLOOR`)* — an encoder NLI cross-encoder vetoes a
+  "supported" the LLM gave but a mechanistically-different model does not corroborate.
+
 ## Calibration & benchmark (`prism eval`)
 
 prism is built to be **measured**, not just asserted. `prism eval` runs the lenses over a labeled

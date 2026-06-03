@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 Serviço de avaliação em tempo real para fluxos de trabalho de agentes. Verificação com múltiplas perspectivas, que considera as diferenças entre famílias, elimina o raciocínio complexo e permite a reprodução dos resultados. **[Página inicial e manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
@@ -70,6 +70,13 @@ O Prism aplica quatro restrições arquiteturais no contrato da API:
 2. **Sem raciocínio** — o CoT do produtor é removido antes de atravessar a fronteira da família.
 3. **Múltiplas lentes** — pelo menos 3 lentes independentes são executadas em paralelo.
 4. **Consciência da submodularidade** — recusa se as lentes concordarem demais (sinal colapsado).
+
+Para os artefatos de **citação**, uma camada de verificação é aplicada antes da análise da consistência do LLM — cada etapa determinística rejeita o que pode *comprovar*, caso contrário, abstém-se:
+
+- **Camada de existência** — recuperação em tempo real do arXiv/Crossref; um identificador fabricado é descartado, sem que se faça qualquer análise sobre ele.
+- **Camada numérica/de unidades** — uma troca de percentagens, um erro na escala de unidades (42 mili- versus micro-segundos de arco) ou uma falsidade na direção da comparação (5,0 < 5,8 ≠ "excedido) são detectados aritmeticamente.
+- **Análise de consistência** — verificação do LLM, que difere em termos de família e que não utiliza raciocínio, em relação ao resumo recuperado.
+- **Camada NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)* — um codificador NLI (Inferência de Linguagem Natural) rejeita uma afirmação "confirmada" pelo LLM, mas que um modelo mecanicamente diferente não corrobora.
 
 ## Calibração e teste de desempenho (`prism eval`)
 
@@ -159,4 +166,4 @@ as chaves do provedor do Prism.
 
 ## Licença
 
-Licença MIT.
+MIT

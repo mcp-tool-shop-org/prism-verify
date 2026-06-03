@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from prism.core.citations import (
     numeric_mismatch,
+    numeric_unit_mismatch,
     parse_citation_groundedness,
     parse_citations,
 )
@@ -57,6 +58,55 @@ class TestNumericMismatch:
 
     def test_claim_without_percentage_abstains(self):
         flagged, _ = numeric_mismatch("a qualitative claim", "we achieve 89%")
+        assert flagged is False
+
+
+class TestNumericUnitMismatch:
+    def test_flags_unit_scale_slip(self):
+        # same number, same base unit, different metric prefix (milli vs micro) -> a contradiction
+        flagged, detail = numeric_unit_mismatch(
+            "the ring diameter was 42 milliarcseconds",
+            "we measure an emission ring with a diameter of 42 micro-arcseconds",
+        )
+        assert flagged is True
+        assert "arcsec" in detail
+
+    def test_flags_comparison_direction_falsehood(self):
+        flagged, detail = numeric_unit_mismatch(
+            "the observed local significance exceeded the expected significance",
+            "a local significance of 5.0 standard deviations; "
+            "the expected significance is 5.8 standard deviations",
+        )
+        assert flagged is True
+        assert "5.8" in detail
+
+    def test_abstains_on_true_comparison(self):
+        # observed 5.8 DID exceed expected 5.0 -> the claim is true -> must NOT flag
+        flagged, _ = numeric_unit_mismatch(
+            "the observed local significance exceeded the expected significance",
+            "a local significance of 5.8 standard deviations; "
+            "the expected significance is 5.0 standard deviations",
+        )
+        assert flagged is False
+
+    def test_abstains_on_matching_units(self):
+        flagged, _ = numeric_unit_mismatch(
+            "the ring diameter was 42 microarcseconds", "a diameter of 42 micro-arcseconds"
+        )
+        assert flagged is False
+
+    def test_abstains_without_units_or_comparison(self):
+        flagged, _ = numeric_unit_mismatch(
+            "a qualitative claim about the method", "we propose a new approach"
+        )
+        assert flagged is False
+
+    def test_abstains_when_operands_unbindable(self):
+        # 'fewer than two-thirds' has no second explicit source number to bind -> abstain
+        flagged, _ = numeric_unit_mismatch(
+            "the system found evidence for fewer than two-thirds of the claims",
+            "we identify plausible evidence for 23 / 36 claims",
+        )
         assert flagged is False
 
 
