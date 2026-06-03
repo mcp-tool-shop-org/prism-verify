@@ -130,7 +130,8 @@ async def test_resolved_supported_surfaces_full_abstract(tmp_path):
     supporting_span. A downstream re-verifier (the role-os local panel) can then judge a faithful
     claim against the whole abstract instead of one span — fixing the wave-6 e2e where a faithful
     Kambhampati claim was escalated because only the truncated span was visible. The abstract is
-    already retrieved to ground the lens; this stops discarding it (and model_dump carries it to JSON)."""
+    already retrieved to ground the lens; prism stops discarding it (model_dump carries it to
+    JSON)."""
     engine, store = _engine(tmp_path, outcome="supported")
     abstract = (
         "We argue that autoregressive LLMs cannot self-verify their own outputs and require a "

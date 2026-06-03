@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - 2026-06-03
+
+**First stable release.** prism graduates from its 0.x line. The architecture proven across the
+pre-1.0 series is now declared stable: the four locks (family-different routing, reasoning-stripped,
+multi-lens ≥ 3, submodularity-aware) and the citation-verification layer (v0.1–0.3), the installable
++ HTTP-callable + independently-verifiable surface with Ed25519 receipts and the npm launcher (v0.4),
+and the `prism eval` calibration pack (v0.5). The one functional change since 0.5.0:
 
 ### Added
 - **`CitationResult.source_abstract`** — the full retrieved source abstract is now surfaced on each
