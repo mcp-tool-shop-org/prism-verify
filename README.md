@@ -14,7 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
 
-# prism-verify
+# 
 
 Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts. **[Landing page &amp; handbook →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
