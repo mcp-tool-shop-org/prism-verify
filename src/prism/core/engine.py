@@ -549,6 +549,7 @@ class VerificationEngine:
                     action="FIX TO MATCH SOURCE",
                     detail=mism_detail,
                     source_title=existence.source_title,
+                    source_abstract=existence.source_abstract,
                 ),
                 None,
             )
@@ -602,6 +603,7 @@ class VerificationEngine:
                     action="RETRIEVE MANUALLY",
                     detail=f"groundedness verifier unavailable: {exc}",
                     source_title=existence.source_title,
+                    source_abstract=existence.source_abstract,
                 ),
                 lr,
             )
@@ -644,6 +646,7 @@ class VerificationEngine:
                 action=action,
                 detail=detail,
                 source_title=existence.source_title,
+                source_abstract=existence.source_abstract,
                 supporting_span=span,
                 confidence=conf,
             ),

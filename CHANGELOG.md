@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-06-02
+## [Unreleased]
+
+### Added
+- **`CitationResult.source_abstract`** — the full retrieved source abstract is now surfaced on each
+  RESOLVED citation result (and flows to the `verify --type citations` JSON via `model_dump`),
+  instead of only the groundedness lens's single `supporting_span`. The abstract is already
+  retrieved to ground the lens; prism stopped discarding it. This lets a downstream re-verifier
+  (e.g. role-os's `verify-citations --local-panel`) judge a faithful claim against the whole
+  abstract rather than one span — fixing a case where a faithful claim was escalated because only
+  the truncated span was visible to the panel. Additive, non-breaking (new optional field).
 
 Stage-A security hardening (no API changes; receipt schema v5 in place) + the Slice-1 calibration
 pack (`prism eval`). First release that **measures** prism's locks on its own labeled data — and

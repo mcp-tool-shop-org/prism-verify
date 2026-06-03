@@ -20,6 +20,7 @@ from prism.core.types import (
     ArtifactType,
     CallerContext,
     ExistenceOutcome,
+    FindingMatch,
     ModelFamily,
     Verdict,
     VerifyError,
@@ -121,6 +122,34 @@ async def test_resolved_and_supported_accepts(tmp_path):
     assert result.receipt.retrieval_pins[0]["source_sha256"]
     assert "export.arxiv.org" in result.receipt.retrieval_pins[0]["query"]
     assert store.verify_signature(result.receipt.id) is True
+    store.close()
+
+
+async def test_resolved_supported_surfaces_full_abstract(tmp_path):
+    """The RESOLVED result carries the FULL retrieved abstract, not just the lens's single
+    supporting_span. A downstream re-verifier (the role-os local panel) can then judge a faithful
+    claim against the whole abstract instead of one span — fixing the wave-6 e2e where a faithful
+    Kambhampati claim was escalated because only the truncated span was visible. The abstract is
+    already retrieved to ground the lens; this stops discarding it (and model_dump carries it to JSON)."""
+    engine, store = _engine(tmp_path, outcome="supported")
+    abstract = (
+        "We argue that autoregressive LLMs cannot self-verify their own outputs and require a "
+        "sound external verifier to close the loop in an LLM-Modulo framework."
+    )
+    cits = [{"id": "c1", "claim": "LLMs cannot self-verify", "identifier": "2402.01817"}]
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(200, text=_feed("A Paper", abstract))
+        )
+        result = await engine.verify(_request(cits))
+
+    cr = result.citation_results[0]
+    assert cr.existence == ExistenceOutcome.RESOLVED
+    assert cr.finding_match == FindingMatch.SUPPORTED
+    # The full retrieved abstract is surfaced on the result (previously discarded).
+    assert cr.source_abstract == abstract
+    # The CLI serializes via model_dump(), so the field reaches downstream consumers as JSON.
+    assert result.model_dump()["citation_results"][0]["source_abstract"] == abstract
     store.close()
 
 

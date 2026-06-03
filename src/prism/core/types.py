@@ -209,6 +209,7 @@ class CitationResult(BaseModel):
     action: str
     detail: str
     source_title: str | None = None
+    source_abstract: str | None = None
     supporting_span: str | None = None
     # Set only when a verdict is driven by the groundedness LLM lens (RESOLVED +
     # supported/contradicted/not_addressed): carries that lens's parsed confidence so the
