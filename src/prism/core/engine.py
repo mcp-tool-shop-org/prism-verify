@@ -39,6 +39,7 @@ from prism.core.types import (
     VerifyRequest,
     VerifyResponse,
 )
+from prism.eval.harvest import capture as harvest_capture
 from prism.lenses.base import Lens, compute_prompt_hash
 from prism.lenses.nli import nli_floor_enabled, nli_groundedness
 from prism.lenses.registry import resolve_lenses
@@ -149,7 +150,9 @@ class VerificationEngine:
         # v0.3: citations take a distinct path (deterministic existence floor -> numeric
         # guard -> RAG-fed groundedness lens), not the code-artifact multi-lens pipeline.
         if request.artifact.type == ArtifactType.CITATIONS:
-            return await self._verify_citations(request)
+            citation_response = await self._verify_citations(request)
+            harvest_capture(request, citation_response)
+            return citation_response
 
         # Step 1: Strip reasoning
         try:
@@ -324,7 +327,7 @@ class VerificationEngine:
         # Report success to router
         self._router.report_success(route.family, route.model_id)
 
-        return VerifyResponse(
+        response = VerifyResponse(
             verdict=verdict,
             confidence=confidence,
             retryable=retryable,
@@ -333,6 +336,8 @@ class VerificationEngine:
             pairwise_rho=sub_result.pairwise_rho,
             receipt=receipt,
         )
+        harvest_capture(request, response)
+        return response
 
     async def _run_lens(
         self,

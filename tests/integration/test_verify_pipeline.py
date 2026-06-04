@@ -291,3 +291,45 @@ async def test_two_of_four_errored_is_verifier_unavailable(tmp_path):
     assert result.reason == RefusalReason.VERIFIER_UNAVAILABLE
     assert result.retryable is True
     store.close()
+
+
+async def test_harvest_sink_fires_through_real_verify_when_enabled(tmp_path, monkeypatch):
+    """The opt-in L4 sink fires end-to-end: a groundedness PASS becomes one 'supported' record,
+    joined to the real receipt by receipt_id. The other three lenses are not 'groundedness' and
+    contribute nothing — the name filter holds through the real pipeline (prism.eval.harvest).
+    """
+    harvest_file = tmp_path / "harvest.jsonl"
+    monkeypatch.setenv("PRISM_HARVEST_PATH", str(harvest_file))
+    engine, store = _build_engine(tmp_path)
+    lens_json = json.dumps({"outcome": "pass", "confidence": 0.95, "findings": []})
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(f"{OLLAMA_URL}/api/chat").mock(
+            return_value=httpx.Response(200, json={"message": {"content": lens_json}})
+        )
+        result = await engine.verify(_request())
+
+    assert isinstance(result, VerifyResponse)
+    lines = harvest_file.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1  # only the groundedness lens contributes
+    rec = json.loads(lines[0])
+    assert rec["schema"] == "prism-l4-harvest/v1"
+    assert rec["source"] == "prism-groundedness"
+    assert rec["verdict"] == "supported"
+    assert rec["receipt_id"] == result.receipt.id  # the join key holds end-to-end
+    store.close()
+
+
+async def test_harvest_sink_is_off_by_default(tmp_path, monkeypatch):
+    """Default-off: with no PRISM_HARVEST_PATH, a full verify writes no harvest file at all."""
+    monkeypatch.delenv("PRISM_HARVEST_PATH", raising=False)
+    engine, store = _build_engine(tmp_path)
+    lens_json = json.dumps({"outcome": "pass", "confidence": 0.95, "findings": []})
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post(f"{OLLAMA_URL}/api/chat").mock(
+            return_value=httpx.Response(200, json={"message": {"content": lens_json}})
+        )
+        result = await engine.verify(_request())
+
+    assert isinstance(result, VerifyResponse)
+    assert not (tmp_path / "harvest.jsonl").exists()
+    store.close()

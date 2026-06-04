@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Opt-in L4 training-data capture sink** (`prism.eval.harvest`, env `PRISM_HARVEST_PATH`) — when
+  set, prism appends the `(claim, evidence_span, verdict)` triples a verification produces to a JSONL
+  file (`prism-l4-harvest/v1`). This is the training corpus for a local groundedness specialist that
+  can back prism's `local` lens family. **Default OFF**: unset env means no capture, no file, and zero
+  behavior change (the engine hook is a no-op). Captures the citation path's per-claim
+  `CitationResult`s — the clean triples receipts never persist, since receipts store artifact *hashes*
+  only — and the code path's `groundedness` lens; label mapping mirrors prism's own verdict semantics
+  (SUPPORTED→supported, CONTRADICTED→unsupported, NOT_ADDRESSED→abstain). Best-effort secret redaction
+  runs before write; receipts remain the join/provenance index via `receipt_id`.
+
 ## [1.1.0] - 2026-06-03
 
 Two more deterministic/orthogonal layers for the citation path, both precision-biased (neither can
