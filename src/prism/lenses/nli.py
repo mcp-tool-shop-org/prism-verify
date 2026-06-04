@@ -45,8 +45,8 @@ def _tau() -> float:
 def _load(model_id: str) -> tuple[Any, Any, str, dict[int, str]] | None:
     """(tokenizer, model, device, id2label), or None if the optional ``nli`` extra is absent."""
     try:  # pragma: no cover - exercised only with the optional torch extra installed
-        import torch  # type: ignore[import-not-found]
-        from transformers import (  # type: ignore[import-not-found]
+        import torch  # type: ignore[import-not-found, unused-ignore]
+        from transformers import (  # type: ignore[import-not-found, unused-ignore]
             AutoModelForSequenceClassification,
             AutoTokenizer,
         )
