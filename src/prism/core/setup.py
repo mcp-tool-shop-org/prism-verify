@@ -34,6 +34,20 @@ def build_providers_from_env() -> dict[str, ModelProvider]:
 
     providers["local"] = OllamaProvider()
 
+    # The Verifier specialist (a locally-served fine-tuned groundedness model) — opt-in via env. When set,
+    # build_default_engine injects it as the primary citation-groundedness verifier; mistral `local` and the
+    # hosted families remain as cross-family failover targets. Recommend pairing with PRISM_NLI_FLOOR (the
+    # orthogonal encoder-NLI veto) since the circuit-breaker fails over on errors, not on a confident-wrong
+    # "supported".
+    verifier_endpoint = os.environ.get("PRISM_LOCAL_VERIFIER_ENDPOINT")
+    if verifier_endpoint:
+        from prism.providers.local_verifier import LocalVerifierProvider
+
+        providers["local-verifier"] = LocalVerifierProvider(
+            endpoint=verifier_endpoint,
+            model_id=os.environ.get("PRISM_LOCAL_VERIFIER_MODEL", "qwen3-14b-groundedness"),
+        )
+
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
         from prism.providers.anthropic import AnthropicProvider
@@ -56,6 +70,18 @@ def build_providers_from_env() -> dict[str, ModelProvider]:
 
 
 def build_default_engine() -> VerificationEngine:
-    """Register the default lenses and construct an engine with env-configured providers."""
+    """Register the default lenses and construct an engine with env-configured providers.
+
+    When the local Verifier specialist is configured (PRISM_LOCAL_VERIFIER_ENDPOINT), inject a routing
+    map that makes it the PRIMARY citation verifier (failing over to the hosted/mistral verifiers behind
+    it). The static DEFAULT_ROUTING_MAP is left untouched when the specialist is not configured.
+    """
     register_default_lenses()
-    return VerificationEngine(providers=build_providers_from_env())
+    providers = build_providers_from_env()
+    router = None
+    if "local-verifier" in providers:
+        from prism.core.routing import DEFAULT_ROUTING_MAP, FamilyRouter, with_local_verifier
+
+        model_id = providers["local-verifier"].available_models[0]
+        router = FamilyRouter(routing_map=with_local_verifier(DEFAULT_ROUTING_MAP, model_id))
+    return VerificationEngine(providers=providers, router=router)

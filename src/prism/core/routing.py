@@ -40,6 +40,31 @@ DEFAULT_ROUTING_MAP: dict[ModelFamily, list[tuple[ModelFamily, str]]] = {
     ],
 }
 
+
+def with_local_verifier(
+    base: dict[ModelFamily, list[tuple[ModelFamily, str]]],
+    model_id: str = "qwen3-14b-groundedness",
+) -> dict[ModelFamily, list[tuple[ModelFamily, str]]]:
+    """A routing map with the local Verifier specialist PREPENDED as the primary verifier for every
+    caller (so it serves the high-frequency citation check, failing over to that caller's existing
+    cross-family verifiers when its circuit opens), plus a caller row for LOCAL_VERIFIER itself.
+
+    Injected by ``build_default_engine`` ONLY when the specialist provider is configured, so the static
+    ``DEFAULT_ROUTING_MAP`` — and its shipped contract/tests — is unchanged when it is not. LOCAL_VERIFIER
+    is a distinct family from LOCAL (=mistral), so family-difference holds and mistral stays a failover.
+    """
+    out = {
+        caller: [(ModelFamily.LOCAL_VERIFIER, model_id), *verifiers]
+        for caller, verifiers in base.items()
+    }
+    out[ModelFamily.LOCAL_VERIFIER] = [
+        (ModelFamily.ANTHROPIC, "claude-sonnet-4-6"),
+        (ModelFamily.OPENAI, "gpt-5.4-mini"),
+        (ModelFamily.GOOGLE, "gemini-2.5-pro"),
+        (ModelFamily.LOCAL, "mistral-small:24b"),
+    ]
+    return out
+
 # Circuit-breaker: open after this many consecutive failures within the window
 CIRCUIT_BREAKER_THRESHOLD = 3
 CIRCUIT_BREAKER_WINDOW_S = 60.0

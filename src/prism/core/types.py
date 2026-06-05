@@ -16,6 +16,10 @@ class ModelFamily(StrEnum):
     OPENAI = "openai"
     GOOGLE = "google"
     LOCAL = "local"
+    # A locally-served, fine-tuned SPECIALIST verifier (the Verifier specialist — a Qwen3-14B QLoRA for
+    # citation groundedness). Distinct family from LOCAL (=mistral) so it satisfies family-difference and
+    # leaves LOCAL as a real cross-family failover target. Opt-in via PRISM_LOCAL_VERIFIER_ENDPOINT.
+    LOCAL_VERIFIER = "local-verifier"
 
 
 class ArtifactType(StrEnum):
