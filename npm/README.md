@@ -33,7 +33,8 @@ Network access is HTTPS-only to GitHub; no telemetry, no credentials stored.
 **Prefer the Python package?** `uv tool install prism-verify` / `pipx install prism-verify`
 (PyPI, with PEP 740 provenance attestations). The npm wrapper exists for zero-Python `npx` use; the
 bundled binary covers the CLI + local (Ollama) verification + the HTTP service + citation
-verification + the `prism eval` calibration benchmark. Hosted-provider verifiers (Anthropic /
+verification (including an opt-in self-hosted groundedness verifier) + the `prism eval` calibration
+benchmark. Hosted-provider verifiers (Anthropic /
 OpenAI / Google) and full extras come with the PyPI install.
 
 Full docs, security model, and source: <https://github.com/mcp-tool-shop-org/prism-verify>.

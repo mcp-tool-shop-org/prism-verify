@@ -74,6 +74,10 @@ Per gli artefatti di **citazione**, viene eseguito un livello di controllo prima
 - **Lente di verifica della coerenza con i dati di base:** verifica, rispetto all'abstract recuperato, da parte di un modello LLM diverso e privo di capacità di ragionamento.
 - **Livello di inferenza del linguaggio naturale ortogonale** *(opzionale, `PRISM_NLI_FLOOR`)*: un encoder NLI (Natural Language Inference) esegue un controllo incrociato e rifiuta una risposta "supportata" fornita dal modello LLM, ma non confermata da un modello meccanicamente diverso.
 
+### Porta con te il tuo strumento di verifica
+
+È possibile utilizzare lo strumento di verifica locale con un modello che **ospiti tu stesso** invece di utilizzare un’API ospitata. Per farlo, abilita l’opzione tramite `PRISM_LOCAL_VERIFIER_ENDPOINT`. Questa opzione è specifica per ogni famiglia di modelli e, in caso di errore, si riconnette automaticamente ai tuoi strumenti di verifica. La verifica più frequente non comporta alcun costo per ogni chiamata e i dati rimangono memorizzati localmente. Un sistema di acquisizione opzionale (`PRISM_HARVEST_PATH`) registra le triple `(affermazione, prova, risultato)` in modo da poterle utilizzare per l’addestramento. Consulta il [manuale](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
 ## Calibrazione e test di riferimento (`prism eval`)
 
 Prism è progettato per essere **misurato**, non solo per fornire asserzioni. `prism eval` esegue i controlli su un corpus etichettato e fornisce un rapporto, basato sui dati di Prism, sulla precisione/richiamo/MCC per ogni lente, sulla matrice di diversità tra le lenti (alfa di Krippendorff + kappa di Cohen a coppie), sul guadagno di copertura submodulare, sull'accuratezza delle decisioni e sulla calibrazione della confidenza (ECE/Brier), il tutto con un intervallo di confidenza onesto.
@@ -83,7 +87,7 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-L'esecuzione della versione 0.5 (locale `mistral-small:24b`) ha evidenziato una lacuna reale in un controllo fondamentale: la metrica di submodularità in fase di esecuzione (Jaccard ρ dell'insieme di risultati) è pari a **0.0 per ogni coppia di lenti**, mentre il kappa di Cohen a livello di decisione è compreso tra **0.73 e 0.81**: il limite `ρ ≤ 0.25` è *insensibile alla correlazione tra le lenti, che invece viene rivelata dal kappa*. Individuare questo è l'obiettivo principale del test; i risultati completi e la metodologia sono disponibili in [`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
+Consulta il [manuale di valutazione](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/) per la procedura e un esempio pratico.
 
 ## Servizio HTTP
 

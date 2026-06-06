@@ -81,6 +81,14 @@ deterministic stage refuses what it can *prove*, else abstains:
 - **Orthogonal NLI floor** *(opt-in, `PRISM_NLI_FLOOR`)* — an encoder NLI cross-encoder vetoes a
   "supported" the LLM gave but a mechanistically-different model does not corroborate.
 
+### Bring your own verifier
+
+The groundedness lens can run against a model **you host** instead of a hosted API — opt-in via
+`PRISM_LOCAL_VERIFIER_ENDPOINT`, family-different, and fail-open to your hosted verifiers. The most
+frequent check costs nothing per call and your evidence stays local. An opt-in capture sink
+(`PRISM_HARVEST_PATH`) records the `(claim, evidence, verdict)` triples so you can train one. See the
+[handbook](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
 ## Calibration & benchmark (`prism eval`)
 
 prism is built to be **measured**, not just asserted. `prism eval` runs the lenses over a labeled
@@ -93,11 +101,8 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-The v0.5 run (local `mistral-small:24b`) surfaced a real gap in a core lock: the runtime
-submodularity metric (finding-set Jaccard ρ) reads **0.0 for every lens pair** while decision-level
-Cohen κ is **0.73–0.81** — the `ρ ≤ 0.25` gate is *blind to the lens correlation κ reveals*. Finding
-that is the whole point of the slice; full results + method in
-[`eval/RESULTS.md`](eval/RESULTS.md) and [`design/07`](design/07-slice1-calibration.md).
+See the [evaluation handbook](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/)
+for the method and a worked example.
 
 ## HTTP service
 

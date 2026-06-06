@@ -74,6 +74,10 @@ Prism 在 API 协议层面强制执行四个架构锁定：
 - **基础性检查**——使用与检索到的摘要进行比较的不同模型系列，并去除推理过程。
 - **正交 NLI 检查**（可选，`PRISM_NLI_FLOOR`）——一个编码器 NLI 交叉编码器会否决 LLM 给出的“支持”结果，但一个机械上不同的模型不会证实该结果。
 
+### 请自行提供验证器
+
+“可信度验证”功能可以针对您自行托管的模型进行运行，而不是使用托管的 API——您可以通过设置 `PRISM_LOCAL_VERIFIER_ENDPOINT` 来启用此功能，该功能会根据不同的模型进行调整，并且在出现问题时会默认使用您自行托管的验证器。最常见的验证操作每次都不需要额外费用，并且您的验证数据将保留在本地。一个可选的数据收集模块 (`PRISM_HARVEST_PATH`) 会记录 `(声明、证据、结果)` 三元组，以便您可以利用这些数据进行训练。请参阅[手册](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/)。
+
 ## 校准和基准测试 (`prism eval`)
 
 Prism 的设计目的是为了能够**进行测量**，而不仅仅是进行断言。`prism eval` 会在一个标记的语料库上运行各个检查模块，并报告——基于 Prism 自身的数据——每个检查模块的精确度/召回率/MCC，各个检查模块之间的多样性矩阵（Krippendorff α + 成对 Cohen κ），子模覆盖增益，判决准确性，以及置信度校准（ECE/Brier），每个指标都附带一个诚实的置信区间。
@@ -83,7 +87,7 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-v0.5 版本的运行（本地 `mistral-small:24b`）揭示了一个核心锁中的实际差距：运行时子模度指标（查找集 Jaccard ρ）对于每个检查模块对都显示为**0.0**，而决策级别的 Cohen κ 为**0.73–0.81**——`ρ ≤ 0.25` 门限*忽略了检查模块之间的相关性 κ 所揭示的内容*。发现这一点正是该切片分析的全部目的；完整结果和方法请参见 [`eval/RESULTS.md`](eval/RESULTS.md) 和 [`design/07`](design/07-slice1-calibration.md)。
+请参阅[评估手册](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/)，了解该方法和示例。
 
 ## HTTP 服务
 

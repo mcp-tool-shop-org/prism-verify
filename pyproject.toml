@@ -1,6 +1,6 @@
 [project]
 name = "prism-verify"
-version = "1.2.0"
+version = "1.2.1"
 description = "Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts."
 readme = "README.md"
 license = "MIT"

@@ -78,6 +78,10 @@ Para os artefatos de **citação**, uma camada de verificação é aplicada ante
 - **Análise de consistência** — verificação do LLM, que difere em termos de família e que não utiliza raciocínio, em relação ao resumo recuperado.
 - **Camada NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)* — um codificador NLI (Inferência de Linguagem Natural) rejeita uma afirmação "confirmada" pelo LLM, mas que um modelo mecanicamente diferente não corrobora.
 
+### Traga o seu próprio verificador
+
+A ferramenta de verificação pode ser executada em um modelo **que você hospeda**, em vez de uma API hospedada — ative essa opção por meio de `PRISM_LOCAL_VERIFIER_ENDPOINT`, que é diferente para cada família, e, em caso de falha, utilize os seus verificadores hospedados. A verificação mais frequente não tem custo por chamada e as suas evidências permanecem locais. Um recurso de captura opcional (`PRISM_HARVEST_PATH`) registra os triplos `(declaração, evidência, veredicto)`, para que você possa usá-los para treinar um modelo. Consulte o [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
 ## Calibração e teste de desempenho (`prism eval`)
 
 O Prism foi desenvolvido para ser **mensurado**, e não apenas para fazer afirmações. O comando `prism eval` executa as lentes em um corpus rotulado e gera relatórios — com base nos próprios dados do Prism — sobre a precisão/revocação/MCC por lente, a matriz de diversidade inter-lente (alfa de Krippendorff + kappa de Cohen por pares), o ganho de cobertura submodular, a precisão do veredicto e a calibração da confiança (ECE/Brier), cada um com um intervalo de confiança honesto.
@@ -87,8 +91,7 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-A execução da versão 0.5 (localmente, `mistral-small:24b`) revelou uma lacuna real em um bloqueio central: a métrica de submodularidade em tempo de execução (Jaccard do conjunto de resultados, ρ) apresenta o valor **0,0 para cada par de lentes**, enquanto o kappa de Cohen no nível de decisão é de **0,73–0,81** — o limite `ρ ≤ 0,25` é *cego à correlação das lentes que o kappa revela*. Descobrir isso é o objetivo principal da análise; os resultados completos e o método estão em
-[`eval/RESULTS.md`](eval/RESULTS.md) e [`design/07`](design/07-slice1-calibration.md).
+Consulte o [manual de avaliação](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/) para obter informações sobre o método e um exemplo prático.
 
 ## Serviço HTTP
 

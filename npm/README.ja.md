@@ -22,9 +22,9 @@ npx @mcptoolshop/prism-verify verify --artifact @myfile.py --intent "..." --call
 npm install -g @mcptoolshop/prism-verify
 ```
 
-これは、[`@mcptoolshop/npm-launcher`](https://github.com/mcp-tool-shop-org/npm-launcher)の薄いラッパーです。プラットフォーム固有の`prism`バイナリを、[prism-verify GitHubリリース](https://github.com/mcp-tool-shop-org/prism-verify/releases)からダウンロードし、**SHA256チェックサムを検証**し、キャッシュ（`~/.cache/mcptoolshop/prism/<version>/`）に保存し、実行します。ネットワークアクセスはHTTPSのみで、GitHubに限定されます。テレメトリや認証情報は保存されません。
+これは、[`@mcptoolshop/npm-launcher`](https://github.com/mcp-tool-shop-org/npm-launcher) のためのシンプルなラッパーです。プラットフォーム固有の`prism`バイナリを、[prism-verify GitHub リリース](https://github.com/mcp-tool-shop-org/prism-verify/releases)からダウンロードし、**SHA256チェックサムを検証**し、キャッシュ（`~/.cache/mcptoolshop/prism/<version>/`）に保存し、実行します。ネットワークアクセスはHTTPSのみで、GitHubに限定されます。テレメトリや認証情報は保存されません。
 
-**Pythonパッケージの方が使いやすいですか？** `uv tool install prism-verify` / `pipx install prism-verify`（PyPI、PEP 740に準拠した信頼性証明付き）。npmラッパーは、Pythonを使用しない`npx`での利用のために存在します。バンドルされたバイナリには、CLI、ローカル（Ollama）検証、HTTPサービス、引用検証、`prism eval`キャリブレーションベンチマークが含まれます。ホストプロバイダー検証ツール（Anthropic / OpenAI / Google）およびその他の機能は、PyPIインストールに含まれます。
+**Pythonパッケージの方が使いやすいですか？** `uv tool install prism-verify` / `pipx install prism-verify`（PyPI、PEP 740に準拠した信頼性証明付き）。npmラッパーは、Pythonを使用しない`npx`での利用を想定しています。バンドルされたバイナリには、CLI、ローカル（Ollama）検証、HTTPサービス、引用検証（オプションで自己ホスト型の根拠検証ツールを含む）、および`prism eval`キャリブレーションベンチマークが含まれます。ホストプロバイダー検証ツール（Anthropic / OpenAI / Google）およびその他の機能は、PyPIインストールに含まれます。
 
 完全なドキュメント、セキュリティモデル、およびソースコード：<https://github.com/mcp-tool-shop-org/prism-verify>。
 

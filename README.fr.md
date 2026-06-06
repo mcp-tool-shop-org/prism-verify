@@ -74,6 +74,10 @@ Pour les artefacts de **citation**, un niveau de vérification est appliqué ava
 - **Analyse de la pertinence** : vérification par la famille de modèles différente, sans raisonnement, par rapport au résumé récupéré.
 - **Niveau de vérification NLI orthogonal** *(facultatif, `PRISM_NLI_FLOOR`)* : un encodeur NLI croisé rejette une affirmation que le LLM a donnée, mais qu’un modèle mécaniquement différent ne confirme pas.
 
+### Utilisez votre propre outil de vérification
+
+L’outil d’analyse peut être utilisé avec un modèle que **vous hébergez** au lieu d’une API hébergée. Pour ce faire, activez l’option via `PRISM_LOCAL_VERIFIER_ENDPOINT`. Cette option est différente selon la famille et permet une ouverture par défaut vers vos outils de vérification hébergés. La vérification la plus fréquente est gratuite et vos données restent locales. Un collecteur d’informations optionnel (`PRISM_HARVEST_PATH`) enregistre les triplets `(revendication, preuve, verdict)`, ce qui vous permet de les utiliser pour l’apprentissage. Consultez le [manuel](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
 ## Calibration et évaluation comparative (`prism eval`)
 
 Prism est conçu pour être **mesuré**, et non pas seulement pour faire des affirmations. `prism eval` exécute les analyses sur un corpus étiqueté et génère un rapport : sur les propres données de Prism, il indique la précision/le rappel/le MCC par analyse, la matrice de diversité inter-analyses (alpha de Krippendorff + kappa de Cohen par paires), le gain de couverture sous-modulaire, la précision de la décision et l’étalonnage de la confiance (ECE/Brier), le tout avec un intervalle de confiance honnête.
@@ -83,7 +87,7 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-L’exécution de la version 0.5 (locale `mistral-small:24b`) a révélé un réel problème dans un verrou principal : la métrique de sous-modularité en temps d’exécution (Jaccard ρ de l’ensemble de résultats) indique **0,0 pour chaque paire d’analyses**, tandis que le kappa de Cohen au niveau de la décision est de **0,73 à 0,81** : la limite `ρ ≤ 0,25` est *aveugle à la corrélation entre les analyses que révèle κ*. Découvrir cela est tout l’intérêt de cette analyse ; les résultats complets et la méthode sont disponibles dans [`eval/RESULTS.md`](eval/RESULTS.md) et [`design/07`](design/07-slice1-calibration.md).
+Consultez le [manuel d’évaluation](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/) pour connaître la méthode et un exemple concret.
 
 ## Service HTTP
 

@@ -70,12 +70,16 @@ Prism aplica cuatro bloqueos arquitectónicos en el contrato de la API:
 3. **Múltiples lentes:** se ejecutan al menos 3 lentes independientes en paralelo.
 4. **Con conocimiento de la submodularidad:** se rechaza si los lentes están demasiado de acuerdo (señal colapsada).
 
-Para los artefactos de **citación**, se utiliza una capa de verificación antes de la lente de fundamentación del LLM; cada etapa determinista rechaza aquello que puede *demostrar*, y, en caso contrario, se abstiene:
+Para los artefactos de **citación**, se aplica una capa de verificación antes de la evaluación de la coherencia del LLM; cada etapa determinista rechaza aquello que puede *demostrar*, y, en caso contrario, se abstiene:
 
-- **Capa de existencia**: recuperación en tiempo real de arXiv/Crossref; se descarta un identificador fabricado, sin realizarse ningún razonamiento al respecto.
-- **Capa numérica/de unidades**: se detecta aritméticamente un cambio de porcentaje, un error en la escala de unidades (42 mili- frente a micro-arcosegundos) o una falsedad en la dirección de la comparación (5,0 < 5,8 ≠ "superado").
-- **Lente de fundamentación**: se realiza una comprobación del LLM, desprovisto de razonamiento y diferente en su familia, con el resumen recuperado.
-- **Capa NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)*: un codificador NLI (inferencia del lenguaje natural) actúa como filtro y rechaza una afirmación "respaldada" por el LLM, pero que un modelo mecánicamente diferente no corrobora.
+- **Capa de existencia:** se realiza una búsqueda en tiempo real en arXiv/Crossref; se descarta un identificador fabricado, sin analizarlo.
+- **Capa numérica/de unidades:** se detecta un error en el intercambio de porcentajes, un error en la escala de unidades (42 mili- frente a micro-arcosegundos) o una falsedad en la dirección de la comparación (5,0 < 5,8 ≠ "superado") mediante cálculos aritméticos.
+- **Evaluación de la coherencia:** se compara el LLM, que pertenece a una familia diferente y carece de capacidad de razonamiento, con el resumen recuperado.
+- **Capa de NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)*: un codificador NLI actúa como filtro cruzado y rechaza una afirmación que el LLM considera "válida", pero que un modelo diferente, con un funcionamiento distinto, no corrobora.
+
+### Utilice su propio verificador
+
+La evaluación de la coherencia puede aplicarse a un modelo **que usted aloje** en lugar de utilizar una API alojada; para ello, active la opción mediante `PRISM_LOCAL_VERIFIER_ENDPOINT`. Se trata de una familia diferente y, en caso de fallo, se recurrirá a sus verificadores alojados. La verificación más frecuente no tiene coste por consulta y sus pruebas permanecen en su sistema. Un receptor de captura opcional (`PRISM_HARVEST_PATH`) registra las tripletas `(afirmación, evidencia, veredicto)` para que pueda entrenar un modelo. Consulte el [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
 
 ## Calibración y prueba de rendimiento (`prism eval`)
 
@@ -86,8 +90,7 @@ prism eval --split public --runs 3     # measure against the bundled corpus (nee
 prism eval --offline                    # deterministic mock (CI smoke; NOT a real measurement)
 ```
 
-La ejecución de la versión 0.5 (local `mistral-small:24b`) reveló una brecha real en un bloqueo central: la métrica de submodularidad en tiempo de ejecución (Jaccard ρ del conjunto de resultados) muestra **0.0 para cada par de modelos**, mientras que el kappa de Cohen a nivel de decisión es de **0.73–0.81**: la puerta de entrada `ρ ≤ 0.25` es *ciega a la correlación entre modelos que revela kappa*. Encontrar esto es el objetivo principal de la prueba; los resultados completos y el método se encuentran en
-[`eval/RESULTS.md`](eval/RESULTS.md) y [`design/07`](design/07-slice1-calibration.md).
+Consulte el [manual de evaluación](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/) para conocer el método y un ejemplo práctico.
 
 ## Servicio HTTP
 

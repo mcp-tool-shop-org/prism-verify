@@ -12,7 +12,7 @@ export const config: SiteConfig = {
     'MIT Licensed — built by <a href="https://github.com/mcp-tool-shop-org" style="color:var(--color-muted);text-decoration:underline">mcp-tool-shop-org</a>',
 
   hero: {
-    badge: 'Runtime verifier · v0.5',
+    badge: 'Runtime verifier · v1.2',
     headline: 'Verify what your agents produce —',
     headlineAccent: 'before it ships.',
     description:
@@ -55,6 +55,10 @@ export const config: SiteConfig = {
         {
           title: 'Citation verification',
           desc: 'A deterministic retrieval floor (arXiv/Crossref) + a numeric guard gate a RAG-fed groundedness lens — fabrications refuse, not pass.',
+        },
+        {
+          title: 'Bring your own verifier',
+          desc: 'Back the citation groundedness check with a model you self-host — opt-in, family-different, and fail-open to your hosted verifiers. The most frequent check, at zero per-call cost.',
         },
         {
           title: 'CLI · MCP · HTTP',

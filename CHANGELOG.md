@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-06-06
+
+### Docs
+- **README + handbook for the self-hosted verifier and harvest sink.** The README gains a "Bring your
+  own verifier" note — the citation groundedness lens can run against a model you host via
+  `PRISM_LOCAL_VERIFIER_ENDPOINT` (opt-in, fail-open), with the `PRISM_HARVEST_PATH` capture sink to
+  build its training data — and two new handbook pages document both, wired to the landing page.
+  Re-translated across all 8 locales.
+- **README front-door cleanup** — the calibration section's internal ρ/κ findings moved to the
+  [evaluation handbook](https://mcp-tool-shop-org.github.io/prism-verify/handbook/evaluation/); the
+  README keeps the value proposition, the detail lives in the docs.
+
+(Docs/branding only — no code or API changes from 1.2.0.)
+
 ## [1.2.0] - 2026-06-06
 
 ### Added

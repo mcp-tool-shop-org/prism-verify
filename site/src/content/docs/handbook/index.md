@@ -42,4 +42,5 @@ The same engine is exposed three ways, with identical guarantees:
 
 Start with [Getting started](../getting-started/), then the
 [HTTP service](../http-service/), [Receipts &amp; signing](../receipts/), or the full
-[Reference](../reference/).
+[Reference](../reference/). To run the citation check against a model you host, see the
+[self-hosted groundedness verifier](../local-verifier/).
