@@ -4,7 +4,9 @@ Skipped unless PRISM_LOCAL_VERIFIER_ENDPOINT is set (so CI stays hermetic). Prov
 served Qwen3-14B groundedness soup -> provider re-template/strip/map -> prism's own
 parse_citation_groundedness -> the correct citation outcome.
 
-Run:  PRISM_LOCAL_VERIFIER_ENDPOINT=http://localhost:8092 pytest tests/integration/test_local_verifier_live.py
+Run with a served endpoint set:
+  PRISM_LOCAL_VERIFIER_ENDPOINT=http://localhost:8092
+  pytest tests/integration/test_local_verifier_live.py
 """
 
 import os
@@ -20,11 +22,13 @@ from prism.providers.local_verifier import LocalVerifierProvider
 
 ENDPOINT = os.environ.get("PRISM_LOCAL_VERIFIER_ENDPOINT")
 pytestmark = pytest.mark.skipif(
-    not ENDPOINT, reason="set PRISM_LOCAL_VERIFIER_ENDPOINT to run the live verifier integration test"
+    not ENDPOINT,
+    reason="set PRISM_LOCAL_VERIFIER_ENDPOINT to run the live verifier integration test",
 )
 
 _ABSTRACT = (
-    "We introduce BERT, a deep bidirectional transformer. BERT obtains new state-of-the-art results on "
+    "We introduce BERT, a deep bidirectional transformer. BERT obtains new state-of-the-art "
+    "results on "
     "eleven NLP tasks, including pushing the GLUE score to 80.5% and SQuAD v1.1 test F1 to 93.2."
 )
 

@@ -34,11 +34,11 @@ def build_providers_from_env() -> dict[str, ModelProvider]:
 
     providers["local"] = OllamaProvider()
 
-    # The Verifier specialist (a locally-served fine-tuned groundedness model) — opt-in via env. When set,
-    # build_default_engine injects it as the primary citation-groundedness verifier; mistral `local` and the
-    # hosted families remain as cross-family failover targets. Recommend pairing with PRISM_NLI_FLOOR (the
-    # orthogonal encoder-NLI veto) since the circuit-breaker fails over on errors, not on a confident-wrong
-    # "supported".
+    # The Verifier specialist (a locally-served fine-tuned groundedness model) — opt-in via env.
+    # When set, build_default_engine injects it as the primary citation-groundedness verifier;
+    # mistral `local` and the hosted families remain as cross-family failover targets. Recommend
+    # pairing with PRISM_NLI_FLOOR (the orthogonal encoder-NLI veto) since the circuit-breaker fails
+    # over on errors, not on a confident-wrong "supported".
     verifier_endpoint = os.environ.get("PRISM_LOCAL_VERIFIER_ENDPOINT")
     if verifier_endpoint:
         from prism.providers.local_verifier import LocalVerifierProvider
@@ -72,9 +72,9 @@ def build_providers_from_env() -> dict[str, ModelProvider]:
 def build_default_engine() -> VerificationEngine:
     """Register the default lenses and construct an engine with env-configured providers.
 
-    When the local Verifier specialist is configured (PRISM_LOCAL_VERIFIER_ENDPOINT), inject a routing
-    map that makes it the PRIMARY citation verifier (failing over to the hosted/mistral verifiers behind
-    it). The static DEFAULT_ROUTING_MAP is left untouched when the specialist is not configured.
+    When the local Verifier specialist is configured (PRISM_LOCAL_VERIFIER_ENDPOINT), inject a
+    routing map that makes it the PRIMARY citation verifier (failing over to the hosted/mistral
+    verifiers behind it). The static DEFAULT_ROUTING_MAP is left untouched when not configured.
     """
     register_default_lenses()
     providers = build_providers_from_env()

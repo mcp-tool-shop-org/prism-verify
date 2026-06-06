@@ -1,4 +1,4 @@
-"""Local fine-tuned groundedness verifier — the Verifier specialist as prism's citation-lens backend.
+"""Local fine-tuned groundedness verifier — the Verifier specialist as prism's citation backend.
 
 Bridges prism's CITATION groundedness lens to a locally-served Qwen3-14B QLoRA (the certified
 ``verifier-14b600-soup``, served by llama.cpp at ``--lora scale 4``). prism hands this provider a
@@ -8,17 +8,17 @@ reply with ``parse_citation_groundedness``, which expects JSON ``{"outcome": ...
 
 The adapter was trained on ``(EVIDENCE, CLAIM) -> {supported|unsupported|abstain}`` and emits
 ``<think>...</think>\n\n{verdict}``. So this provider:
-  1. RE-TEMPLATES prism's markered prompt into the model's trained EVIDENCE/CLAIM shape (best accuracy);
+  1. RE-TEMPLATES prism's markered prompt into the model's trained EVIDENCE/CLAIM shape;
   2. queries the served model, STRIPS the ``<think>`` block, reads the bare verdict;
   3. MAPS the verdict to prism's vocabulary (matches prism's own definitions — see
      ``specialist/V-D-INTEGRATION.md``); and
   4. emits the JSON object prism parses — NEVER the bare ``<think>`` reply, which would parse as the
      safe default ``not_addressed`` and silently escalate 100% of citations.
 
-On any failure (HTTP error, empty/garbage body, no mappable verdict) it raises ``ProviderError`` so the
-engine's circuit-breaker fails OVER to a hosted verifier (core/routing.py + engine.py:_verify_citations)
-— a loud failover, not a silent escalate. Opt-in: registered only when ``PRISM_LOCAL_VERIFIER_ENDPOINT``
-is set (core/setup.py).
+On any failure (HTTP error, empty/garbage body, no mappable verdict) it raises ``ProviderError``
+so the engine's circuit-breaker fails OVER to a hosted verifier (core/routing.py +
+engine.py:_verify_citations) — a loud failover, not a silent escalate. Opt-in: registered only
+when ``PRISM_LOCAL_VERIFIER_ENDPOINT`` is set (core/setup.py).
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from typing import Any
 
 import httpx
 
@@ -38,7 +39,7 @@ from prism.providers.base import (
 )
 
 # The groundedness system prompt the adapter was TRAINED with (specialist/dataset/config.py
-# SYSTEM_PROMPT). Embedded verbatim — re-templating to the trained prompt is what preserves accuracy.
+# SYSTEM_PROMPT). Embedded verbatim — re-templating to the trained prompt preserves accuracy.
 VERIFIER_SYSTEM = (
     "You are a Groundedness Verifier. Given EVIDENCE and a CLAIM, decide whether the evidence "
     "supports the claim. Check every load-bearing part of the claim against the evidence. Answer "
@@ -47,10 +48,10 @@ VERIFIER_SYSTEM = (
     "Reason briefly, then give the one-word verdict."
 )
 
-# model verdict -> prism citation outcome. Principled, not arbitrary: prism defines 'contradicted' =
-# source conflicts with claim and 'not_addressed' = abstract insufficient (citations.py). Our curriculum
-# trained 'unsupported' = a planted conflict/violation (L2) and 'abstain' = evidence silent (L5), so the
-# 3-way mapping is exact.
+# model verdict -> prism citation outcome. Principled, not arbitrary: prism defines
+# 'contradicted' = source conflicts with claim and 'not_addressed' = abstract insufficient
+# (citations.py). Our curriculum trained 'unsupported' = a planted conflict/violation (L2) and
+# 'abstain' = evidence silent (L5), so the 3-way mapping is exact.
 VERDICT_MAP = {"supported": "supported", "unsupported": "contradicted", "abstain": "not_addressed"}
 
 _SOURCE_RE = re.compile(r"<<<SOURCE\s*(.*?)\s*SOURCE>>>", re.DOTALL)
@@ -59,7 +60,8 @@ _CLAIM_RE = re.compile(r"<<<CLAIM\s*(.*?)\s*CLAIM>>>", re.DOTALL)
 
 def retemplate(user_prompt: str) -> str:
     """prism citation user-prompt (``<<<SOURCE>>>`` / ``<<<CLAIM>>>``) -> the model's trained
-    ``EVIDENCE:\\n...\\n\\nCLAIM:\\n...`` shape. Falls back to the raw prompt if markers are absent."""
+    ``EVIDENCE:\\n...\\n\\nCLAIM:\\n...`` shape. Falls back to the raw prompt
+    if markers are absent."""
     src = _SOURCE_RE.search(user_prompt)
     clm = _CLAIM_RE.search(user_prompt)
     evidence = src.group(1).strip() if src else user_prompt.strip()
@@ -100,7 +102,9 @@ class LocalVerifierProvider(ModelProvider):
     def available_models(self) -> list[str]:
         return [self._model_id]
 
-    def _build_response(self, verdict: str, latency_ms: int, usage: dict) -> CompletionResponse:
+    def _build_response(
+        self, verdict: str, latency_ms: int, usage: dict[str, Any]
+    ) -> CompletionResponse:
         outcome = VERDICT_MAP[verdict]
         body = json.dumps(
             {
@@ -143,7 +147,7 @@ class LocalVerifierProvider(ModelProvider):
 
         verdict = parse_verdict(content)
         if verdict is None:
-            # No mappable verdict -> RAISE (never a silent 'not_addressed') so the engine fails over.
+            # No mappable verdict -> RAISE (never a silent 'not_addressed') — engine fails over.
             raise ProviderError(
                 f"local verifier emitted no verdict (content={content[:160]!r})", retryable=True
             )

@@ -49,9 +49,10 @@ def with_local_verifier(
     caller (so it serves the high-frequency citation check, failing over to that caller's existing
     cross-family verifiers when its circuit opens), plus a caller row for LOCAL_VERIFIER itself.
 
-    Injected by ``build_default_engine`` ONLY when the specialist provider is configured, so the static
-    ``DEFAULT_ROUTING_MAP`` — and its shipped contract/tests — is unchanged when it is not. LOCAL_VERIFIER
-    is a distinct family from LOCAL (=mistral), so family-difference holds and mistral stays a failover.
+    Injected by ``build_default_engine`` ONLY when the specialist provider is configured, so the
+    static ``DEFAULT_ROUTING_MAP`` — and its shipped contract/tests — is unchanged when it is not.
+    LOCAL_VERIFIER is a distinct family from LOCAL (=mistral), so family-difference holds and
+    mistral stays a failover.
     """
     out = {
         caller: [(ModelFamily.LOCAL_VERIFIER, model_id), *verifiers]

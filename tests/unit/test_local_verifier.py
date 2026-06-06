@@ -1,9 +1,9 @@
-"""Unit tests for the LocalVerifierProvider — the Verifier specialist as prism's citation-lens backend.
+"""Unit tests for the LocalVerifierProvider — the Verifier specialist as prism's citation backend.
 
 Covers the bridge logic and, critically, the SILENT-ESCALATE guard: a real verdict must round-trip
 through prism's OWN parse_citation_groundedness to the correct outcome (never the safe-default
-'not_addressed'), and any failure must RAISE ProviderError (loud circuit-breaker failover), not return
-a quiet escalate.
+'not_addressed'), and any failure must RAISE ProviderError (loud circuit-breaker failover), not
+return a quiet escalate.
 """
 
 import asyncio
@@ -17,6 +17,8 @@ from prism.core.citations import (
     build_citation_groundedness_prompts,
     parse_citation_groundedness,
 )
+from prism.core.routing import DEFAULT_ROUTING_MAP, with_local_verifier
+from prism.core.setup import build_default_engine
 from prism.core.types import ModelFamily
 from prism.providers.base import CompletionRequest, ProviderError
 from prism.providers.local_verifier import (
@@ -25,8 +27,6 @@ from prism.providers.local_verifier import (
     parse_verdict,
     retemplate,
 )
-from prism.core.routing import DEFAULT_ROUTING_MAP, with_local_verifier
-from prism.core.setup import build_default_engine
 
 
 class _FakeResp:
@@ -105,7 +105,7 @@ def test_verdict_map_is_prism_vocab():
     ],
 )
 def test_roundtrip_through_prism_parser(model_out, expected):
-    # THE silent-escalate guard: a real verdict round-trips to the right prism outcome via prism's own
+    # THE silent-escalate guard: a real verdict round-trips to the right prism outcome via prism's
     # parse_citation_groundedness — NOT the safe-default ('not_addressed', None, 0.0).
     _sys, user = build_citation_groundedness_prompts("c", "t", "a")
     p = _provider(content=model_out)
@@ -135,7 +135,7 @@ def test_http_error_raises_provider_error():
 
 
 def test_no_verdict_raises_provider_error():
-    # a thinking reply with no verdict must RAISE (-> circuit-breaker failover), not silently escalate
+    # a no-verdict reply must RAISE (-> circuit-breaker failover), not silently escalate
     p = _provider(content="<think>still unsure, no verdict</think>\n\n")
     with pytest.raises(ProviderError):
         asyncio.run(p.complete(CompletionRequest(system_prompt="s", user_prompt="u", model_id="m")))
@@ -149,7 +149,8 @@ def test_with_local_verifier_prepends_and_leaves_default_untouched():
     m = with_local_verifier(DEFAULT_ROUTING_MAP, "qwen3-14b-groundedness")
     for caller, verifiers in m.items():
         if caller == ModelFamily.LOCAL_VERIFIER:
-            assert all(f != ModelFamily.LOCAL_VERIFIER for f, _ in verifiers)  # Lock 1: excludes itself
+            # Lock 1: a family never verifies itself
+            assert all(f != ModelFamily.LOCAL_VERIFIER for f, _ in verifiers)
         else:
             assert verifiers[0] == (ModelFamily.LOCAL_VERIFIER, "qwen3-14b-groundedness")
     # the shipped static map is NOT mutated
