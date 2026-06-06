@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-06-06
 
 ### Added
 - **Opt-in L4 training-data capture sink** (`prism.eval.harvest`, env `PRISM_HARVEST_PATH`) — when
@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   only — and the code path's `groundedness` lens; label mapping mirrors prism's own verdict semantics
   (SUPPORTED→supported, CONTRADICTED→unsupported, NOT_ADDRESSED→abstain). Best-effort secret redaction
   runs before write; receipts remain the join/provenance index via `receipt_id`.
+- **Local Verifier specialist as a citation-groundedness backend** (`prism.providers.local_verifier`,
+  opt-in) — a `LocalVerifierProvider` that bridges the citation lens to a locally-served, fine-tuned
+  groundedness model (a Qwen3-14B QLoRA served by llama.cpp at `--lora scale 4`). It re-templates
+  prism's `<<<SOURCE>>>`/`<<<CLAIM>>>` prompt into the model's trained EVIDENCE/CLAIM shape, strips the
+  model's reasoning block, and maps the verdict to prism's citation vocabulary (supported→supported,
+  unsupported→contradicted, abstain→not_addressed), emitting the JSON `parse_citation_groundedness`
+  expects (never the bare token — which would parse as the safe default and silently escalate). New
+  `ModelFamily.LOCAL_VERIFIER`, distinct from `LOCAL` (=mistral), so family-difference holds and mistral
+  remains a failover target. The capture sink above is exactly what produced this verifier's training data.
+- **Opt-in** via `PRISM_LOCAL_VERIFIER_ENDPOINT` (+ `PRISM_LOCAL_VERIFIER_MODEL`): when set,
+  `build_default_engine` injects the specialist as the **primary** citation verifier (failing over to the
+  hosted/mistral verifiers on circuit-open); when unset, the static `DEFAULT_ROUTING_MAP` and behavior are
+  unchanged. **Fail-open**: a verifier outage raises `ProviderError` → circuit-breaker failover, never a
+  silent escalate. Recommend pairing with `PRISM_NLI_FLOOR` (the orthogonal encoder-NLI veto), since the
+  breaker fails over on errors, not on a confident-wrong `supported`.
 
 ## [1.1.0] - 2026-06-03
 

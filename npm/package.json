@@ -1,6 +1,6 @@
 {
   "name": "@mcptoolshop/prism-verify",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "prism-verify — runtime LLM verifier (family-different, reasoning-stripped, multi-lens, signed Ed25519 receipts). Zero-prerequisite npx install via a verified binary launcher.",
   "type": "commonjs",
   "license": "MIT",
