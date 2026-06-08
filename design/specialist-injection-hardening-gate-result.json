@@ -1,0 +1,526 @@
+{
+  "verdict": "revise",
+  "pass": false,
+  "blocking": false,
+  "advisory": true,
+  "citations": [
+    {
+      "id": "c1",
+      "identifier": "arXiv:2403.14720",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Defending Against Indirect Prompt Injection Attacks With Spotlighting",
+      "source_abstract": "Large Language Models (LLMs), while powerful, are built and trained to process a single text input. In common applications, multiple inputs can be processed by concatenating them together into a single stream of text. However, the LLM is unable to distinguish which sections of prompt belong to various input sources. Indirect prompt injection attacks take advantage of this vulnerability by embedding adversarial instructions into untrusted data being processed alongside user commands. Often, the LLM will mistake the adversarial instructions as user commands to be followed, creating a security vulnerability in the larger system. We introduce spotlighting, a family of prompt engineering techniques that can be used to improve LLMs' ability to distinguish among multiple sources of input. The key insight is to utilize transformations of an input to provide a reliable and continuous signal of its provenance. We evaluate spotlighting as a defense against indirect prompt injection attacks, and find that it is a robust defense that has minimal detrimental impact to underlying NLP tasks. Using GPT-family models, we find that spotlighting reduces the attack success rate from greater than {50}\\% to below {2}\\% in our experiments with minimal impact on task efficacy."
+    },
+    {
+      "id": "c2",
+      "identifier": "arXiv:2402.06363",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "StruQ: Defending Against Prompt Injection with Structured Queries",
+      "source_abstract": "Recent advances in Large Language Models (LLMs) enable exciting LLM-integrated applications, which perform text-based tasks by utilizing their advanced language understanding capabilities. However, as LLMs have improved, so have the attacks against them. Prompt injection attacks are an important threat: they trick the model into deviating from the original application's instructions and instead follow user directives. These attacks rely on the LLM's ability to follow instructions and inability to separate prompts and user data. We introduce structured queries, a general approach to tackle this problem. Structured queries separate prompts and data into two channels. We implement a system that supports structured queries. This system is made of (1) a secure front-end that formats a prompt and user data into a special format, and (2) a specially trained LLM that can produce high-quality outputs from these inputs. The LLM is trained using a novel fine-tuning strategy: we convert a base (non-instruction-tuned) LLM to a structured instruction-tuned model that will only follow instructions in the prompt portion of a query. To do so, we augment standard instruction tuning datasets with examples that also include instructions in the data portion of the query, and fine-tune the model to ignore these. Our system significantly improves resistance to prompt injection attacks, with little or no impact on utility. Our code is released at https://github.com/Sizhe-Chen/StruQ."
+    },
+    {
+      "id": "c3",
+      "identifier": "arXiv:2410.05451",
+      "existence": "resolved",
+      "finding_match": "contradicted",
+      "verdict": "revise",
+      "action": "FIX TO MATCH SOURCE",
+      "detail": "claim cites [8.0]% but the source states [10.0]%",
+      "span": null,
+      "source_title": "SecAlign: Defending Against Prompt Injection with Preference Optimization",
+      "source_abstract": "Large language models (LLMs) are becoming increasingly prevalent in modern software systems, interfacing between the user and the Internet to assist with tasks that require advanced language understanding. To accomplish these tasks, the LLM often uses external data sources such as user documents, web retrieval, results from API calls, etc. This opens up new avenues for attackers to manipulate the LLM via prompt injection. Adversarial prompts can be injected into external data sources to override the system's intended instruction and instead execute a malicious instruction. To mitigate this vulnerability, we propose a new defense called SecAlign based on the technique of preference optimization. Our defense first constructs a preference dataset with prompt-injected inputs, secure outputs (ones that respond to the legitimate instruction), and insecure outputs (ones that respond to the injection). We then perform preference optimization on this dataset to teach the LLM to prefer the secure output over the insecure one. This provides the first known method that reduces the success rates of various prompt injections to <10%, even against attacks much more sophisticated than ones seen during training. This indicates our defense generalizes well against unknown and yet-to-come attacks. Also, SecAlign models are still practical with similar utility to the one before defensive training in our evaluations. Our code is at https://github.com/facebookresearch/SecAlign"
+    },
+    {
+      "id": "c4",
+      "identifier": "arXiv:2404.13208",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We then propose a data generation method to demonstrate this hierarchical instruction following behavior, which teaches LLMs to selectively ignore lower-privileged instructions.",
+      "source_title": "The Instruction Hierarchy: Training LLMs to Prioritize Privileged Instructions",
+      "source_abstract": "Today's LLMs are susceptible to prompt injections, jailbreaks, and other attacks that allow adversaries to overwrite a model's original instructions with their own malicious prompts. In this work, we argue that one of the primary vulnerabilities underlying these attacks is that LLMs often consider system prompts (e.g., text from an application developer) to be the same priority as text from untrusted users and third parties. To address this, we propose an instruction hierarchy that explicitly defines how models should behave when instructions of different priorities conflict. We then propose a data generation method to demonstrate this hierarchical instruction following behavior, which teaches LLMs to selectively ignore lower-privileged instructions. We apply this method to GPT-3.5, showing that it drastically increases robustness -- even for attack types not seen during training -- while imposing minimal degradations on standard capabilities."
+    },
+    {
+      "id": "c5",
+      "identifier": "arXiv:2505.18333",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "A Critical Evaluation of Defenses against Prompt Injection Attacks",
+      "source_abstract": "Large Language Models (LLMs) are vulnerable to prompt injection attacks, and several defenses have recently been proposed, often claiming to mitigate these attacks successfully. However, we argue that existing studies lack a principled approach to evaluating these defenses. In this paper, we argue the need to assess defenses across two critical dimensions: (1) effectiveness, measured against both existing and adaptive prompt injection attacks involving diverse target and injected prompts, and (2) general-purpose utility, ensuring that the defense does not compromise the foundational capabilities of the LLM. Our critical evaluation reveals that prior studies have not followed such a comprehensive evaluation methodology. When assessed using this principled approach, we show that existing defenses are not as successful as previously reported. This work provides a foundation for evaluating future defenses and guiding their development. Our code and data are available at: https://github.com/PIEval123/PIEval."
+    },
+    {
+      "id": "c6",
+      "identifier": "arXiv:2504.11358",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "DataSentinel: A Game-Theoretic Detection of Prompt Injection Attacks",
+      "source_abstract": "LLM-integrated applications and agents are vulnerable to prompt injection attacks, where an attacker injects prompts into their inputs to induce attacker-desired outputs. A detection method aims to determine whether a given input is contaminated by an injected prompt. However, existing detection methods have limited effectiveness against state-of-the-art attacks, let alone adaptive ones. In this work, we propose DataSentinel, a game-theoretic method to detect prompt injection attacks. Specifically, DataSentinel fine-tunes an LLM to detect inputs contaminated with injected prompts that are strategically adapted to evade detection. We formulate this as a minimax optimization problem, with the objective of fine-tuning the LLM to detect strong adaptive attacks. Furthermore, we propose a gradient-based method to solve the minimax optimization problem by alternating between the inner max and outer min problems. Our evaluation results on multiple benchmark datasets and LLMs show that DataSentinel effectively detects both existing and adaptive prompt injection attacks."
+    },
+    {
+      "id": "c7",
+      "identifier": "arXiv:2310.12815",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Formalizing and Benchmarking Prompt Injection Attacks and Defenses",
+      "source_abstract": "A prompt injection attack aims to inject malicious instruction/data into the input of an LLM-Integrated Application such that it produces results as an attacker desires. Existing works are limited to case studies. As a result, the literature lacks a systematic understanding of prompt injection attacks and their defenses. We aim to bridge the gap in this work. In particular, we propose a framework to formalize prompt injection attacks. Existing attacks are special cases in our framework. Moreover, based on our framework, we design a new attack by combining existing ones. Using our framework, we conduct a systematic evaluation on 5 prompt injection attacks and 10 defenses with 10 LLMs and 7 tasks. Our work provides a common benchmark for quantitatively evaluating future prompt injection attacks and defenses. To facilitate research on this topic, we make our platform public at https://github.com/liu00222/Open-Prompt-Injection."
+    },
+    {
+      "id": "c8",
+      "identifier": "arXiv:2403.17710",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Optimization-based Prompt Injection Attack to LLM-as-a-Judge",
+      "source_abstract": "LLM-as-a-Judge uses a large language model (LLM) to select the best response from a set of candidates for a given question. LLM-as-a-Judge has many applications such as LLM-powered search, reinforcement learning with AI feedback (RLAIF), and tool selection. In this work, we propose JudgeDeceiver, an optimization-based prompt injection attack to LLM-as-a-Judge. JudgeDeceiver injects a carefully crafted sequence into an attacker-controlled candidate response such that LLM-as-a-Judge selects the candidate response for an attacker-chosen question no matter what other candidate responses are. Specifically, we formulate finding such sequence as an optimization problem and propose a gradient based method to approximately solve it. Our extensive evaluation shows that JudgeDeceive is highly effective, and is much more effective than existing prompt injection attacks that manually craft the injected sequences and jailbreak attacks when extended to our problem. We also show the effectiveness of JudgeDeceiver in three case studies, i.e., LLM-powered search, RLAIF, and tool selection. Moreover, we consider defenses including known-answer detection, perplexity detection, and perplexity windowed detection. Our results show these defenses are insufficient, highlighting the urgent need for developing new defense strategies. Our implementation is available at this repository: https://github.com/ShiJiawenwen/JudgeDeceiver."
+    },
+    {
+      "id": "c9",
+      "identifier": "arXiv:2504.11168",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Bypassing LLM Guardrails: An Empirical Analysis of Evasion Attacks against Prompt Injection and Jailbreak Detection Systems",
+      "source_abstract": "Large Language Models (LLMs) guardrail systems are designed to protect against prompt injection and jailbreak attacks. However, they remain vulnerable to evasion techniques. We demonstrate two approaches for bypassing LLM prompt injection and jailbreak detection systems via traditional character injection methods and algorithmic Adversarial Machine Learning (AML) evasion techniques. Through testing against six prominent protection systems, including Microsoft's Azure Prompt Shield and Meta's Prompt Guard, we show that both methods can be used to evade detection while maintaining adversarial utility achieving in some instances up to 100% evasion success. Furthermore, we demonstrate that adversaries can enhance Attack Success Rates (ASR) against black-box targets by leveraging word importance ranking computed by offline white-box models. Our findings reveal vulnerabilities within current LLM protection mechanisms and highlight the need for more robust guardrail systems."
+    },
+    {
+      "id": "c10",
+      "identifier": "arXiv:2508.20890",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "PromptSleuth: Detecting Prompt Injection via Semantic Intent Invariance",
+      "source_abstract": "Large Language Models (LLMs) are increasingly integrated into real-world applications, from virtual assistants to autonomous agents. However, their flexibility also introduces new attack vectors-particularly Prompt Injection (PI), where adversaries manipulate model behavior through crafted inputs. As attackers continuously evolve with paraphrased, obfuscated, and even multi-task injection strategies, existing benchmarks are no longer sufficient to capture the full spectrum of emerging threats.\n  To address this gap, we construct a new benchmark that systematically extends prior efforts. Our benchmark subsumes the two widely-used existing ones while introducing new manipulation techniques and multi-task scenarios, thereby providing a more comprehensive evaluation setting. We find that existing defenses, though effective on their original benchmarks, show clear weaknesses under our benchmark, underscoring the need for more robust solutions. Our key insight is that while attack forms may vary, the adversary's intent-injecting an unauthorized task-remains invariant. Building on this observation, we propose PromptSleuth, a semantic-oriented defense framework that detects prompt injection by reasoning over task-level intent rather than surface features. Evaluated across state-of-the-art benchmarks, PromptSleuth consistently outperforms existing defense while maintaining comparable runtime and cost efficiency. These results demonstrate that intent-based semantic reasoning offers a robust, efficient, and generalizable strategy for defending LLMs against evolving prompt injection threats."
+    },
+    {
+      "id": "c11",
+      "identifier": "arXiv:2507.05630",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "It consistently evades KAD defenses, achieving detection rates as low as $0%$ while reliably inducing malicious behavior with a success rate of $91%$, all without requiring white-box access to the LLM or any optimization procedures.",
+      "source_title": "How Not to Detect Prompt Injections with an LLM",
+      "source_abstract": "LLM-integrated applications and agents are vulnerable to prompt injection attacks, where adversaries embed malicious instructions within seemingly benign input data to manipulate the LLM's intended behavior. Recent defenses based on known-answer detection (KAD) scheme have reported near-perfect performance by observing an LLM's output to classify input data as clean or contaminated. KAD attempts to repurpose the very susceptibility to prompt injection as a defensive mechanism. We formally characterize the KAD scheme and uncover a structural vulnerability that invalidates its core security premise. To exploit this fundamental vulnerability, we methodically design an adaptive attack, DataFlip. It consistently evades KAD defenses, achieving detection rates as low as $0\\%$ while reliably inducing malicious behavior with a success rate of $91\\%$, all without requiring white-box access to the LLM or any optimization procedures."
+    },
+    {
+      "id": "c12",
+      "identifier": "arXiv:2504.14716",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Pairwise protocols are more vulnerable to distracted evaluation.",
+      "source_title": "Pairwise or Pointwise? Evaluating Feedback Protocols for Bias in LLM-Based Evaluation",
+      "source_abstract": "Large Language Models (LLMs) are widely used as proxies for human labelers in both training (Reinforcement Learning from AI Feedback) and large-scale response evaluation (LLM-as-a-judge). Alignment and evaluation are critical components in the development of reliable LLMs, and the choice of feedback protocol plays a central role in both but remains understudied. In this work, we show that the choice of feedback protocol for evaluation (absolute scores versus relative preferences) can significantly affect evaluation reliability and induce systematic biases. In the context of LLM-as-a-judge evaluation, we show that pairwise protocols are more vulnerable to distracted evaluation. Generator models can exploit spurious attributes (or distractor features) favored by the LLM judge, resulting in inflated scores for lower-quality outputs. We find that absolute scoring is more robust to such manipulation, producing judgments that better reflect response quality and are less influenced by distractor features. Our results demonstrate that generator models can flip preferences by embedding distractor features, skewing LLM-as-a-judge comparisons and leading to inaccurate conclusions about model quality in benchmark evaluations. Pairwise preferences flip in about 35% of the cases, compared to only 9% for absolute scores. We offer recommendations for choosing feedback protocols based on dataset characteristics and evaluation objectives."
+    },
+    {
+      "id": "c13",
+      "identifier": "arXiv:1906.02530",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "traditional post-hoc calibration does indeed fall short, as do several other previous methods.",
+      "source_title": "Can You Trust Your Model's Uncertainty? Evaluating Predictive Uncertainty Under Dataset Shift",
+      "source_abstract": "Modern machine learning methods including deep learning have achieved great success in predictive accuracy for supervised learning tasks, but may still fall short in giving useful estimates of their predictive {\\em uncertainty}. Quantifying uncertainty is especially critical in real-world settings, which often involve input distributions that are shifted from the training distribution due to a variety of factors including sample bias and non-stationarity. In such settings, well calibrated uncertainty estimates convey information about when a model's output should (or should not) be trusted. Many probabilistic deep learning methods, including Bayesian-and non-Bayesian methods, have been proposed in the literature for quantifying predictive uncertainty, but to our knowledge there has not previously been a rigorous large-scale empirical comparison of these methods under dataset shift. We present a large-scale benchmark of existing state-of-the-art methods on classification problems and investigate the effect of dataset shift on accuracy and calibration. We find that traditional post-hoc calibration does indeed fall short, as do several other previous methods. However, some methods that marginalize over models give surprisingly strong results across a broad spectrum of tasks."
+    },
+    {
+      "id": "c14",
+      "identifier": "arXiv:2310.12815",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Formalizing and Benchmarking Prompt Injection Attacks and Defenses",
+      "source_abstract": "A prompt injection attack aims to inject malicious instruction/data into the input of an LLM-Integrated Application such that it produces results as an attacker desires. Existing works are limited to case studies. As a result, the literature lacks a systematic understanding of prompt injection attacks and their defenses. We aim to bridge the gap in this work. In particular, we propose a framework to formalize prompt injection attacks. Existing attacks are special cases in our framework. Moreover, based on our framework, we design a new attack by combining existing ones. Using our framework, we conduct a systematic evaluation on 5 prompt injection attacks and 10 defenses with 10 LLMs and 7 tasks. Our work provides a common benchmark for quantitatively evaluating future prompt injection attacks and defenses. To facilitate research on this topic, we make our platform public at https://github.com/liu00222/Open-Prompt-Injection."
+    },
+    {
+      "id": "c15",
+      "identifier": "arXiv:2505.18333",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Our critical evaluation reveals that prior studies have not followed such a comprehensive evaluation methodology. When assessed using this principled approach, we show that existing defenses are not as successful as previously reported.",
+      "source_title": "A Critical Evaluation of Defenses against Prompt Injection Attacks",
+      "source_abstract": "Large Language Models (LLMs) are vulnerable to prompt injection attacks, and several defenses have recently been proposed, often claiming to mitigate these attacks successfully. However, we argue that existing studies lack a principled approach to evaluating these defenses. In this paper, we argue the need to assess defenses across two critical dimensions: (1) effectiveness, measured against both existing and adaptive prompt injection attacks involving diverse target and injected prompts, and (2) general-purpose utility, ensuring that the defense does not compromise the foundational capabilities of the LLM. Our critical evaluation reveals that prior studies have not followed such a comprehensive evaluation methodology. When assessed using this principled approach, we show that existing defenses are not as successful as previously reported. This work provides a foundation for evaluating future defenses and guiding their development. Our code and data are available at: https://github.com/PIEval123/PIEval."
+    },
+    {
+      "id": "c16",
+      "identifier": "arXiv:2504.18333",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Attacks achieved up to seventy three point eight percent success smaller models proved more vulnerable and transferability ranged from fifty point five to sixty two point six percent.",
+      "source_title": "Adversarial Attacks on LLM-as-a-Judge Systems: Insights from Prompt Injections",
+      "source_abstract": "LLM as judge systems used to assess text quality code correctness and argument strength are vulnerable to prompt injection attacks. We introduce a framework that separates content author attacks from system prompt attacks and evaluate five models Gemma 3.27B Gemma 3.4B Llama 3.2 3B GPT 4 and Claude 3 Opus on four tasks with various defenses using fifty prompts per condition. Attacks achieved up to seventy three point eight percent success smaller models proved more vulnerable and transferability ranged from fifty point five to sixty two point six percent. Our results contrast with Universal Prompt Injection and AdvPrompter We recommend multi model committees and comparative scoring and release all code and datasets"
+    },
+    {
+      "id": "c17",
+      "identifier": "arXiv:2507.08794",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "One Token to Fool LLM-as-a-Judge",
+      "source_abstract": "Large language models (LLMs) are increasingly trusted as automated judges, assisting evaluation and providing reward signals for training other models, particularly in reference-based settings like Reinforcement Learning with Verifiable Rewards (RLVR). However, we uncover a critical vulnerability even in this reference-based paradigm: generative reward models are systematically susceptible to reward hacking. We find that superficial inputs, which we term ''master keys'' such as non-word symbols (e.g., '':'' or ''.'') or generic reasoning openers (e.g., ''Thought process:'' or ''Let's solve this problem step by step.''), can consistently elicit false positive rewards without any substantive reasoning. Our systematic evaluation demonstrates this is a widespread failure affecting a diverse range of models, including leading proprietary systems such as GPT-o1 and Claude-4. These results challenge the assumed robustness of LLM judges and pose a significant threat to their reliability. To address this, we propose a simple yet effective data augmentation strategy using truncated model outputs as adversarial negative examples. The resulting Master Reward Models (Master-RMs) demonstrate state-of-the-art robustness against these ''master key'' attacks while maintaining high performance in standard evaluation settings. We supplement these findings with a comprehensive analysis of the vulnerability across model scales, prompt variations, and common inference-time strategies, offering insights to guide future research on robust LLM evaluation. We release our robust, general-domain reward models and the synthetic training data at https://huggingface.co/sarosavo/Master-RM and https://huggingface.co/datasets/sarosavo/Master-RM."
+    },
+    {
+      "id": "c18",
+      "identifier": "arXiv:2506.09443",
+      "existence": "resolved",
+      "finding_match": "contradicted",
+      "verdict": "revise",
+      "action": "FIX TO MATCH SOURCE",
+      "detail": "claim cites [16.7, 59.7, 60.0, 63.0, 65.0, 100.0]% but the source states [40.0]%",
+      "span": null,
+      "source_title": "LLMs Cannot Reliably Judge (Yet?): A Comprehensive Assessment on the Robustness of LLM-as-a-Judge",
+      "source_abstract": "Large Language Models (LLMs) have demonstrated exceptional capabilities across diverse tasks, driving the development and widespread adoption of LLM-as-a-Judge systems for automated evaluation, including red teaming and benchmarking. However, these systems are susceptible to adversarial attacks that can manipulate evaluation outcomes, raising critical concerns about their robustness and trustworthiness. Existing evaluation methods for LLM-based judges are often fragmented and lack a unified framework for comprehensive robustness assessment. Furthermore, the impact of prompt template design and model selection on judge robustness has rarely been explored, and their performance in real-world deployments remains largely unverified. To address these gaps, we introduce RobustJudge, a fully automated and scalable framework designed to systematically evaluate the robustness of LLM-as-a-Judge systems. Specifically, RobustJudge investigates the effectiveness of 15 attack methods and 7 defense strategies across 12 models (RQ1), examines the impact of prompt template design and model selection (RQ2), and evaluates the security of real-world deployments (RQ3). Our study yields three key findings: (1) LLM-as-a-Judge systems are highly vulnerable to attacks such as PAIR and combined attacks, while defense mechanisms such as re-tokenization and LLM-based detectors can provide enhanced protection; (2) robustness varies substantially across prompt templates (up to 40%); (3) deploying RobustJudge on Alibaba's PAI platform uncovers previously undiscovered vulnerabilities. These results offer practical insights for building trustworthy LLM-as-a-Judge systems."
+    },
+    {
+      "id": "c19",
+      "identifier": "arXiv:2603.29403",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Security in LLM-as-a-Judge: A Comprehensive SoK",
+      "source_abstract": "LLM-as-a-Judge (LaaJ) is a novel paradigm in which powerful language models are used to assess the quality, safety, or correctness of generated outputs. While this paradigm has significantly improved the scalability and efficiency of evaluation processes, it also introduces novel security risks and reliability concerns that remain largely unexplored. In particular, LLM-based judges can become both targets of adversarial manipulation and instruments through which attacks are conducted, potentially compromising the trustworthiness of evaluation pipelines. In this paper, we present the first Systematization of Knowledge (SoK) focusing on the security aspects of LLM-as-a-Judge systems. We perform a comprehensive literature review across major academic databases, analyzing 863 works and selecting 45 relevant studies published between 2020 and 2026. Based on this study, we propose a taxonomy that organizes recent research according to the role played by LLM-as-a-Judge in the security landscape, distinguishing between attacks targeting LaaJ systems, attacks performed through LaaJ, defenses leveraging LaaJ for security purposes, and applications where LaaJ is used as an evaluation strategy in security-related domains. We further provide a comparative analysis of existing approaches, highlighting current limitations, emerging threats, and open research challenges. Our findings reveal significant vulnerabilities in LLM-based evaluation frameworks, as well as promising directions for improving their robustness and reliability. Finally, we outline key research opportunities that can guide the development of more secure and trustworthy LLM-as-a-Judge systems."
+    },
+    {
+      "id": "c20",
+      "identifier": "arXiv:2603.25176",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Prompt Attack Detection with LLM-as-a-Judge and Mixture-of-Models",
+      "source_abstract": "Prompt attacks, including jailbreaks and prompt injections, pose a critical security risk to Large Language Model (LLM) systems. In production, guardrails must mitigate these attacks under strict low-latency constraints, resulting in a deployment gap in which lightweight classifiers and rule-based systems struggle to generalize under distribution shift, while high-capacity LLM-based judges remain too slow or costly for live enforcement. In this work, we examine whether lightweight, general-purpose LLMs can reliably serve as security judges under real-world production constraints. Through careful prompt and output design, lightweight LLMs are guided through a structured reasoning process involving explicit intent decomposition, safety-signal verification, harm assessment, and self-reflection. We evaluate our method on a curated dataset combining benign queries from real-world chatbots with adversarial prompts generated via automated red teaming (ART), covering diverse and evolving patterns. Our results show that general-purpose LLMs, such as gemini-2.0-flash-lite-001, can serve as effective low-latency judges for live guardrails. This configuration is currently deployed in production as a centralized guardrail service for public service chatbots in Singapore. We additionally evaluate a Mixture-of-Models (MoM) setting to assess whether aggregating multiple LLM judges improves prompt-attack detection performance relative to single-model judges, with only modest gains observed."
+    },
+    {
+      "id": "c21",
+      "identifier": "arXiv:2602.14161",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We systematically compare production guardrails (PromptGuard 2, LlamaGuard) and LLM-as-judge approaches on our benchmark, finding all three fail on indirect attacks targeting agents (7-37% detection) and that PromptGuard 2 and LlamaGuard cannot evaluate agentic tool injection due to architectural limitations.",
+      "source_title": "When Benchmarks Lie: Evaluating Malicious Prompt Classifiers Under True Distribution Shift",
+      "source_abstract": "Detecting prompt injection and jailbreak attacks is critical for deploying LLM-based agents safely. As agents increasingly process untrusted data from emails, documents, tool outputs, and external APIs, robust attack detection becomes essential. Yet current evaluation practices and production systems have fundamental limitations. We present a comprehensive analysis using a diverse benchmark of 18 datasets spanning harmful requests, jailbreaks, indirect prompt injections, and extraction attacks. We propose Leave-One-Dataset-Out (LODO) evaluation to measure true out-of-distribution generalization, revealing that the standard practice of train-test splits from the same dataset sources severely overestimates performance: aggregate metrics show an 8.4 percentage point AUC inflation, but per-dataset gaps range from 1% to 25% accuracy-exposing heterogeneous failure modes. To understand why classifiers fail to generalize, we analyze Sparse Auto-Encoder (SAE) feature coefficients across LODO folds, finding that 28% of top features are dataset-dependent shortcuts whose class signal depends on specific dataset compositions rather than semantic content. We systematically compare production guardrails (PromptGuard 2, LlamaGuard) and LLM-as-judge approaches on our benchmark, finding all three fail on indirect attacks targeting agents (7-37% detection) and that PromptGuard 2 and LlamaGuard cannot evaluate agentic tool injection due to architectural limitations. Finally, we show that LODO-stable SAE features provide more reliable explanations for classifier decisions by filtering dataset artifacts. We release our evaluation framework at https://github.com/maxf-zn/prompt-mining to establish LODO as the appropriate protocol for prompt attack detection research."
+    },
+    {
+      "id": "c22",
+      "identifier": "arXiv:2502.01027",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Adversarial Robustness in Two-Stage Learning-to-Defer: Algorithms and Guarantees",
+      "source_abstract": "Two-stage Learning-to-Defer (L2D) enables optimal task delegation by assigning each input to either a fixed main model or one of several offline experts, supporting reliable decision-making in complex, multi-agent environments. However, existing L2D frameworks assume clean inputs and are vulnerable to adversarial perturbations that can manipulate query allocation--causing costly misrouting or expert overload. We present the first comprehensive study of adversarial robustness in two-stage L2D systems. We introduce two novel attack strategie--untargeted and targeted--which respectively disrupt optimal allocations or force queries to specific agents. To defend against such threats, we propose SARD, a convex learning algorithm built on a family of surrogate losses that are provably Bayes-consistent and $(\\mathcal{R}, \\mathcal{G})$-consistent. These guarantees hold across classification, regression, and multi-task settings. Empirical results demonstrate that SARD significantly improves robustness under adversarial attacks while maintaining strong clean performance, marking a critical step toward secure and trustworthy L2D deployment."
+    },
+    {
+      "id": "c23",
+      "identifier": "arXiv:2410.10736",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We show negative calibration results for convex surrogates and quasi-concave conditional risk cases (these gave positive calibration in adversarial setting without reject option).",
+      "source_title": "Towards Calibrated Losses for Adversarial Robust Reject Option Classification",
+      "source_abstract": "Robustness towards adversarial attacks is a vital property for classifiers in several applications such as autonomous driving, medical diagnosis, etc. Also, in such scenarios, where the cost of misclassification is very high, knowing when to abstain from prediction becomes crucial. A natural question is which surrogates can be used to ensure learning in scenarios where the input points are adversarially perturbed and the classifier can abstain from prediction? This paper aims to characterize and design surrogates calibrated in \"Adversarial Robust Reject Option\" setting. First, we propose an adversarial robust reject option loss $\\ell_{d}^γ$ and analyze it for the hypothesis set of linear classifiers ($\\mathcal{H}_{\\textrm{lin}}$). Next, we provide a complete characterization result for any surrogate to be $(\\ell_{d}^γ,\\mathcal{H}_{\\textrm{lin}})$- calibrated. To demonstrate the difficulty in designing surrogates to $\\ell_{d}^γ$, we show negative calibration results for convex surrogates and quasi-concave conditional risk cases (these gave positive calibration in adversarial setting without reject option). We also empirically argue that Shifted Double Ramp Loss (DRL) and Shifted Double Sigmoid Loss (DSL) satisfy the calibration conditions. Finally, we demonstrate the robustness of shifted DRL and shifted DSL against adversarial perturbations on a synthetically generated dataset."
+    },
+    {
+      "id": "c24",
+      "identifier": "arXiv:2602.14161",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "aggregate metrics show an 8.4 percentage point AUC inflation, but per-dataset gaps range from 1% to 25% accuracy-exposing heterogeneous failure modes.",
+      "source_title": "When Benchmarks Lie: Evaluating Malicious Prompt Classifiers Under True Distribution Shift",
+      "source_abstract": "Detecting prompt injection and jailbreak attacks is critical for deploying LLM-based agents safely. As agents increasingly process untrusted data from emails, documents, tool outputs, and external APIs, robust attack detection becomes essential. Yet current evaluation practices and production systems have fundamental limitations. We present a comprehensive analysis using a diverse benchmark of 18 datasets spanning harmful requests, jailbreaks, indirect prompt injections, and extraction attacks. We propose Leave-One-Dataset-Out (LODO) evaluation to measure true out-of-distribution generalization, revealing that the standard practice of train-test splits from the same dataset sources severely overestimates performance: aggregate metrics show an 8.4 percentage point AUC inflation, but per-dataset gaps range from 1% to 25% accuracy-exposing heterogeneous failure modes. To understand why classifiers fail to generalize, we analyze Sparse Auto-Encoder (SAE) feature coefficients across LODO folds, finding that 28% of top features are dataset-dependent shortcuts whose class signal depends on specific dataset compositions rather than semantic content. We systematically compare production guardrails (PromptGuard 2, LlamaGuard) and LLM-as-judge approaches on our benchmark, finding all three fail on indirect attacks targeting agents (7-37% detection) and that PromptGuard 2 and LlamaGuard cannot evaluate agentic tool injection due to architectural limitations. Finally, we show that LODO-stable SAE features provide more reliable explanations for classifier decisions by filtering dataset artifacts. We release our evaluation framework at https://github.com/maxf-zn/prompt-mining to establish LODO as the appropriate protocol for prompt attack detection research."
+    },
+    {
+      "id": "c25",
+      "identifier": "10.1145/3723158",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Alert Fatigue in Security Operations Centres: Research Challenges and Opportunities",
+      "source_abstract": "A security operations centre (SOC) is a facility where teams of security professionals, supported by advanced technologies and processes, work together to monitor, detect, and respond to cybersecurity incidents. With advances in AI technology, most of the SOC functions are increasingly becoming AI-driven. Among these, real-time alert monitoring and triage is particularly important. Recent studies, by both industry and academia, have highlighted the problem of alert fatigue and burnout in SOC. Several solutions have been proposed in the literature and by the industry to address this problem. In this article, we review the existing literature and industry solutions on alert fatigue mitigation through the lenses of automation, augmentation, and human–AI collaboration. Based on the review, we identify four major causes of alert fatigue in SOC. We also examine the shortcomings of existing solutions and propose several potential research directions leveraging AI. By providing a comprehensive analysis of the state-of-the-art approaches and their limitations, this study contributes to the existing literature in an important field of study. We anticipate that it will inspire new research directions for addressing alert fatigue not just in SOCs but across other Command and Control (C2) domains as well."
+    },
+    {
+      "id": "c26",
+      "identifier": "arXiv:2503.18813",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "In this paper we propose CaMeL, a robust defense that creates a protective system layer around the LLM, securing it even when underlying models are susceptible to attacks... To operate, CaMeL explicitly extracts the control and data flows from the (trusted) query; therefore, the untrusted data retrieved by the LLM can never impact the program flow. To further improve security, CaMeL uses a notion of a capability to prevent the exfiltration of private data over unauthorized data flows... We demonstrate effectiveness of CaMeL by solving $77%$ of tasks with provable security (compared to $84%$ with an undefended system) in AgentDojo.",
+      "source_title": "Defeating Prompt Injections by Design",
+      "source_abstract": "Large Language Models (LLMs) are increasingly deployed in agentic systems that interact with an untrusted environment. However, LLM agents are vulnerable to prompt injection attacks when handling untrusted data. In this paper we propose CaMeL, a robust defense that creates a protective system layer around the LLM, securing it even when underlying models are susceptible to attacks. To operate, CaMeL explicitly extracts the control and data flows from the (trusted) query; therefore, the untrusted data retrieved by the LLM can never impact the program flow. To further improve security, CaMeL uses a notion of a capability to prevent the exfiltration of private data over unauthorized data flows by enforcing security policies when tools are called. We demonstrate effectiveness of CaMeL by solving $77\\%$ of tasks with provable security (compared to $84\\%$ with an undefended system) in AgentDojo. We release CaMeL at https://github.com/google-research/camel-prompt-injection."
+    }
+  ],
+  "unparsed": [
+    "**Why A is the anchor, not B (spotlight the specialist input) or C (re-mint):** the entire moat is a **fixed-input-shape certification** (flip-consistency + held-out OOD gate). A is the **only** option that does not alter the certified input distribution — Ovadia 2019 [13] establishes any input transform (B) or weight change (C) moves a calibrated model off its operating point and voids the cert by construction; Liu & Gong 2024 [14] measure detection defenses at **~0% FPR with input unchanged** vs a **~0.14 accuracy tax** for transform-style prevention. **But A is security-weak** (adaptively evadable — DataFlip drives KAD detection to **0%** while keeping **91%** ASR [11]; over-ABSTAINs on the long-context inputs judges consume [10]), so it is a coverage floor on top of the committee, not the protection itself.",
+    "**PoisonedRAG: ~5 poisoned documents in a large corpus yield ~90% ASR on targeted queries; the first knowledge-corpus poisoning attack on RAG, and existing defenses are insufficient.** Zou, Geng, Wang & Jia 2025 (USENIX Security 2025). → For the CITATION duty the dominant threat is **corpus poisoning UPSTREAM of the judge input** — an axis A/B/C don't touch → intervene at retrieval (provenance/signing, retrieval-time anomaly detection); the arXiv/Crossref oracle is already a provenance anchor."
+  ],
+  "receipt": {
+    "schema": "roleos-citation-receipt/v1",
+    "kind": "citation-verification",
+    "tool": "roleos verify-citations",
+    "input": "E:/AI/prism-verify/design/specialist-injection-hardening-dispatch.md",
+    "verdict": "revise",
+    "blocking": false,
+    "advisory": true,
+    "citations_sha256": "59e0ee53248ecb8f94412a4f60e2a07ece32075557751b0d36d2599d7e9a90c6",
+    "prism_receipt": {
+      "id": "prism-01ktkq71ezb7vc6xh3n4xtxn5j",
+      "signature": "f166b4507aa28c8cad20449279765f90d703a38493fdecd5a95ea0644b9e8835f08a2d319c5759ddca04eb5a4afe99909767ee862629e55b00df90368424f608",
+      "verdict": "revise"
+    },
+    "retrieval_pins": [
+      {
+        "id": "c1",
+        "identifier": "arXiv:2403.14720",
+        "query": "https://export.arxiv.org/api/query?id_list=2403.14720",
+        "source_sha256": "04dd7ac28a3b05498f6c34479d54d733a185f2a8841f0a78f1a46c24f7da30db",
+        "existence": "resolved"
+      },
+      {
+        "id": "c2",
+        "identifier": "arXiv:2402.06363",
+        "query": "https://export.arxiv.org/api/query?id_list=2402.06363",
+        "source_sha256": "afb026c2b27abb915770fbab51feba8f446455e5ea1748edae68a63b1b87a639",
+        "existence": "resolved"
+      },
+      {
+        "id": "c3",
+        "identifier": "arXiv:2410.05451",
+        "query": "https://export.arxiv.org/api/query?id_list=2410.05451",
+        "source_sha256": "2abcc900b0b3282643df532213b4e9dcaa91676f631e9359d3bcd8e09954cefa",
+        "existence": "resolved"
+      },
+      {
+        "id": "c4",
+        "identifier": "arXiv:2404.13208",
+        "query": "https://export.arxiv.org/api/query?id_list=2404.13208",
+        "source_sha256": "ccb69038b8dc1e431d66cef6c6583dde4edc7789590459f80a1217f4823c9ef5",
+        "existence": "resolved"
+      },
+      {
+        "id": "c5",
+        "identifier": "arXiv:2505.18333",
+        "query": "https://export.arxiv.org/api/query?id_list=2505.18333",
+        "source_sha256": "4be63e21f0a648ca5846854360b24d2d579cbcf86a3b3988c85ad0736bedf82b",
+        "existence": "resolved"
+      },
+      {
+        "id": "c6",
+        "identifier": "arXiv:2504.11358",
+        "query": "https://export.arxiv.org/api/query?id_list=2504.11358",
+        "source_sha256": "694e932932515bdb187eabbae8fea046593f3b0d34c9de66d08a500305888919",
+        "existence": "resolved"
+      },
+      {
+        "id": "c7",
+        "identifier": "arXiv:2310.12815",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.12815",
+        "source_sha256": "90a6f1938487c37ae228e0ed27160b163ca67c5b43f155abe423731ffaf11750",
+        "existence": "resolved"
+      },
+      {
+        "id": "c8",
+        "identifier": "arXiv:2403.17710",
+        "query": "https://export.arxiv.org/api/query?id_list=2403.17710",
+        "source_sha256": "b72e006cebcb23bc78b903784be96c8975d1a86ac71ea092a0669bd5bbdc949a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c9",
+        "identifier": "arXiv:2504.11168",
+        "query": "https://export.arxiv.org/api/query?id_list=2504.11168",
+        "source_sha256": "cf55457d1bc8d8245c31739138256a092d5f0aefe59114f2a644062ec3d3aeb6",
+        "existence": "resolved"
+      },
+      {
+        "id": "c10",
+        "identifier": "arXiv:2508.20890",
+        "query": "https://export.arxiv.org/api/query?id_list=2508.20890",
+        "source_sha256": "e755756755e351f383379070b2092e08580466deed72e2e71b71d1b75ae3f627",
+        "existence": "resolved"
+      },
+      {
+        "id": "c11",
+        "identifier": "arXiv:2507.05630",
+        "query": "https://export.arxiv.org/api/query?id_list=2507.05630",
+        "source_sha256": "d687c353d44c35b1f8d8a5d9422046a8b119e60cf0ca99e482af7cdb4c49251b",
+        "existence": "resolved"
+      },
+      {
+        "id": "c12",
+        "identifier": "arXiv:2504.14716",
+        "query": "https://export.arxiv.org/api/query?id_list=2504.14716",
+        "source_sha256": "48eab015be7120140df0e2c81a1e4e200b0d4c218728ba0aaf7028357eeeaf2a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c13",
+        "identifier": "arXiv:1906.02530",
+        "query": "https://export.arxiv.org/api/query?id_list=1906.02530",
+        "source_sha256": "e06f50a12e1cb447966fd2639f3ea29e13fe466fbf1a40694bf36c376e890e88",
+        "existence": "resolved"
+      },
+      {
+        "id": "c14",
+        "identifier": "arXiv:2310.12815",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.12815",
+        "source_sha256": "90a6f1938487c37ae228e0ed27160b163ca67c5b43f155abe423731ffaf11750",
+        "existence": "resolved"
+      },
+      {
+        "id": "c15",
+        "identifier": "arXiv:2505.18333",
+        "query": "https://export.arxiv.org/api/query?id_list=2505.18333",
+        "source_sha256": "4be63e21f0a648ca5846854360b24d2d579cbcf86a3b3988c85ad0736bedf82b",
+        "existence": "resolved"
+      },
+      {
+        "id": "c16",
+        "identifier": "arXiv:2504.18333",
+        "query": "https://export.arxiv.org/api/query?id_list=2504.18333",
+        "source_sha256": "a7de66ccf996f8457dbdd6f4d9195e8df2a4df56ffc9a02d14467080aa7e505a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c17",
+        "identifier": "arXiv:2507.08794",
+        "query": "https://export.arxiv.org/api/query?id_list=2507.08794",
+        "source_sha256": "d16aa7b3e7f4ca952eee1368fa8b54d9360f4f96156c8e62e0293bbae32ba385",
+        "existence": "resolved"
+      },
+      {
+        "id": "c18",
+        "identifier": "arXiv:2506.09443",
+        "query": "https://export.arxiv.org/api/query?id_list=2506.09443",
+        "source_sha256": "70f8fa94c9575a91000089823424b3446a321ad480ede3190437cdf7c2721f9b",
+        "existence": "resolved"
+      },
+      {
+        "id": "c19",
+        "identifier": "arXiv:2603.29403",
+        "query": "https://export.arxiv.org/api/query?id_list=2603.29403",
+        "source_sha256": "f1f9f1f5e31ef3dce349c488ada1853596001ac6f968db4158687e79ce1968aa",
+        "existence": "resolved"
+      },
+      {
+        "id": "c20",
+        "identifier": "arXiv:2603.25176",
+        "query": "https://export.arxiv.org/api/query?id_list=2603.25176",
+        "source_sha256": "2d9013a8cd7942f98486297dd385da398e644c591f4d759dcd4cef1b4ca634de",
+        "existence": "resolved"
+      },
+      {
+        "id": "c21",
+        "identifier": "arXiv:2602.14161",
+        "query": "https://export.arxiv.org/api/query?id_list=2602.14161",
+        "source_sha256": "1f3d29fa837fbc3ebfb0b68b5fb2771063b40f40d0e1c1d1793e2618fc51e010",
+        "existence": "resolved"
+      },
+      {
+        "id": "c22",
+        "identifier": "arXiv:2502.01027",
+        "query": "https://export.arxiv.org/api/query?id_list=2502.01027",
+        "source_sha256": "d3189d5ca4aa88ad36de941784b2979f21c677a405902781e7021058e496c5c1",
+        "existence": "resolved"
+      },
+      {
+        "id": "c23",
+        "identifier": "arXiv:2410.10736",
+        "query": "https://export.arxiv.org/api/query?id_list=2410.10736",
+        "source_sha256": "87d0d2c809a86140b28555d5cb06aaf347742dd1986bd100540d470b539b9c65",
+        "existence": "resolved"
+      },
+      {
+        "id": "c24",
+        "identifier": "arXiv:2602.14161",
+        "query": "https://export.arxiv.org/api/query?id_list=2602.14161",
+        "source_sha256": "1f3d29fa837fbc3ebfb0b68b5fb2771063b40f40d0e1c1d1793e2618fc51e010",
+        "existence": "resolved"
+      },
+      {
+        "id": "c25",
+        "identifier": "10.1145/3723158",
+        "query": "https://api.crossref.org/works/10.1145/3723158?mailto=verify%40prism-verify.dev",
+        "source_sha256": "8d95b1de8225422340b86c81c4433fa4ddbbebf04ef5f150af8c6bd037153e2e",
+        "existence": "resolved"
+      },
+      {
+        "id": "c26",
+        "identifier": "arXiv:2503.18813",
+        "query": "https://export.arxiv.org/api/query?id_list=2503.18813",
+        "source_sha256": "fab7bb70e6569cedb4a5e30ec7b4b8f24e7beae1f59fd23d8c50a56fa0053003",
+        "existence": "resolved"
+      }
+    ],
+    "local_panel": null,
+    "chain_sha256": "7c9fbe7bc955b3a50ae0f7e36fa8b067d0c47620279ef4ec90dac1ac9ff09975"
+  },
+  "duration": 40128
+}
