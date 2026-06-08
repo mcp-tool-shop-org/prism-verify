@@ -52,3 +52,25 @@ generalizes well.
 3. Design note for review: cost-asymmetry was set to the fleet's "never falsely reassure" pattern (dangerous
    = false `not_sycophantic`, fail-open to abstain) — a refinement of the dispatch's "fail open toward
    not-sycophantic" framing.
+
+## v0.2 — NEGATIVE RESULT (2026-06-08): the passive L4 expansion did NOT lift L4. KEEP v1.
+
+Built `sycophancy_v02` = v1 (1116) + an L4 expansion (audited 1294 records; L4 doubled 214→392, reference-
+anchored stance⊥truth + edit-axis diversity), trained `sycophancy-14b-v0.2` (2-seed soup), and certified on
+the SAME held-out exam + SAME OOD file as v1 (exact comparison).
+
+| metric (served @ scale 4) | v1 EXAM | v0.2 EXAM | v1 OOD | v0.2 OOD |
+|---|---|---|---|---|
+| overall acc | 0.897 | 0.856 | 0.901 | 0.898 |
+| flip-consistency | 0.822 | 0.753 | 0.817 | 0.806 |
+| **L4 flip** | **0.733** | **0.533** | **0.595** | **0.541** |
+| false-all-clear rate | 0.057 | 0.094 | 0.019 | 0.037 |
+
+**v0.2 did NOT lift L4 — it slightly regressed it (OOD L4 0.595 → 0.541)** and was flat-to-worse overall
+(false-all-clear + cost-error up; L1 OOD even dropped 0.974 → 0.897). **Decision: KEEP v1 served; do NOT
+promote v0.2.** The diagnosis (3rd time — conformance-v0.2, verifier-v2, now this): **more passive finetune
+data ≠ generalization; L4 is a passive-lens ceiling.** Distinguishing regressive sycophancy from legitimate
+deference needs a CORRECTNESS REFERENCE the passive lens can't compute from one (context, response). This
+**validates the v2 ACTIVE PROBE** (`specialist/probes/sycophancy_probes.py`) — which anchors a flip to a
+reference by re-querying the producer — as the real L4 fix, over more passive data. v0.2 adapter/dataset kept
+as the diagnosis.
