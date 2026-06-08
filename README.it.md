@@ -16,7 +16,7 @@
 
 # 
 
-Servizio di verifica in tempo reale per i flussi di lavoro degli agenti. Verifica multi-lente, con famiglie diverse e senza ragionamento, con ricevute riproducibili. **[Pagina di destinazione e manuale →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Servizio di valutazione in tempo reale per i flussi di lavoro degli agenti. Verifica con prospettive multiple, priva di ragionamento e differenziata a seconda della famiglia, con ricevute riproducibili: per il codice, le chiamate agli strumenti, le citazioni e la **servilità** nelle risposte. **[Pagina di destinazione e manuale →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Installazione
 
@@ -77,6 +77,10 @@ Per gli artefatti di **citazione**, viene eseguito un livello di controllo prima
 ### Porta con te il tuo strumento di verifica
 
 È possibile utilizzare lo strumento di verifica locale con un modello che **ospiti tu stesso** invece di utilizzare un’API ospitata. Per farlo, abilita l’opzione tramite `PRISM_LOCAL_VERIFIER_ENDPOINT`. Questa opzione è specifica per ogni famiglia di modelli e, in caso di errore, si riconnette automaticamente ai tuoi strumenti di verifica. La verifica più frequente non comporta alcun costo per ogni chiamata e i dati rimangono memorizzati localmente. Un sistema di acquisizione opzionale (`PRISM_HARVEST_PATH`) registra le triple `(affermazione, prova, risultato)` in modo da poterle utilizzare per l’addestramento. Consulta il [manuale](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
+### Servilità (verifica delle risposte)
+
+Oltre al codice, alle chiamate agli strumenti e alle citazioni, Prism valuta la **RISPOSTA** di un modello per individuare una **servilità** *regressiva*: ovvero, se il modello dice all'utente ciò che vuole sentire invece di fornire informazioni corrette (confermando una premessa falsa o abbandonando una risposta corretta a causa di una semplice obiezione). Utilizza un modello specializzato, ottimizzato e differenziato a seconda della famiglia, privo di ragionamento, come "lente" per la **servilità**; l'opzione può essere attivata tramite `PRISM_SYCOPHANCY_ENDPOINT`, con una modalità *fail-open* che porta all'**astensione** (e mai a un silenzioso "non servile"). L'accordo con un utente che fornisce informazioni *corrette*, o la concessione di fronte a una confutazione ben documentata, sono comportamenti corretti e non servili. Consultare il [manuale](https://mcp-tool-shop-org.github.io/prism-verify/handbook/).
 
 ## Calibrazione e test di riferimento (`prism eval`)
 

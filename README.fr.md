@@ -16,7 +16,7 @@
 
 # 
 
-Service d’évaluation en temps réel pour les flux de travail des agents. Vérification à plusieurs niveaux, avec des familles différentes, sans raisonnement explicite et avec des reçus rejouables. **[Page d’accueil et manuel →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Service d’évaluation en temps réel pour les flux de travail des agents. Vérification à multiples facettes, sans biais et spécifique à chaque modèle, avec enregistrement des résultats – pour le code, les appels aux outils, les citations et la **servilité** dans les réponses. **[Page d’accueil et guide →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Installation
 
@@ -77,6 +77,10 @@ Pour les artefacts de **citation**, un niveau de vérification est appliqué ava
 ### Utilisez votre propre outil de vérification
 
 L’outil d’analyse peut être utilisé avec un modèle que **vous hébergez** au lieu d’une API hébergée. Pour ce faire, activez l’option via `PRISM_LOCAL_VERIFIER_ENDPOINT`. Cette option est différente selon la famille et permet une ouverture par défaut vers vos outils de vérification hébergés. La vérification la plus fréquente est gratuite et vos données restent locales. Un collecteur d’informations optionnel (`PRISM_HARVEST_PATH`) enregistre les triplets `(revendication, preuve, verdict)`, ce qui vous permet de les utiliser pour l’apprentissage. Consultez le [manuel](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
+### Servilité (vérification des réponses)
+
+Au-delà du code, des appels aux outils et des citations, Prism évalue la **RÉPONSE** d’un modèle pour détecter une **servilité** *régressive* – en disant à l’utilisateur ce qu’il veut entendre plutôt que ce qui est correct (en confirmant une fausse prémisse, en abandonnant une réponse correcte sous la simple pression). Il exécute un spécialiste affiné et spécifique à chaque modèle, sans biais ni raisonnement, comme filtre de « servilité » – activation possible via `PRISM_SYCOPHANCY_ENDPOINT`, avec **par défaut une option d’abstention** (jamais de réponse silencieuse indiquant l’absence de servilité). L’accord avec un utilisateur qui a raison ou la concession face à une réfutation bien étayée sont des signes de fidélité, et non de servilité. Voir le [guide](https://mcp-tool-shop-org.github.io/prism-verify/handbook/).
 
 ## Calibration et évaluation comparative (`prism eval`)
 

@@ -16,7 +16,7 @@
 
 # 
 
-Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts. **[Landing page &amp; handbook →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Runtime adjudication service for agent workflows. Family-different, reasoning-stripped, multi-lens verification with replayable receipts — for code, tool-calls, citations, and response **sycophancy**. **[Landing page &amp; handbook →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Install
 
@@ -88,6 +88,16 @@ The groundedness lens can run against a model **you host** instead of a hosted A
 frequent check costs nothing per call and your evidence stays local. An opt-in capture sink
 (`PRISM_HARVEST_PATH`) records the `(claim, evidence, verdict)` triples so you can train one. See the
 [handbook](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
+### Sycophancy (response verification)
+
+Beyond code, tool-calls, and citations, prism judges a model **RESPONSE** for *regressive*
+**sycophancy** — telling the user what they want to hear over what is correct (affirming a false
+premise, abandoning a correct answer under mere pushback). It runs a family-different,
+reasoning-stripped fine-tuned specialist as the `sycophancy` lens — opt-in via
+`PRISM_SYCOPHANCY_ENDPOINT`, **fail-open to *abstain*** (never a silent "not sycophantic"). Agreement
+with a *correct* user, or conceding to a well-evidenced rebuttal, is faithful, not sycophantic. See
+the [handbook](https://mcp-tool-shop-org.github.io/prism-verify/handbook/).
 
 ## Calibration & benchmark (`prism eval`)
 

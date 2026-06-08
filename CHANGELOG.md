@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-06-08
+
+### Added
+- **Sycophancy lens v1 (wedge #2) — a new verification duty.** `prism.lenses.sycophancy` judges a
+  model RESPONSE against its CONTEXT for *regressive* sycophancy (telling the user what they want over
+  what is correct — affirming a false premise, abandoning a correct answer under mere pushback),
+  routed via the engine's RESPONSE artifact branch. Backed by a locally-served, family-different
+  fine-tuned specialist (`providers/sycophancy.py` `SycophancyProvider`, opt-in
+  `PRISM_SYCOPHANCY_ENDPOINT`), reasoning-stripped, **fail-open to abstain** — never a silent
+  "not sycophantic". Adds `prism.probes` (active capitulation/counterfactual probes — a
+  producer-querying slice).
+
+### Security
+- **`prism.security` — input-hardening on a screening copy (opt-in / additive, fail-open).**
+  `desmuggle` strips zero-width / Unicode-tag / variation-selector / bidi smuggling and NFKC-folds;
+  `spotlight` wraps untrusted content in content-derived **unforgeable** delimiters (boundary =
+  `sha256(content)`, both unforgeable and replay-stable). The citation **groundedness** prompt is
+  hardened (de-smuggle + unforgeable markers) **only for non-certified general-model verifiers** — a
+  frozen specialist's certified input is never transformed (`CERTIFIED_FROZEN_FAMILIES`), so the
+  default path is byte-identical. Internal-first quality-oversight posture; the adversarial extensions
+  are research-gated but shelved (`design/`).
+
 ## [1.2.1] - 2026-06-06
 
 ### Docs

@@ -16,7 +16,7 @@
 
 # 
 
-Servicio de validación en tiempo de ejecución para flujos de trabajo de agentes. Verificación con múltiples modelos, diferenciada por familia y sin razonamiento, con comprobantes que se pueden reproducir. **[Página de destino y manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Servicio de verificación en tiempo de ejecución para flujos de trabajo de agentes. Verificación con múltiples niveles, sin razonamiento y adaptada a cada familia, con registros que se pueden reproducir: para código, llamadas a herramientas, citas y la **adulación** en las respuestas. **[Página de inicio y manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Instalar
 
@@ -70,16 +70,20 @@ Prism aplica cuatro bloqueos arquitectónicos en el contrato de la API:
 3. **Múltiples lentes:** se ejecutan al menos 3 lentes independientes en paralelo.
 4. **Con conocimiento de la submodularidad:** se rechaza si los lentes están demasiado de acuerdo (señal colapsada).
 
-Para los artefactos de **citación**, se aplica una capa de verificación antes de la evaluación de la coherencia del LLM; cada etapa determinista rechaza aquello que puede *demostrar*, y, en caso contrario, se abstiene:
+Para los artefactos de **cita**, se aplica una capa de verificación antes del análisis de la veracidad del modelo lingüístico: cada etapa determinista rechaza lo que puede *demostrar*, y, en caso contrario, se abstiene.
 
-- **Capa de existencia:** se realiza una búsqueda en tiempo real en arXiv/Crossref; se descarta un identificador fabricado, sin analizarlo.
-- **Capa numérica/de unidades:** se detecta un error en el intercambio de porcentajes, un error en la escala de unidades (42 mili- frente a micro-arcosegundos) o una falsedad en la dirección de la comparación (5,0 < 5,8 ≠ "superado") mediante cálculos aritméticos.
-- **Evaluación de la coherencia:** se compara el LLM, que pertenece a una familia diferente y carece de capacidad de razonamiento, con el resumen recuperado.
-- **Capa de NLI ortogonal** *(opcional, `PRISM_NLI_FLOOR`)*: un codificador NLI actúa como filtro cruzado y rechaza una afirmación que el LLM considera "válida", pero que un modelo diferente, con un funcionamiento distinto, no corrobora.
+- **Capa de existencia:** recuperación en tiempo real de arXiv/Crossref; se descarta un identificador fabricado, sin analizarlo.
+- **Capa numérica/de unidades:** se detecta aritméticamente una sustitución porcentual, un error en la escala de unidades (42 mili- frente a micro-arcosegundos) o una falsedad en la dirección de la comparación (5,0 < 5,8 ≠ "superado").
+- **Análisis de veracidad:** verificación del modelo lingüístico, sin razonamiento y adaptada a cada familia, con respecto al resumen recuperado.
+- **Capa ortogonal NLI** *(opcional, `PRISM_NLI_FLOOR`)*: un codificador NLI (inferencia del lenguaje natural) rechaza una respuesta "apoyada" que el modelo lingüístico proporciona, pero que un modelo diferente no corrobora.
 
 ### Utilice su propio verificador
 
-La evaluación de la coherencia puede aplicarse a un modelo **que usted aloje** en lugar de utilizar una API alojada; para ello, active la opción mediante `PRISM_LOCAL_VERIFIER_ENDPOINT`. Se trata de una familia diferente y, en caso de fallo, se recurrirá a sus verificadores alojados. La verificación más frecuente no tiene coste por consulta y sus pruebas permanecen en su sistema. Un receptor de captura opcional (`PRISM_HARVEST_PATH`) registra las tripletas `(afirmación, evidencia, veredicto)` para que pueda entrenar un modelo. Consulte el [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+El análisis de veracidad se puede ejecutar con un modelo **que usted aloje** en lugar de una API alojada; para ello, active la opción mediante `PRISM_LOCAL_VERIFIER_ENDPOINT`. Este proceso está adaptado a cada familia y permite que el sistema falle de forma segura, utilizando sus verificadores alojados. La verificación más frecuente no tiene costo por llamada y su evidencia se mantiene local. Un receptor opcional (`PRISM_HARVEST_PATH`) registra las tripletas `(afirmación, evidencia, veredicto)` para que pueda entrenar un modelo. Consulte el [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
+### Adulación (verificación de respuestas)
+
+Además del código, las llamadas a herramientas y las citas, Prism evalúa la **RESPUESTA** de un modelo para detectar una **adulación** *regresiva*: decir al usuario lo que quiere oír en lugar de lo que es correcto (afirmar una premisa falsa, abandonar una respuesta correcta ante una simple objeción). Para ello, utiliza un especialista afinado, sin razonamiento y adaptado a cada familia, como el análisis de "adulación"; para activarlo, utilice `PRISM_SYCOPHANCY_ENDPOINT` y configure el sistema para que **falle de forma segura absteniéndose** (nunca con un silencio que indique "no es adulador"). Estar de acuerdo con un usuario *correcto* o ceder ante una refutación bien fundamentada es ser fiel, no adulador. Consulte el [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/).
 
 ## Calibración y prueba de rendimiento (`prism eval`)
 

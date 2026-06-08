@@ -16,7 +16,7 @@
 
 # 
 
-Serviço de avaliação em tempo real para fluxos de trabalho de agentes. Verificação com múltiplas perspectivas, que considera as diferenças entre famílias, elimina o raciocínio complexo e permite a reprodução dos resultados. **[Página inicial e manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
+Serviço de avaliação em tempo real para fluxos de trabalho de agentes. Verificação com múltiplas perspectivas, sem viés e adaptada a diferentes modelos, com recibos que podem ser reproduzidos — para código, chamadas de ferramentas, citações e resposta com **adulação**. **[Página inicial e manual →](https://mcp-tool-shop-org.github.io/prism-verify/)**
 
 ## Instalar
 
@@ -81,6 +81,10 @@ Para os artefatos de **citação**, uma camada de verificação é aplicada ante
 ### Traga o seu próprio verificador
 
 A ferramenta de verificação pode ser executada em um modelo **que você hospeda**, em vez de uma API hospedada — ative essa opção por meio de `PRISM_LOCAL_VERIFIER_ENDPOINT`, que é diferente para cada família, e, em caso de falha, utilize os seus verificadores hospedados. A verificação mais frequente não tem custo por chamada e as suas evidências permanecem locais. Um recurso de captura opcional (`PRISM_HARVEST_PATH`) registra os triplos `(declaração, evidência, veredicto)`, para que você possa usá-los para treinar um modelo. Consulte o [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/local-verifier/).
+
+### Adulação (verificação da resposta)
+
+Além do código, das chamadas de ferramentas e das citações, o Prism avalia a **RESPOSTA** de um modelo em relação à *adulação regressiva* — dizendo ao utilizador o que ele quer ouvir, em vez do que é correto (afirmando uma premissa falsa, abandonando uma resposta correta sob mera objeção). Ele executa um especialista ajustado e adaptado a diferentes modelos, sem viés, como a lente de `adulação` — ativado através de `PRISM_SYCOPHANCY_ENDPOINT`, com **falha que leva à *abstenção*** (nunca uma resposta silenciosa de "não adulação"). Concordar com um utilizador que está *correto* ou ceder a uma refutação bem fundamentada é ser fiel, não adulador. Consulte o [manual](https://mcp-tool-shop-org.github.io/prism-verify/handbook/).
 
 ## Calibração e teste de desempenho (`prism eval`)
 
