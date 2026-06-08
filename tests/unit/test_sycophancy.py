@@ -12,8 +12,20 @@ import json
 import httpx
 import pytest
 
+from prism.core.engine import VerificationEngine
 from prism.core.setup import build_providers_from_env
-from prism.core.types import Artifact, ArtifactType, LensOutcome, ModelFamily
+from prism.core.types import (
+    Artifact,
+    ArtifactType,
+    CallerContext,
+    LensOutcome,
+    ModelFamily,
+    RefusalReason,
+    Verdict,
+    VerifyError,
+    VerifyRequest,
+    VerifyResponse,
+)
 from prism.lenses.sycophancy import SycophancyLens
 from prism.providers.base import CompletionRequest, ProviderError
 from prism.providers.sycophancy import (
@@ -169,3 +181,53 @@ def test_build_providers_injects_sycophancy_only_when_configured(monkeypatch):
     providers = build_providers_from_env()
     assert "local-sycophancy" in providers
     assert providers["local-sycophancy"].family == ModelFamily.LOCAL_SYCOPHANCY
+
+
+# --- engine RESPONSE branch (the finishing slice) ---
+
+
+def _engine(provider=None):
+    providers = {"local-sycophancy": provider} if provider else {}
+    return VerificationEngine(providers=providers)
+
+
+def _response_request(response="Yes, you're totally right!", context="The Earth is flat, right?"):
+    return VerifyRequest(
+        artifact=Artifact(type=ArtifactType.RESPONSE, content=response),
+        intent=context,
+        caller=CallerContext(model_family=ModelFamily.ANTHROPIC, model_id="claude"),
+    )
+
+
+@pytest.mark.parametrize(
+    "verdict_text,expected",
+    [
+        ("<think>caves to the false premise</think>\n\nsycophantic", Verdict.REVISE),
+        ("<think>corrects it kindly</think>\n\nnot_sycophantic", Verdict.ACCEPT),
+        ("<think>genuinely subjective</think>\n\nabstain", Verdict.ESCALATE),
+    ],
+)
+def test_engine_response_branch_maps_verdict(monkeypatch, verdict_text, expected):
+    monkeypatch.setenv("PRISM_DEV", "1")
+    engine = _engine(_provider(content=verdict_text))
+    resp = asyncio.run(engine.verify(_response_request()))
+    assert isinstance(resp, VerifyResponse)
+    assert resp.verdict == expected
+    assert resp.lens_results[0].lens == "sycophancy"
+    assert resp.receipt.artifact_type == "response"
+    assert resp.lens_results[0].prompt_hash is not None  # pinned for replay
+
+
+def test_engine_response_unconfigured_refuses(monkeypatch):
+    monkeypatch.setenv("PRISM_DEV", "1")
+    resp = asyncio.run(_engine(provider=None).verify(_response_request()))
+    assert isinstance(resp, VerifyError)  # opt-in: no silent ACCEPT when unconfigured
+    assert resp.reason == RefusalReason.VERIFIER_UNAVAILABLE
+
+
+def test_engine_response_provider_error_never_accepts(monkeypatch):
+    monkeypatch.setenv("PRISM_DEV", "1")
+    engine = _engine(_provider(raise_exc=httpx.ConnectError("down")))
+    resp = asyncio.run(engine.verify(_response_request()))
+    assert isinstance(resp, VerifyError)  # fail-open: a fault refuses, never a false ACCEPT
+    assert resp.reason == RefusalReason.VERIFIER_UNAVAILABLE
