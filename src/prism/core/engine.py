@@ -33,6 +33,7 @@ from prism.core.types import (
     FindingMatch,
     LensOutcome,
     LensResult,
+    ModelFamily,
     RefusalReason,
     Verdict,
     VerifyError,
@@ -43,9 +44,11 @@ from prism.eval.harvest import capture as harvest_capture
 from prism.lenses.base import Lens, compute_prompt_hash
 from prism.lenses.nli import nli_floor_enabled, nli_groundedness
 from prism.lenses.registry import resolve_lenses
+from prism.lenses.sycophancy import SycophancyLens
 from prism.providers.base import CompletionRequest, ModelProvider, ProviderError
 from prism.receipts.store import ReceiptStore
 from prism.retrieval.oracle import CitationOracle, ExistenceResult
+from prism.security import CERTIFIED_FROZEN_FAMILIES
 
 # Minimum lenses required (Lock 3)
 MIN_LENSES = 3
@@ -153,6 +156,11 @@ class VerificationEngine:
             citation_response = await self._verify_citations(request)
             harvest_capture(request, citation_response)
             return citation_response
+
+        # wedge #2: a RESPONSE is judged for sycophancy by the specialist lens (one
+        # mechanism/family-decorrelated watcher), not the code-artifact multi-lens pipeline.
+        if request.artifact.type == ArtifactType.RESPONSE:
+            return await self._verify_sycophancy(request)
 
         # Step 1: Strip reasoning
         try:
@@ -488,6 +496,95 @@ class VerificationEngine:
             receipt=receipt,
         )
 
+    async def _verify_sycophancy(
+        self, request: VerifyRequest
+    ) -> VerifyResponse | VerifyError:
+        """Response path: the Sycophancy specialist lens judges (context=intent, response=artifact).
+
+        One mechanism/family-decorrelated specialist (its own family LOCAL_SYCOPHANCY), so the
+        same-mechanism-panel locks (MIN_LENSES / submodularity) do not apply — the >=3-lens panel +
+        >=2-agreement emission gate is the v0.2 design (design/sycophancy-v0.2-dispatch.md). Opt-in:
+        an unconfigured specialist REFUSES (VERIFIER_UNAVAILABLE), never a silent ACCEPT. Fail-open:
+        a provider/parse fault refuses (availability), never a false 'not_sycophantic'.
+        """
+        provider = self._providers.get(ModelFamily.LOCAL_SYCOPHANCY.value)
+        if provider is None:
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail="sycophancy specialist not configured (set PRISM_SYCOPHANCY_ENDPOINT)",
+                retryable=False,
+            )
+
+        # Lock 2: strip producer reasoning from the response before the lens sees it.
+        try:
+            strip_result = strip_reasoning(request.artifact.content)
+        except StripVerificationError:
+            return VerifyError(
+                reason=RefusalReason.STRIP_VERIFICATION_FAILED,
+                detail="Reasoning patterns survived stripping — cannot proceed safely",
+                retryable=False,
+            )
+        stripped = Artifact(
+            type=request.artifact.type,
+            content=strip_result.content,
+            spec_hash=request.artifact.spec_hash,
+        )
+
+        lens = SycophancyLens()
+        system_prompt, user_prompt = lens.build_prompts(stripped, request.intent)
+        prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
+        model_id = provider.available_models[0]
+        try:
+            lens_result = await lens.evaluate(
+                stripped, request.intent, ModelFamily.LOCAL_SYCOPHANCY.value, model_id, provider
+            )
+        except ProviderError as exc:
+            # Fail-open: an unavailable specialist refuses (route to a human), never ACCEPT.
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail=f"sycophancy specialist call failed: {exc}",
+                retryable=True,
+            )
+        if lens_result.errored:
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail="sycophancy specialist returned an unparseable adjudication",
+                retryable=True,
+            )
+        lens_result.prompt_hash = prompt_hash
+
+        verdict, confidence, retryable = aggregate_verdict([lens_result])
+        revision_hint = None
+        if lens_result.outcome == LensOutcome.FAIL and lens_result.findings:
+            revision_hint = lens_result.findings[0].evidence[:500]
+
+        pre = hashlib.sha256(request.artifact.content.encode()).hexdigest()
+        post = hashlib.sha256(strip_result.content.encode()).hexdigest()
+        receipt = self._receipt_store.create_receipt(
+            pre_strip_hash=pre,
+            post_strip_hash=post,
+            verifier_models=[model_id],
+            pairwise_rho={},
+            reasoning_visibility_mode=request.reasoning_visibility,
+            verdict=verdict.value,
+            confidence=confidence,
+            retryable=retryable,
+            lens_results_json=json.dumps([lens_result.model_dump()], default=str),
+            lens_prompt_hashes={lens.name: prompt_hash},
+            artifact_type=request.artifact.type.value,
+            retrieval_pins=[],
+        )
+        return VerifyResponse(
+            verdict=verdict,
+            confidence=confidence,
+            retryable=retryable,
+            revision_hint=revision_hint,
+            lens_results=[lens_result],
+            pairwise_rho={},
+            citation_results=[],
+            receipt=receipt,
+        )
+
     async def _adjudicate_citation(
         self,
         index: int,
@@ -591,8 +688,14 @@ class VerificationEngine:
                 None,
             )
 
+        # Harden the groundedness prompt (de-smuggle + content-derived unforgeable markers) ONLY for
+        # a non-certified general-model verifier; a frozen specialist's input is never transformed,
+        # so its OOD certification holds (design/specialist-injection-hardening-dispatch.md).
         system, user = build_citation_groundedness_prompts(
-            citation.claim, existence.source_title or "", existence.source_abstract
+            citation.claim,
+            existence.source_title or "",
+            existence.source_abstract,
+            spotlight=route.family not in CERTIFIED_FROZEN_FAMILIES,
         )
         prompt_hash = compute_prompt_hash(system, user)
         lens_name = f"citation_groundedness:{index}:{cid or ident or '?'}"

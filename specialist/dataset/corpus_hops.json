@@ -1,0 +1,482 @@
+[
+  {
+    "ev1": "The Velmaridge Accord established seven coastal jurisdictions along the Saltreach basin.",
+    "ev2": "Each coastal jurisdiction under the Accord operates its own tidal levy office.",
+    "bridge_claim": "The seven jurisdictions of the Velmaridge Accord each operate a tidal levy office."
+  },
+  {
+    "ev1": "Director Amelia Quorrenfeld leads the Pallisade Foundry research division.",
+    "ev2": "The Pallisade Foundry research division is funded entirely by the Estren Heritage Trust.",
+    "bridge_claim": "The division led by Director Amelia Quorrenfeld is funded by the Estren Heritage Trust."
+  },
+  {
+    "ev1": "The Brisanthe Protocol defines twelve escalation bands for grid faults.",
+    "ev2": "Every escalation band in the Protocol is assigned a dedicated on-call engineer.",
+    "bridge_claim": "Each of the twelve escalation bands in the Brisanthe Protocol has a dedicated on-call engineer."
+  },
+  {
+    "ev1": "The mineral veldrite is mined exclusively in the Tannock Highlands.",
+    "ev2": "The Tannock Highlands fall within the borders of the Marn Confederacy.",
+    "bridge_claim": "Veldrite is mined within the borders of the Marn Confederacy."
+  },
+  {
+    "ev1": "The Orsell Index ranks 38 trade routes by annual freight volume.",
+    "ev2": "The top-ranked route on the Orsell Index is the Calder-to-Wexmoor corridor.",
+    "bridge_claim": "The Calder-to-Wexmoor corridor has the highest annual freight volume of the 38 routes on the Orsell Index."
+  },
+  {
+    "ev1": "Captain Doran Velasti commands the survey ship Lantern of Hesperane.",
+    "ev2": "The Lantern of Hesperane is the only vessel cleared to enter the Greyfen Shoals.",
+    "bridge_claim": "Captain Doran Velasti commands the only vessel cleared to enter the Greyfen Shoals."
+  },
+  {
+    "ev1": "The Wrenmark Charter grants nine voting seats to the Lower Assembly.",
+    "ev2": "Each voting seat in the Lower Assembly represents one river district.",
+    "bridge_claim": "The nine voting seats granted by the Wrenmark Charter each represent a river district."
+  },
+  {
+    "ev1": "The compound theladrin is the active ingredient in Quessmoor antifreeze.",
+    "ev2": "Quessmoor antifreeze is rated for temperatures down to minus 61 degrees on the Halvern scale.",
+    "bridge_claim": "Theladrin is the active ingredient in an antifreeze rated to minus 61 degrees on the Halvern scale."
+  },
+  {
+    "ev1": "The Selvane Observatory catalogs 1,140 named star clusters.",
+    "ev2": "Every named star cluster in the catalog is assigned to one of four observation watches.",
+    "bridge_claim": "The 1,140 star clusters in the Selvane Observatory catalog are each assigned to one of four observation watches."
+  },
+  {
+    "ev1": "Engineer Pria Velnathe designed the Korrowend suspension bridge.",
+    "ev2": "The Korrowend suspension bridge spans the Drennig Gorge.",
+    "bridge_claim": "Engineer Pria Velnathe designed the bridge that spans the Drennig Gorge."
+  },
+  {
+    "ev1": "The Halberon Guild maintains 26 apprenticeship tracks for metalwork.",
+    "ev2": "Each apprenticeship track in the Guild concludes with a journeyman's trial.",
+    "bridge_claim": "Each of the Halberon Guild's 26 apprenticeship tracks concludes with a journeyman's trial."
+  },
+  {
+    "ev1": "The freight drone model Kestrel-9 has a service ceiling of 3,800 meters.",
+    "ev2": "No drone with a service ceiling above 3,500 meters may operate over the Yannock Wetlands.",
+    "bridge_claim": "The Kestrel-9 may not operate over the Yannock Wetlands."
+  },
+  {
+    "ev1": "The Vorrane Treaty recognizes five sovereign mountain cantons.",
+    "ev2": "Each sovereign mountain canton under the Treaty mints its own currency.",
+    "bridge_claim": "The five cantons recognized by the Vorrane Treaty each mint their own currency."
+  },
+  {
+    "ev1": "Archivist Lemuel Strane oversees the Tessworth Manuscript Vault.",
+    "ev2": "The Tessworth Manuscript Vault holds the only surviving copy of the Endrith Codex.",
+    "bridge_claim": "Archivist Lemuel Strane oversees the vault holding the only surviving copy of the Endrith Codex."
+  },
+  {
+    "ev1": "The Pellmire Reactor runs on a coolant called brenn-fluid.",
+    "ev2": "Brenn-fluid is produced solely at the Garrow Chemical Works.",
+    "bridge_claim": "The coolant for the Pellmire Reactor is produced solely at the Garrow Chemical Works."
+  },
+  {
+    "ev1": "The Stannock Ledger records 470 chartered merchant houses.",
+    "ev2": "Every chartered merchant house in the Ledger pays an annual seal-fee of 90 marks.",
+    "bridge_claim": "Each of the 470 merchant houses in the Stannock Ledger pays a 90-mark annual seal-fee."
+  },
+  {
+    "ev1": "The cultivar Brennwheat-7 was developed at the Olverhal Seed Station.",
+    "ev2": "The Olverhal Seed Station is operated by the Ministry of Thessane Agriculture.",
+    "bridge_claim": "Brennwheat-7 was developed at a station operated by the Ministry of Thessane Agriculture."
+  },
+  {
+    "ev1": "The Larnwick Festival features 33 competing artisan troupes.",
+    "ev2": "Each competing artisan troupe at the Festival performs on the Grand Quillet stage.",
+    "bridge_claim": "All 33 artisan troupes at the Larnwick Festival perform on the Grand Quillet stage."
+  },
+  {
+    "ev1": "Pilot Sera Tomavich holds the speed record for the Vendrake Pass route.",
+    "ev2": "The Vendrake Pass route is closed to all traffic during the Hollow Months.",
+    "bridge_claim": "Pilot Sera Tomavich holds the record for a route that is closed during the Hollow Months."
+  },
+  {
+    "ev1": "The Ossenbright Charter outlines four classes of harbor permit.",
+    "ev2": "Each class of harbor permit under the Charter requires a separate annual inspection.",
+    "bridge_claim": "Each of the four harbor permit classes in the Ossenbright Charter requires a separate annual inspection."
+  },
+  {
+    "ev1": "The alloy duramantine is used in the hull plating of the cruiser Wren's Tally.",
+    "ev2": "Duramantine is forged only in the furnaces of Castle Bremmoth.",
+    "bridge_claim": "The hull plating of the Wren's Tally uses an alloy forged only in the furnaces of Castle Bremmoth."
+  },
+  {
+    "ev1": "The Calthorn Survey divides the eastern plateau into 18 grazing tracts.",
+    "ev2": "Each grazing tract in the Survey is leased to a single herding clan.",
+    "bridge_claim": "Each of the 18 grazing tracts in the Calthorn Survey is leased to a single herding clan."
+  },
+  {
+    "ev1": "The Vellmar Compact assigns each cargo vessel a sealed manifest token before departure.",
+    "ev2": "Every sealed manifest token is logged in the Driftwell Registry within four hours.",
+    "bridge_claim": "The cargo vessels under the Vellmar Compact have their manifest tokens recorded in the Driftwell Registry."
+  },
+  {
+    "ev1": "Quarry Lake Station operates twelve gravity-fed water locks along its eastern channel.",
+    "ev2": "Each of these twelve water locks is inspected by a certified Brennel warden.",
+    "bridge_claim": "The water locks at Quarry Lake Station are inspected by certified Brennel wardens."
+  },
+  {
+    "ev1": "The Orsano Codex defines seven escalation grades for harbor disputes.",
+    "ev2": "Each escalation grade is resolved by a single arbiter from the Halberd Guild.",
+    "bridge_claim": "The escalation grades in the Orsano Codex are resolved by Halberd Guild arbiters."
+  },
+  {
+    "ev1": "Pilot Marisa Quoll commands the survey skiff named the Pale Lantern.",
+    "ev2": "The Pale Lantern carries a tidal-mapping array built by the Wexford Foundry.",
+    "bridge_claim": "The survey skiff commanded by Marisa Quoll carries a Wexford Foundry tidal-mapping array."
+  },
+  {
+    "ev1": "The Caldwich Accord requires every border outpost to maintain a triple-sealed grain reserve.",
+    "ev2": "Each triple-sealed grain reserve is audited every ninety days by the Tessmark Bureau.",
+    "bridge_claim": "The grain reserves mandated by the Caldwich Accord are audited by the Tessmark Bureau every ninety days."
+  },
+  {
+    "ev1": "Director Holloway Pim oversees the night shift at the Greywater Smeltery.",
+    "ev2": "The Greywater Smeltery processes forty tonnes of slag-iron each working day.",
+    "bridge_claim": "Holloway Pim oversees a night shift at a smeltery that processes forty tonnes of slag-iron daily."
+  },
+  {
+    "ev1": "The Sundering Charter grants the Marrow Coast nine independent fishing leases.",
+    "ev2": "Each of these fishing leases expires at the close of the Brindle harvest.",
+    "bridge_claim": "The Marrow Coast fishing leases granted under the Sundering Charter expire at the close of the Brindle harvest."
+  },
+  {
+    "ev1": "Engineer Dalia Frost designed the pressure baffles used in the Korrin Aqueduct.",
+    "ev2": "The Korrin Aqueduct supplies drinking water to the township of Estreven.",
+    "bridge_claim": "The aqueduct supplying drinking water to Estreven uses pressure baffles designed by Dalia Frost."
+  },
+  {
+    "ev1": "The Pellwitt Treaty establishes four tariff bands for overland salt convoys.",
+    "ev2": "Each tariff band is collected at a designated tollhouse on the Asher Road.",
+    "bridge_claim": "The tariff bands set by the Pellwitt Treaty are collected at tollhouses on the Asher Road."
+  },
+  {
+    "ev1": "Warden-Captain Soren Vale patrols the cliff route between Halloran Keep and the Thresh Beacon.",
+    "ev2": "The Thresh Beacon signals incoming storms to every fleet in the Maren Strait.",
+    "bridge_claim": "Soren Vale's cliff patrol reaches a beacon that signals storms to fleets in the Maren Strait."
+  },
+  {
+    "ev1": "The Ondre Foundation funds eleven scholarship berths at the Calliston Institute.",
+    "ev2": "Each scholarship berth covers one full term of metallurgy instruction.",
+    "bridge_claim": "The scholarship berths funded by the Ondre Foundation each cover a full term of metallurgy instruction."
+  },
+  {
+    "ev1": "The airship Cinder Wren is moored at the Vantle Heights skydock.",
+    "ev2": "The Vantle Heights skydock charges a berthing fee of six talents per night.",
+    "bridge_claim": "The airship Cinder Wren is moored at a skydock that charges six talents per night for berthing."
+  },
+  {
+    "ev1": "The Hesper Mandate divides the salt marsh into five conservation wards.",
+    "ev2": "Each conservation ward is patrolled by a ranger from the Loamwatch Order.",
+    "bridge_claim": "The conservation wards created by the Hesper Mandate are patrolled by Loamwatch Order rangers."
+  },
+  {
+    "ev1": "Curator Imogen Sayle maintains the relic vault beneath the Aldermoor Observatory.",
+    "ev2": "The Aldermoor Observatory tracks the comet known as Veth's Wake every winter.",
+    "bridge_claim": "Imogen Sayle maintains a relic vault beneath an observatory that tracks the comet Veth's Wake."
+  },
+  {
+    "ev1": "The Brannoch Guild issues a copper seal to each licensed dye-house in the lower quarter.",
+    "ev2": "Every copper seal must be renewed before the Festival of Lamps each year.",
+    "bridge_claim": "The copper seals the Brannoch Guild issues to dye-houses must be renewed before the Festival of Lamps."
+  },
+  {
+    "ev1": "Foreman Garrick Wend supervises the tunnel crews at the Sablecut Mine.",
+    "ev2": "The Sablecut Mine yields a rare blue ore called pellumite.",
+    "bridge_claim": "Garrick Wend supervises tunnel crews at a mine that yields the rare blue ore pellumite."
+  },
+  {
+    "ev1": "The Tarrowind Pact assigns each signatory province a quota of three river barges.",
+    "ev2": "Each river barge must fly the pennant of the Cordage League.",
+    "bridge_claim": "The river barges allotted under the Tarrowind Pact must fly the Cordage League pennant."
+  },
+  {
+    "ev1": "Surgeon Nell Brackwater runs the field infirmary at the Hollowford garrison.",
+    "ev2": "The Hollowford garrison defends the only ford across the Sennick River.",
+    "bridge_claim": "Nell Brackwater runs a field infirmary at the garrison defending the only ford across the Sennick River."
+  },
+  {
+    "ev1": "The Quillon Edict lists eight forbidden reagents for civic apothecaries.",
+    "ev2": "Each forbidden reagent is catalogued with a warning glyph in the Mendell Index.",
+    "bridge_claim": "The forbidden reagents named in the Quillon Edict are catalogued with warning glyphs in the Mendell Index."
+  },
+  {
+    "ev1": "Archivist Teodor Wisp keeps the cartography ledgers for the Sundrift Expedition.",
+    "ev2": "The Sundrift Expedition charts the uncharted shoals beyond Cape Verrow.",
+    "bridge_claim": "Teodor Wisp keeps cartography ledgers for the expedition charting the shoals beyond Cape Verrow."
+  },
+  {
+    "ev1": "The Marrowgate Concord sets a curfew of nine bells for all riverside wards.",
+    "ev2": "This nine-bell curfew is enforced by the lantern-bearers of the Ninth Watch.",
+    "bridge_claim": "The riverside curfew set by the Marrowgate Concord is enforced by the Ninth Watch lantern-bearers."
+  },
+  {
+    "ev1": "Captain Yara Dunmore leads the relief convoy bound for the famine-struck Olwen Vale.",
+    "ev2": "The relief convoy carries six hundred sacks of barley from the Threshold Granary.",
+    "bridge_claim": "Yara Dunmore leads a convoy to the Olwen Vale carrying six hundred sacks of Threshold Granary barley."
+  },
+  {
+    "ev1": "The Vellforth Accord establishes seven coastal trade zones across the Marrenel Strait.",
+    "ev2": "Each of the seven coastal trade zones is administered by a single Harbor Reeve.",
+    "bridge_claim": "The Vellforth Accord's coastal trade zones are each administered by a Harbor Reeve."
+  },
+  {
+    "ev1": "Project Tindermark catalogs forty-one heat-resistant alloys for deep-bore drilling.",
+    "ev2": "Every heat-resistant alloy in the catalog is stamped with a Quenton serial code.",
+    "bridge_claim": "Project Tindermark's catalogued alloys are stamped with Quenton serial codes."
+  },
+  {
+    "ev1": "The research vessel Aldris Pell carries nine sediment-coring rigs on its lower deck.",
+    "ev2": "Each sediment-coring rig aboard the vessel is operated by a two-person Brennick crew.",
+    "bridge_claim": "The Aldris Pell's sediment-coring rigs are each operated by a two-person Brennick crew."
+  },
+  {
+    "ev1": "Halvorsen Dynamics ships its Strelka turbine in six rotor configurations.",
+    "ev2": "Each Strelka rotor configuration is certified for a distinct altitude band.",
+    "bridge_claim": "Halvorsen Dynamics' Strelka rotor configurations are each certified for a distinct altitude band."
+  },
+  {
+    "ev1": "The Corvane Ledger records twelve overland caravan routes through the Doswell Flats.",
+    "ev2": "Each overland caravan route in the ledger terminates at a fortified Greypost depot.",
+    "bridge_claim": "The Corvane Ledger's caravan routes each terminate at a fortified Greypost depot."
+  },
+  {
+    "ev1": "The Maridian Charter defines five tiers of guild membership for its shipwrights.",
+    "ev2": "Each tier of guild membership grants access to a separate Holwick dry dock.",
+    "bridge_claim": "The Maridian Charter's guild membership tiers each grant access to a separate Holwick dry dock."
+  },
+  {
+    "ev1": "The Ostral Survey mapped twenty-three thermal vents along the Brask Ridge.",
+    "ev2": "Each thermal vent on the ridge feeds a dedicated Penhallow monitoring buoy.",
+    "bridge_claim": "The Ostral Survey's thermal vents each feed a dedicated Penhallow monitoring buoy."
+  },
+  {
+    "ev1": "The Dravven Institute runs eight isolation chambers for its acoustic experiments.",
+    "ev2": "Each isolation chamber is lined with a proprietary Sorrel-foam baffle.",
+    "bridge_claim": "The Dravven Institute's isolation chambers are each lined with a Sorrel-foam baffle."
+  },
+  {
+    "ev1": "The Kettleworth Compact assigns thirty-four irrigation channels across the Vask Lowlands.",
+    "ev2": "Each irrigation channel is gated by a hand-cranked Munro sluice.",
+    "bridge_claim": "The Kettleworth Compact's irrigation channels are each gated by a hand-cranked Munro sluice."
+  },
+  {
+    "ev1": "The orbital platform Selheim Cradle hosts fourteen docking cradles on its outer ring.",
+    "ev2": "Each docking cradle on the outer ring is rated for a single Trellis-class hauler.",
+    "bridge_claim": "The Selheim Cradle's docking cradles are each rated for a single Trellis-class hauler."
+  },
+  {
+    "ev1": "The Brachten Codex enumerates nineteen ceremonial titles within the Ovrend court.",
+    "ev2": "Each ceremonial title in the codex carries a hereditary Wintermoor stipend.",
+    "bridge_claim": "The Brachten Codex's ceremonial titles each carry a hereditary Wintermoor stipend."
+  },
+  {
+    "ev1": "The Pellmark Foundry produces twenty-six grades of casting sand for its molds.",
+    "ev2": "Each grade of casting sand is sourced from a single Olbright quarry.",
+    "bridge_claim": "The Pellmark Foundry's casting-sand grades are each sourced from a single Olbright quarry."
+  },
+  {
+    "ev1": "The Tannhaus Protocol divides its emergency response into eleven escalation stages.",
+    "ev2": "Each escalation stage activates a different Corwen relay tower.",
+    "bridge_claim": "The Tannhaus Protocol's escalation stages each activate a different Corwen relay tower."
+  },
+  {
+    "ev1": "The expedition leader Marsa Velloy charted sixteen glacial passes through the Dunmere Range.",
+    "ev2": "Each glacial pass she charted is marked by a cairn of Halverstone slate.",
+    "bridge_claim": "Marsa Velloy's charted glacial passes are each marked by a cairn of Halverstone slate."
+  },
+  {
+    "ev1": "The Quillane Archive preserves thirty-eight dialects of the old Serren tongue.",
+    "ev2": "Each preserved dialect is transcribed using a unique Brodhal glyph set.",
+    "bridge_claim": "The Quillane Archive's preserved dialects are each transcribed using a unique Brodhal glyph set."
+  },
+  {
+    "ev1": "The Vorne Conservatory trains its cadets across seven movement disciplines.",
+    "ev2": "Each movement discipline is overseen by a ranking Tessler instructor.",
+    "bridge_claim": "The Vorne Conservatory's movement disciplines are each overseen by a ranking Tessler instructor."
+  },
+  {
+    "ev1": "The mining concern Drelhammer Holdings operates fifteen ore shafts beneath Mount Cassek.",
+    "ev2": "Each ore shaft is ventilated by a twin-fan Lossback assembly.",
+    "bridge_claim": "Drelhammer Holdings' ore shafts are each ventilated by a twin-fan Lossback assembly."
+  },
+  {
+    "ev1": "The Anselmo Treaty partitions the river basin into nine fishing precincts.",
+    "ev2": "Each fishing precinct is patrolled by a chartered Vendry cutter.",
+    "bridge_claim": "The Anselmo Treaty's fishing precincts are each patrolled by a chartered Vendry cutter."
+  },
+  {
+    "ev1": "The Halberd Engine Works builds its Castellan locomotive in four boiler variants.",
+    "ev2": "Each boiler variant burns a graded Threlkeld coke blend.",
+    "bridge_claim": "The Halberd Engine Works' Castellan boiler variants each burn a graded Threlkeld coke blend."
+  },
+  {
+    "ev1": "The Sarvane Compendium lists twenty-two venoms drawn from the Wexmoor marsh fauna.",
+    "ev2": "Each listed venom has a corresponding Druthers antitoxin recipe.",
+    "bridge_claim": "The Sarvane Compendium's listed venoms each have a corresponding Druthers antitoxin recipe."
+  },
+  {
+    "ev1": "The agronomist Pieter Halloran developed thirteen drought-tolerant grain strains for the Cessmoor estates.",
+    "ev2": "Each drought-tolerant grain strain he developed is registered under a Bellhaven seed lot.",
+    "bridge_claim": "Pieter Halloran's drought-tolerant grain strains are each registered under a Bellhaven seed lot."
+  },
+  {
+    "ev1": "The Thornwick Mandate splits municipal oversight into ten civic wards.",
+    "ev2": "Each civic ward elects a single Marrowgate alderman.",
+    "bridge_claim": "The Thornwick Mandate's civic wards each elect a single Marrowgate alderman."
+  },
+  {
+    "ev1": "The deep-survey probe Lanthe Reach deployed twenty-nine pressure sensors along the Verrick Trench.",
+    "ev2": "Each pressure sensor transmits on a dedicated Olwen frequency channel.",
+    "bridge_claim": "The Lanthe Reach's pressure sensors each transmit on a dedicated Olwen frequency channel."
+  },
+  {
+    "ev1": "The Cresswell Guild certifies eighteen tiers of enamel craftsmanship for its artisans.",
+    "ev2": "Each tier of enamel craftsmanship requires a sealed Pordwin kiln test.",
+    "bridge_claim": "The Cresswell Guild's enamel craftsmanship tiers each require a sealed Pordwin kiln test."
+  },
+  {
+    "ev1": "The Halloway Concord designates thirty-three watchtowers along the Selmere frontier.",
+    "ev2": "Each watchtower is garrisoned by a rotating Bracklin company.",
+    "bridge_claim": "The Halloway Concord's watchtowers are each garrisoned by a rotating Bracklin company."
+  },
+  {
+    "ev1": "The Vantreth Foundry mill grinds twelve pigment bases for its glaze line.",
+    "ev2": "Each pigment base is milled with a calibrated Osterly grindstone.",
+    "bridge_claim": "The Vantreth Foundry's pigment bases are each milled with a calibrated Osterly grindstone."
+  },
+  {
+    "ev1": "The Marrowdeep Charter establishes eleven freight corridors across the Veluthi Basin.",
+    "ev2": "Every freight corridor in the Veluthi Basin is patrolled by a single Sablewing cutter.",
+    "bridge_claim": "The Marrowdeep Charter's freight corridors are each patrolled by a Sablewing cutter."
+  },
+  {
+    "ev1": "Thornwick Labs assigns a six-digit seal number to every batch of Quillen resin it cures.",
+    "ev2": "Each Quillen resin seal number is logged in the Drennval provenance ledger.",
+    "bridge_claim": "Thornwick Labs' resin seal numbers are logged in the Drennval provenance ledger."
+  },
+  {
+    "ev1": "The vessel Ornith Pell carries a crew of forty-three across the Harrowmoor crossing.",
+    "ev2": "The Harrowmoor crossing requires every crew member aboard to hold a Tessward navigation badge.",
+    "bridge_claim": "The forty-three crew members of the Ornith Pell hold Tessward navigation badges."
+  },
+  {
+    "ev1": "Project Vandermere catalogs nineteen distinct soil strata beneath the Calloway shelf.",
+    "ev2": "Each soil stratum beneath the Calloway shelf is sampled twice per Brennan cycle.",
+    "bridge_claim": "Project Vandermere's nineteen soil strata are each sampled twice per Brennan cycle."
+  },
+  {
+    "ev1": "The Halvard Accord recognizes seven trade guilds operating out of Port Quessin.",
+    "ev2": "Every trade guild in Port Quessin contributes a delegate to the Mirelight Assembly.",
+    "bridge_claim": "The seven trade guilds recognized by the Halvard Accord each contribute a delegate to the Mirelight Assembly."
+  },
+  {
+    "ev1": "Engineer Solveig Thrane designed the cooling lattice for the Pendrath reactor.",
+    "ev2": "The Pendrath reactor supplies power to the entire Wexmoor district.",
+    "bridge_claim": "Solveig Thrane designed the cooling lattice for the reactor that powers the Wexmoor district."
+  },
+  {
+    "ev1": "The Caldrene Treaty divides the Osprey Strait into four shipping lanes.",
+    "ev2": "Each shipping lane in the Osprey Strait charges a toll of ninety Veltmark coins.",
+    "bridge_claim": "Each of the four shipping lanes created by the Caldrene Treaty charges a ninety Veltmark coin toll."
+  },
+  {
+    "ev1": "The Brindlecombe Archive holds three hundred sealed manuscripts from the Yarrow dynasty.",
+    "ev2": "Every Yarrow dynasty manuscript is transcribed by a scribe of the Felsen order.",
+    "bridge_claim": "The Brindlecombe Archive's Yarrow dynasty manuscripts are transcribed by scribes of the Felsen order."
+  },
+  {
+    "ev1": "The Tannholm Refinery processes twelve grades of Korrick ore each season.",
+    "ev2": "Each grade of Korrick ore is shipped exclusively to the Drassel foundry.",
+    "bridge_claim": "The twelve grades of Korrick ore processed by the Tannholm Refinery are all shipped to the Drassel foundry."
+  },
+  {
+    "ev1": "Captain Imara Voss commands the survey ship Lentrell Dawn through the Sable Reaches.",
+    "ev2": "The Sable Reaches are mapped under the authority of the Greythorn Cartographic Bureau.",
+    "bridge_claim": "Captain Imara Voss surveys reaches mapped under the Greythorn Cartographic Bureau's authority."
+  },
+  {
+    "ev1": "The Penhallow Ordinance defines eight watch posts along the Merrowgate wall.",
+    "ev2": "Each watch post on the Merrowgate wall is staffed by twelve Hollin sentries.",
+    "bridge_claim": "Each of the eight watch posts defined by the Penhallow Ordinance is staffed by twelve Hollin sentries."
+  },
+  {
+    "ev1": "The Avenwood Conservatory cultivates fourteen strains of the Lysander vine.",
+    "ev2": "Every strain of the Lysander vine yields a dye prized by the Castellan weavers.",
+    "bridge_claim": "The fourteen Lysander vine strains cultivated by the Avenwood Conservatory yield dyes prized by the Castellan weavers."
+  },
+  {
+    "ev1": "The mining settlement of Grendle Hollow extracts ore from the Varrick seam.",
+    "ev2": "The Varrick seam runs directly beneath the abandoned Pellmoor aqueduct.",
+    "bridge_claim": "Grendle Hollow extracts ore from a seam that runs beneath the abandoned Pellmoor aqueduct."
+  },
+  {
+    "ev1": "The Dornwell Compact lists twenty-two heritage sites within the Brackenfen marsh.",
+    "ev2": "Each heritage site in the Brackenfen marsh is monitored by a Calwyn warden.",
+    "bridge_claim": "The Dornwell Compact's twenty-two heritage sites are each monitored by a Calwyn warden."
+  },
+  {
+    "ev1": "Archivist Toren Maelle authored the indexing scheme for the Selvarra collection.",
+    "ev2": "The Selvarra collection was bequeathed to the Hollowmere University by the Estfield family.",
+    "bridge_claim": "Toren Maelle's indexing scheme covers a collection bequeathed to Hollowmere University by the Estfield family."
+  },
+  {
+    "ev1": "The Quenwick Foundry casts sixteen bell types for the temples of Ashgrove.",
+    "ev2": "Every bell type cast for Ashgrove temples is tuned to the Veridian scale.",
+    "bridge_claim": "The sixteen bell types the Quenwick Foundry casts for Ashgrove temples are tuned to the Veridian scale."
+  },
+  {
+    "ev1": "The expedition vessel Marrowfast anchors at the Drevlin ice shelf each winter.",
+    "ev2": "The Drevlin ice shelf is governed under the terms of the Hesperin Antarctic Pact.",
+    "bridge_claim": "The Marrowfast anchors at an ice shelf governed under the Hesperin Antarctic Pact."
+  },
+  {
+    "ev1": "The Castermont Guild trains nine ranks of glasswrights in the city of Velloran.",
+    "ev2": "Each rank of glasswright in Velloran wears a sigil forged from Tindel silver.",
+    "bridge_claim": "The nine glasswright ranks the Castermont Guild trains in Velloran wear sigils forged from Tindel silver."
+  },
+  {
+    "ev1": "The Penswick Observatory tracks twenty-seven comets along the Orrindale arc.",
+    "ev2": "Every comet on the Orrindale arc is named after a founder of the Brassmoor Society.",
+    "bridge_claim": "The twenty-seven comets the Penswick Observatory tracks are each named after a Brassmoor Society founder."
+  },
+  {
+    "ev1": "Foreman Cael Drummond oversees the lock gates of the Wexholt canal.",
+    "ev2": "The Wexholt canal connects the inland port of Marrenby to the open Sythe estuary.",
+    "bridge_claim": "Cael Drummond oversees lock gates on a canal that connects Marrenby to the Sythe estuary."
+  },
+  {
+    "ev1": "The Lindquist Protocol enumerates six containment tiers for the Halloran spore vault.",
+    "ev2": "Each containment tier in the Halloran spore vault is sealed with a Drennan pressure lock.",
+    "bridge_claim": "The six containment tiers enumerated by the Lindquist Protocol are each sealed with a Drennan pressure lock."
+  },
+  {
+    "ev1": "The trading house of Velmoria stocks thirty-one spices from the Karreth coast.",
+    "ev2": "Every spice from the Karreth coast is graded by the Sundermark inspection office.",
+    "bridge_claim": "The thirty-one Karreth coast spices stocked by Velmoria are graded by the Sundermark inspection office."
+  },
+  {
+    "ev1": "Composer Anwen Floske wrote the processional anthem for the Greldeth coronation.",
+    "ev2": "The Greldeth coronation is held within the vaulted hall of Castle Bryndovar.",
+    "bridge_claim": "Anwen Floske wrote the processional anthem for a coronation held within Castle Bryndovar."
+  },
+  {
+    "ev1": "The Harrowby Cooperative farms eighteen terraced plots on the slopes of Mount Velden.",
+    "ev2": "Each terraced plot on Mount Velden is irrigated by the ancient Toller cisterns.",
+    "bridge_claim": "The eighteen terraced plots the Harrowby Cooperative farms on Mount Velden are irrigated by the Toller cisterns."
+  },
+  {
+    "ev1": "The Sennfaric Register lists forty lighthouses along the Crannock coastline.",
+    "ev2": "Every lighthouse on the Crannock coastline burns oil refined at the Welbrin works.",
+    "bridge_claim": "The forty lighthouses in the Sennfaric Register burn oil refined at the Welbrin works."
+  },
+  {
+    "ev1": "Director Pell Hargrove manages the seed bank at the Orvane research station.",
+    "ev2": "The Orvane research station draws its entire funding from the Threllic Endowment.",
+    "bridge_claim": "Pell Hargrove manages a seed bank at a station funded entirely by the Threllic Endowment."
+  }
+]

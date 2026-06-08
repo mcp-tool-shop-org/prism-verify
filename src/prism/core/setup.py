@@ -48,6 +48,17 @@ def build_providers_from_env() -> dict[str, ModelProvider]:
             model_id=os.environ.get("PRISM_LOCAL_VERIFIER_MODEL", "qwen3-14b-groundedness"),
         )
 
+    # The Sycophancy specialist (wedge #2) — opt-in via env. Backs the sycophancy lens on RESPONSE
+    # artifacts; its own family (LOCAL_SYCOPHANCY) keeps it family-different from the producer.
+    sycophancy_endpoint = os.environ.get("PRISM_SYCOPHANCY_ENDPOINT")
+    if sycophancy_endpoint:
+        from prism.providers.sycophancy import SycophancyProvider
+
+        providers["local-sycophancy"] = SycophancyProvider(
+            endpoint=sycophancy_endpoint,
+            model_id=os.environ.get("PRISM_SYCOPHANCY_MODEL", "qwen3-14b-sycophancy"),
+        )
+
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
         from prism.providers.anthropic import AnthropicProvider

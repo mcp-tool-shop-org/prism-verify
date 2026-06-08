@@ -1,0 +1,428 @@
+{
+  "verdict": "accept",
+  "pass": true,
+  "blocking": false,
+  "advisory": false,
+  "citations": [
+    {
+      "id": "c1",
+      "identifier": "arXiv:2310.13548",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We first demonstrate that five state-of-the-art AI assistants consistently exhibit sycophancy across four varied free-form text-generation tasks... Moreover, both humans and preference models (PMs) prefer convincingly-written sycophantic responses over correct ones a non-negligible fraction of the time.",
+      "source_title": "Towards Understanding Sycophancy in Language Models",
+      "source_abstract": "Human feedback is commonly utilized to finetune AI assistants. But human feedback may also encourage model responses that match user beliefs over truthful ones, a behaviour known as sycophancy. We investigate the prevalence of sycophancy in models whose finetuning procedure made use of human feedback, and the potential role of human preference judgments in such behavior. We first demonstrate that five state-of-the-art AI assistants consistently exhibit sycophancy across four varied free-form text-generation tasks. To understand if human preferences drive this broadly observed behavior, we analyze existing human preference data. We find that when a response matches a user's views, it is more likely to be preferred. Moreover, both humans and preference models (PMs) prefer convincingly-written sycophantic responses over correct ones a non-negligible fraction of the time. Optimizing model outputs against PMs also sometimes sacrifices truthfulness in favor of sycophancy. Overall, our results indicate that sycophancy is a general behavior of state-of-the-art AI assistants, likely driven in part by human preference judgments favoring sycophantic responses."
+    },
+    {
+      "id": "c2",
+      "identifier": "arXiv:2605.21778",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "The taxonomy distinguishes (1) whether a model is sycophantic toward a user's positions and beliefs, or toward the user's broader personal traits and emotions, and (2) whether this occurs through explicit, direct language or more implicit, subtle behaviors such as framing, omission, or tone.",
+      "source_title": "What Counts as AI Sycophancy? A Taxonomy and Expert Survey of a Fragmented Construct",
+      "source_abstract": "AI sycophancy has become a prominent concern in large language model (LLM) research. Yet the term lacks a consistent definition and has been applied to behaviors ranging from agreeing with a user's false claim to excessively praising the user to withholding corrective feedback. When researchers, companies, and policymakers use the same term to describe different behaviors, evaluation results become difficult to compare, mitigation strategies fail to transfer, and systems that are resistant to one form of sycophancy continue exhibiting other forms. To address this, we make two contributions. First, we reviewed 70 papers on AI sycophancy to develop a taxonomy of how the behavior has been defined and measured. The taxonomy distinguishes (1) whether a model is sycophantic toward a user's positions and beliefs, or toward the user's broader personal traits and emotions, and (2) whether this occurs through explicit, direct language or more implicit, subtle behaviors such as framing, omission, or tone. Mapping existing literature to our taxonomy reveals that current research has focused on overt forms of sycophancy toward users' beliefs, leaving more subtle and person-directed behaviors relatively understudied. Second, we surveyed 106 experts in AI sycophancy and related fields to examine whether researchers agree on which model behaviors are sycophantic. While experts are nearly unanimous in believing that sycophancy is a significant problem in current AI systems (94.3% agree), they disagree substantially on which specific behaviors qualify. Together, these findings demonstrate that AI sycophancy is a broad family of behaviors with different measurement challenges, intervention requirements, and governance implications. Our taxonomy provides a shared vocabulary for understanding and addressing these behaviors."
+    },
+    {
+      "id": "c3",
+      "identifier": "arXiv:2502.08177",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Sycophantic behavior was observed in 58.19% of cases, with progressive sycophancy, leading to correct answers, occurred in 43.52% of cases, while regressive sycophancy, leading to incorrect answers, was observed in 14.66%. Sycophantic behavior showed high persistence (78.5%, 95% CI: [77.2%, 79.8%]) regardless of context or model.",
+      "source_title": "SycEval: Evaluating LLM Sycophancy",
+      "source_abstract": "Large language models (LLMs) are increasingly applied in educational, clinical, and professional settings, but their tendency for sycophancy -- prioritizing user agreement over independent reasoning -- poses risks to reliability. This study introduces a framework to evaluate sycophantic behavior in ChatGPT-4o, Claude-Sonnet, and Gemini-1.5-Pro across AMPS (mathematics) and MedQuad (medical advice) datasets. Sycophantic behavior was observed in 58.19% of cases, with Gemini exhibiting the highest rate (62.47%) and ChatGPT the lowest (56.71%). Progressive sycophancy, leading to correct answers, occurred in 43.52% of cases, while regressive sycophancy, leading to incorrect answers, was observed in 14.66%. Preemptive rebuttals demonstrated significantly higher sycophancy rates than in-context rebuttals (61.75% vs. 56.52%, $Z=5.87$, $p<0.001$), particularly in computational tasks, where regressive sycophancy increased significantly (preemptive: 8.13%, in-context: 3.54%, $p<0.001$). Simple rebuttals maximized progressive sycophancy ($Z=6.59$, $p<0.001$), while citation-based rebuttals exhibited the highest regressive rates ($Z=6.59$, $p<0.001$). Sycophantic behavior showed high persistence (78.5%, 95% CI: [77.2%, 79.8%]) regardless of context or model. These findings emphasize the risks and opportunities of deploying LLMs in structured and dynamic domains, offering insights into prompt programming and model optimization for safer AI applications."
+    },
+    {
+      "id": "c4",
+      "identifier": "arXiv:2311.08596",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "A systematic study of ten LLMs on seven classification tasks reveals that models flip their answers on average 46% of the time and that all models see a deterioration of accuracy between their first and final prediction, with an average drop of 17%. We conduct finetuning experiments on an open-source LLM and find that finetuning on synthetically created data can mitigate - reducing performance deterioration by 60% - but not resolve sycophantic behavior entirely.",
+      "source_title": "Are You Sure? Challenging LLMs Leads to Performance Drops in The FlipFlop Experiment",
+      "source_abstract": "The interactive nature of Large Language Models (LLMs) theoretically allows models to refine and improve their answers, yet systematic analysis of the multi-turn behavior of LLMs remains limited. In this paper, we propose the FlipFlop experiment: in the first round of the conversation, an LLM completes a classification task. In a second round, the LLM is challenged with a follow-up phrase like \"Are you sure?\", offering an opportunity for the model to reflect on its initial answer, and decide whether to confirm or flip its answer. A systematic study of ten LLMs on seven classification tasks reveals that models flip their answers on average 46% of the time and that all models see a deterioration of accuracy between their first and final prediction, with an average drop of 17% (the FlipFlop effect). We conduct finetuning experiments on an open-source LLM and find that finetuning on synthetically created data can mitigate - reducing performance deterioration by 60% - but not resolve sycophantic behavior entirely. The FlipFlop experiment illustrates the universality of sycophantic behavior in LLMs and provides a robust framework to analyze model behavior and evaluate future models."
+    },
+    {
+      "id": "c5",
+      "identifier": "arXiv:2505.13995",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "This fails to capture broader forms of sycophancy such as affirming a user's self-image or other implicit beliefs.",
+      "source_title": "ELEPHANT: Measuring and understanding social sycophancy in LLMs",
+      "source_abstract": "LLMs are known to exhibit sycophancy: agreeing with and flattering users, even at the cost of correctness. Prior work measures sycophancy only as direct agreement with users' explicitly stated beliefs that can be compared to a ground truth. This fails to capture broader forms of sycophancy such as affirming a user's self-image or other implicit beliefs. To address this gap, we introduce social sycophancy, characterizing sycophancy as excessive preservation of a user's face (their desired self-image), and present ELEPHANT, a benchmark for measuring social sycophancy in an LLM. Applying our benchmark to 11 models, we show that LLMs consistently exhibit high rates of social sycophancy: on average, they preserve user's face 45 percentage points more than humans in general advice queries and in queries describing clear user wrongdoing (from Reddit's r/AmITheAsshole). Furthermore, when prompted with perspectives from either side of a moral conflict, LLMs affirm both sides (depending on whichever side the user adopts) in 48% of cases--telling both the at-fault party and the wronged party that they are not wrong--rather than adhering to a consistent moral or value judgment. We further show that social sycophancy is rewarded in preference datasets, and that while existing mitigation strategies for sycophancy are limited in effectiveness, model-based steering shows promise for mitigating these behaviors. Our work provides theoretical grounding and an empirical benchmark for understanding and addressing sycophancy in the open-ended contexts that characterize the vast majority of LLM use cases."
+    },
+    {
+      "id": "c6",
+      "identifier": "arXiv:2510.04721",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Large language models (LLMs) have recently shown strong performance on mathematical benchmarks. At the same time, they are prone to hallucination and sycophancy, often providing convincing but flawed proofs for incorrect mathematical statements provided by users.",
+      "source_title": "BrokenMath: A Benchmark for Sycophancy in Theorem Proving with LLMs",
+      "source_abstract": "Large language models (LLMs) have recently shown strong performance on mathematical benchmarks. At the same time, they are prone to hallucination and sycophancy, often providing convincing but flawed proofs for incorrect mathematical statements provided by users. This significantly limits the applicability of LLMs in theorem proving, as verification of these flawed proofs must be done manually by expert mathematicians. However, existing benchmarks that measure sycophancy in mathematics are limited: they focus solely on final-answer problems, rely on very simple and often contaminated datasets, and construct benchmark samples using synthetic modifications that create ill-posed questions rather than well-posed questions that are demonstrably false. To address these issues, we introduce BrokenMath, the first benchmark for evaluating sycophantic behavior in LLMs within the context of natural language theorem proving. BrokenMath is built from advanced 2025 competition problems, which are perturbed with an LLM to produce false statements and subsequently refined through expert review. Using an LLM-as-a-judge framework, we evaluate state-of-the-art LLMs and agentic systems and find that sycophancy is widespread, with the best model, GPT-5, producing sycophantic answers 29% of the time. We further investigate several mitigation strategies, including test-time interventions and supervised fine-tuning on curated sycophantic examples. These approaches substantially reduce, but do not eliminate, sycophantic behavior."
+    },
+    {
+      "id": "c7",
+      "identifier": "arXiv:2509.21305",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We decompose sycophancy into sycophantic agreement and sycophantic praise, contrasting both with genuine agreement... we show that: (1) the three behaviors are encoded along distinct linear directions in latent space; (2) each behavior can be independently amplified or suppressed without affecting the others; and (3) their representational structure is consistent across model families and scales.",
+      "source_title": "Sycophancy Is Not One Thing: Causal Separation of Sycophantic Behaviors in LLMs",
+      "source_abstract": "Large language models (LLMs) often exhibit sycophantic behaviors -- such as excessive agreement with or flattery of the user -- but it is unclear whether these behaviors arise from a single mechanism or multiple distinct processes. We decompose sycophancy into sycophantic agreement and sycophantic praise, contrasting both with genuine agreement. Using difference-in-means directions, activation additions, and subspace geometry across multiple models and datasets, we show that: (1) the three behaviors are encoded along distinct linear directions in latent space; (2) each behavior can be independently amplified or suppressed without affecting the others; and (3) their representational structure is consistent across model families and scales. These results suggest that sycophantic behaviors correspond to distinct, independently steerable representations."
+    },
+    {
+      "id": "c8",
+      "identifier": "arXiv:2404.13076",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "By fine-tuning LLMs, we discover a linear correlation between self-recognition capability and the strength of self-preference bias; using controlled experiments, we show that the causal explanation resists straightforward confounders.",
+      "source_title": "LLM Evaluators Recognize and Favor Their Own Generations",
+      "source_abstract": "Self-evaluation using large language models (LLMs) has proven valuable not only in benchmarking but also methods like reward modeling, constitutional AI, and self-refinement. But new biases are introduced due to the same LLM acting as both the evaluator and the evaluatee. One such bias is self-preference, where an LLM evaluator scores its own outputs higher than others' while human annotators consider them of equal quality. But do LLMs actually recognize their own outputs when they give those texts higher scores, or is it just a coincidence? In this paper, we investigate if self-recognition capability contributes to self-preference. We discover that, out of the box, LLMs such as GPT-4 and Llama 2 have non-trivial accuracy at distinguishing themselves from other LLMs and humans. By fine-tuning LLMs, we discover a linear correlation between self-recognition capability and the strength of self-preference bias; using controlled experiments, we show that the causal explanation resists straightforward confounders. We discuss how self-recognition can interfere with unbiased evaluations and AI safety more generally."
+    },
+    {
+      "id": "c9",
+      "identifier": "arXiv:2410.21819",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "This suggests that the essence of the bias lies in perplexity and that the self-preference bias exists because LLMs prefer texts more familiar to them.",
+      "source_title": "Self-Preference Bias in LLM-as-a-Judge",
+      "source_abstract": "Automated evaluation leveraging large language models (LLMs), commonly referred to as LLM evaluators or LLM-as-a-judge, has been widely used in measuring the performance of dialogue systems. However, the self-preference bias in LLMs has posed significant risks, including promoting specific styles or policies intrinsic to the LLMs. Despite the importance of this issue, there is a lack of established methods to measure the self-preference bias quantitatively, and its underlying causes are poorly understood. In this paper, we introduce a novel quantitative metric to measure the self-preference bias. Our experimental results demonstrate that GPT-4 exhibits a significant degree of self-preference bias. To explore the causes, we hypothesize that LLMs may favor outputs that are more familiar to them, as indicated by lower perplexity. We analyze the relationship between LLM evaluations and the perplexities of outputs. Our findings reveal that LLMs assign significantly higher evaluations to outputs with lower perplexity than human evaluators, regardless of whether the outputs were self-generated. This suggests that the essence of the bias lies in perplexity and that the self-preference bias exists because LLMs prefer texts more familiar to them."
+    },
+    {
+      "id": "c10",
+      "identifier": "arXiv:2310.01798",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "our research indicates that LLMs struggle to self-correct their responses without external feedback, and at times, their performance even degrades after self-correction.",
+      "source_title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+      "source_abstract": "Large Language Models (LLMs) have emerged as a groundbreaking technology with their unparalleled text generation capabilities across various applications. Nevertheless, concerns persist regarding the accuracy and appropriateness of their generated content. A contemporary methodology, self-correction, has been proposed as a remedy to these issues. Building upon this premise, this paper critically examines the role and efficacy of self-correction within LLMs, shedding light on its true potential and limitations. Central to our investigation is the notion of intrinsic self-correction, whereby an LLM attempts to correct its initial responses based solely on its inherent capabilities, without the crutch of external feedback. In the context of reasoning, our research indicates that LLMs struggle to self-correct their responses without external feedback, and at times, their performance even degrades after self-correction. Drawing from these insights, we offer suggestions for future research and practical applications in this field."
+    },
+    {
+      "id": "c11",
+      "identifier": "arXiv:2402.08115",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We observe significant performance collapse with self-critique and significant performance gains with sound external verification.",
+      "source_title": "On the Self-Verification Limitations of Large Language Models on Reasoning and Planning Tasks",
+      "source_abstract": "There has been considerable divergence of opinion on the reasoning abilities of Large Language Models (LLMs). While the initial optimism that reasoning might emerge automatically with scale has been tempered thanks to a slew of counterexamples--ranging from multiplication to simple planning--there persists a wide spread belief that LLMs can self-critique and improve their own solutions in an iterative fashion. This belief seemingly rests on the assumption that verification of correctness should be easier than generation--a rather classical argument from computational complexity--which should be irrelevant to LLMs to the extent that what they are doing is approximate retrieval. In this paper, we set out to systematically investigate the effectiveness of iterative prompting in the context of reasoning and planning. We present a principled empirical study of the performance of GPT-4 in three domains: Game of 24, Graph Coloring, and STRIPS planning. We experiment both with the model critiquing its own answers and with an external correct reasoner verifying proposed solutions. In each case, we analyze whether the content of criticisms actually affects bottom line performance, and whether we can ablate elements of the augmented system without losing performance. We observe significant performance collapse with self-critique and significant performance gains with sound external verification. We also note that merely re-prompting with a sound verifier maintains most of the benefits of more involved setups."
+    },
+    {
+      "id": "c12",
+      "identifier": "arXiv:2406.01297",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "no prior work demonstrates successful self-correction with feedback from prompted LLMs, except for studies in tasks that are exceptionally suited for self-correction, (2) self-correction works well in tasks that can use reliable external feedback, and (3) large-scale fine-tuning enables self-correction.",
+      "source_title": "When Can LLMs Actually Correct Their Own Mistakes? A Critical Survey of Self-Correction of LLMs",
+      "source_abstract": "Self-correction is an approach to improving responses from large language models (LLMs) by refining the responses using LLMs during inference. Prior work has proposed various self-correction frameworks using different sources of feedback, including self-evaluation and external feedback. However, there is still no consensus on the question of when LLMs can correct their own mistakes, as recent studies also report negative results. In this work, we critically survey broad papers and discuss the conditions required for successful self-correction. We first find that prior studies often do not define their research questions in detail and involve impractical frameworks or unfair evaluations that over-evaluate self-correction. To tackle these issues, we categorize research questions in self-correction research and provide a checklist for designing appropriate experiments. Our critical survey based on the newly categorized research questions shows that (1) no prior work demonstrates successful self-correction with feedback from prompted LLMs, except for studies in tasks that are exceptionally suited for self-correction, (2) self-correction works well in tasks that can use reliable external feedback, and (3) large-scale fine-tuning enables self-correction."
+    },
+    {
+      "id": "c13",
+      "identifier": "arXiv:2404.18796",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We propose instead to evaluate models using a Panel of LLm evaluators (PoLL). Across three distinct judge settings and spanning six different datasets, we find that using a PoLL composed of a larger number of smaller models outperforms a single large judge, exhibits less intra-model bias due to its composition of disjoint model families, and does so while being over seven times less expensive.",
+      "source_title": "Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models",
+      "source_abstract": "As Large Language Models (LLMs) have become more advanced, they have outpaced our abilities to accurately evaluate their quality. Not only is finding data to adequately probe particular model properties difficult, but evaluating the correctness of a model's freeform generation alone is a challenge. To address this, many evaluations now rely on using LLMs themselves as judges to score the quality of outputs from other LLMs. Evaluations most commonly use a single large model like GPT4. While this method has grown in popularity, it is costly, has been shown to introduce intramodel bias, and in this work, we find that very large models are often unnecessary. We propose instead to evaluate models using a Panel of LLm evaluators (PoLL). Across three distinct judge settings and spanning six different datasets, we find that using a PoLL composed of a larger number of smaller models outperforms a single large judge, exhibits less intra-model bias due to its composition of disjoint model families, and does so while being over seven times less expensive."
+    },
+    {
+      "id": "c14",
+      "identifier": "arXiv:2308.03958",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Adding these data in a lightweight finetuning step can significantly reduce sycophantic behavior on held-out prompts.",
+      "source_title": "Simple synthetic data reduces sycophancy in large language models",
+      "source_abstract": "Sycophancy is an undesirable behavior where models tailor their responses to follow a human user's view even when that view is not objectively correct (e.g., adapting liberal views once a user reveals that they are liberal). In this paper, we study the prevalence of sycophancy in language models and propose a simple synthetic-data intervention to reduce this behavior.\n  First, on a set of three sycophancy tasks (Perez et al., 2022) where models are asked for an opinion on statements with no correct answers (e.g., politics), we observe that both model scaling and instruction tuning significantly increase sycophancy for PaLM models up to 540B parameters. Second, we extend sycophancy evaluations to simple addition statements that are objectively incorrect, finding that despite knowing that these statements are wrong, language models will still agree with them if the user does as well.\n  To reduce sycophancy, we present a straightforward synthetic-data intervention that takes public NLP tasks and encourages models to be robust to user opinions on these tasks. Adding these data in a lightweight finetuning step can significantly reduce sycophantic behavior on held-out prompts. Code for generating synthetic data for intervention can be found at https://github.com/google/sycophancy-intervention."
+    },
+    {
+      "id": "c15",
+      "identifier": "arXiv:2604.05279",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We train using a contrastive dataset pairing pressure-free baselines with pressured variants across three authority levels and two opposing evidence contexts... The learned resistance to pressure generalises beyond our training methodology and prompt structure, reducing answer-priming sycophancy by up to 17 points on SycophancyEval despite the absence of such pressure forms during training.",
+      "source_title": "Pressure, What Pressure? Sycophancy Disentanglement in Language Models via Reward Decomposition",
+      "source_abstract": "Large language models exhibit sycophancy, the tendency to shift their stated positions toward perceived user preferences or authority cues regardless of evidence. Standard alignment methods fail to correct this because scalar reward models conflate two distinct failure modes into a single signal: pressure capitulation, where the model changes a correct answer under social pressure, and evidence blindness, where the model ignores the provided context entirely. We operationalise sycophancy through formal definitions of pressure independence and evidence responsiveness, serving as a working framework for disentangled training rather than a definitive characterisation of the phenomenon. We propose the first approach to sycophancy reduction via reward decomposition, introducing a multi-component Group Relative Policy Optimisation (GRPO) reward that decomposes the training signal into five terms: pressure resistance, context fidelity, position consistency, agreement suppression, and factual correctness. We train using a contrastive dataset pairing pressure-free baselines with pressured variants across three authority levels and two opposing evidence contexts. Across five base models, our two-phase pipeline consistently reduces sycophancy on all metric axes, with ablations confirming that each reward term governs an independent behavioural dimension. The learned resistance to pressure generalises beyond our training methodology and prompt structure, reducing answer-priming sycophancy by up to 17 points on SycophancyEval despite the absence of such pressure forms during training."
+    },
+    {
+      "id": "c16",
+      "identifier": "arXiv:2412.00967",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We develop a linear probing method to identify and penalize markers of sycophancy within the reward model, producing rewards that discourage sycophantic behavior.",
+      "source_title": "Linear Probe Penalties Reduce LLM Sycophancy",
+      "source_abstract": "Large language models (LLMs) are often sycophantic, prioritizing agreement with their users over accurate or objective statements. This problematic behavior becomes more pronounced during reinforcement learning from human feedback (RLHF), an LLM fine-tuning stage intended to align model outputs with human values. Instead of increasing accuracy and reliability, the reward model learned from RLHF often rewards sycophancy. We develop a linear probing method to identify and penalize markers of sycophancy within the reward model, producing rewards that discourage sycophantic behavior. Our experiments show that constructing and optimizing against this surrogate reward function reduces sycophantic behavior in multiple open-source LLMs. Our results suggest a generalizable methodology for reducing unwanted LLM behaviors that are not sufficiently disincentivized by RLHF fine-tuning."
+    },
+    {
+      "id": "c17",
+      "identifier": "arXiv:2601.16644",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "steering using these probes is most effective in a sparse subset of middle-layer attention heads.",
+      "source_title": "Sycophancy Hides Linearly in the Attention Heads",
+      "source_abstract": "We find that correct-to-incorrect sycophancy signals are most linearly separable within multi-head attention activations. Motivated by the linear representation hypothesis, we train linear probes across the residual stream, multilayer perceptron (MLP), and attention layers to analyze where these signals emerge. Although separability appears in the residual stream and MLPs, steering using these probes is most effective in a sparse subset of middle-layer attention heads. Using TruthfulQA as the base dataset, we find that probes trained on it transfer effectively to other factual QA benchmarks. Furthermore, comparing our discovered direction to previously identified \"truthful\" directions reveals limited overlap, suggesting that factual accuracy, and deference resistance, arise from related but distinct mechanisms. Attention-pattern analysis further indicates that the influential heads attend disproportionately to expressions of user doubt, contributing to sycophantic shifts. Overall, these findings suggest that sycophancy can be mitigated through simple, targeted linear interventions that exploit the internal geometry of attention activations."
+    },
+    {
+      "id": "c18",
+      "identifier": "arXiv:2509.16533",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "LLMs are increasingly adopted as successful evaluative agents for tasks such as grading and adjudicating claims.",
+      "source_title": "Challenging the Evaluator: LLM Sycophancy Under User Rebuttal",
+      "source_abstract": "Large Language Models (LLMs) often exhibit sycophancy, distorting responses to align with user beliefs, notably by readily agreeing with user counterarguments. Paradoxically, LLMs are increasingly adopted as successful evaluative agents for tasks such as grading and adjudicating claims. This research investigates that tension: why do LLMs show sycophancy when challenged in subsequent conversational turns, yet perform well when evaluating conflicting arguments presented simultaneously? We empirically tested these contrasting scenarios by varying key interaction patterns. We find that state-of-the-art models: (1) are more likely to endorse a user's counterargument when framed as a follow-up from a user, rather than when both responses are presented simultaneously for evaluation; (2) show increased susceptibility to persuasion when the user's rebuttal includes detailed reasoning, even when the conclusion of the reasoning is incorrect; and (3) are more readily swayed by casually phrased feedback than by formal critiques, even when the casual input lacks justification. Our results highlight the risk of relying on LLMs for judgment tasks without accounting for conversational framing."
+    },
+    {
+      "id": "c19",
+      "identifier": "arXiv:2407.01085",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "The use of large language models (LLMs) as judges, particularly in preference comparisons, has become widespread, but this reveals a notable bias towards longer responses, undermining the reliability of such evaluations.",
+      "source_title": "Explaining Length Bias in LLM-Based Preference Evaluations",
+      "source_abstract": "The use of large language models (LLMs) as judges, particularly in preference comparisons, has become widespread, but this reveals a notable bias towards longer responses, undermining the reliability of such evaluations. To better understand such bias, we propose to decompose the preference evaluation metric, specifically the win rate, into two key components: desirability and information mass, where the former is length-independent and related to trustworthiness such as correctness, toxicity, and consistency, and the latter is length-dependent and represents the amount of information in the response. We empirically demonstrated the decomposition through controlled experiments and found that response length impacts evaluations by influencing information mass. To derive a reliable evaluation metric that assesses content quality without being confounded by response length, we propose AdapAlpaca, a simple yet effective adjustment to win rate measurement. Specifically, AdapAlpaca ensures a fair comparison of response quality by aligning the lengths of reference and test model responses under equivalent length intervals."
+    },
+    {
+      "id": "c20",
+      "identifier": "arXiv:2601.21183",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Reasoning models frequently agree with incorrect user suggestions -- a behavior known as sycophancy... We introduce \\em]sycophantic anchors\\em] -- sentences identified via counterfactual analysis that commit models to user agreement.",
+      "source_title": "Sycophantic Anchors: Localizing and Quantifying User Agreement in Reasoning Models",
+      "source_abstract": "Reasoning models frequently agree with incorrect user suggestions -- a behavior known as sycophancy. However, it is unclear where in the reasoning trace this agreement originates and how strong the commitment is. We introduce \\emph{sycophantic anchors} -- sentences identified via counterfactual analysis that commit models to user agreement. Across four reasoning models spanning three architecture families (Llama, Qwen, Falcon-hybrid) and 1.5B--8B parameters, we analyze over 200,000 counterfactual rollouts and show that linear probes reliably detect sycophantic anchors (74--85\\% balanced accuracy), outperforming text-only baselines at high commitment levels -- confirming they capture internal states beyond surface vocabulary. Regressors further predict commitment strength from activations ($R^2$ up to 0.74). We observe a consistent asymmetry: sycophancy leaves a stronger mechanistic footprint than correct reasoning. We also find that sycophancy builds gradually during generation rather than being determined by the prompt. These findings enable sentence-level detection and quantification of model misalignment mid-inference."
+    },
+    {
+      "id": "c21",
+      "identifier": "arXiv:2310.17631",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Evaluating Large Language Models (LLMs) in open-ended scenarios is challenging because existing benchmarks and metrics can not measure them comprehensively.",
+      "source_title": "JudgeLM: Fine-tuned Large Language Models are Scalable Judges",
+      "source_abstract": "Evaluating Large Language Models (LLMs) in open-ended scenarios is challenging because existing benchmarks and metrics can not measure them comprehensively. To address this problem, we propose to fine-tune LLMs as scalable judges (JudgeLM) to evaluate LLMs efficiently and effectively in open-ended benchmarks. We first propose a comprehensive, large-scale, high-quality dataset containing task seeds, LLMs-generated answers, and GPT-4-generated judgments for fine-tuning high-performance judges, as well as a new benchmark for evaluating the judges. We train JudgeLM at different scales from 7B, 13B, to 33B parameters, and conduct a systematic analysis of its capabilities and behaviors. We then analyze the key biases in fine-tuning LLM as a judge and consider them as position bias, knowledge bias, and format bias. To address these issues, JudgeLM introduces a bag of techniques including swap augmentation, reference support, and reference drop, which clearly enhance the judge's performance. JudgeLM obtains the state-of-the-art judge performance on both the existing PandaLM benchmark and our proposed new benchmark. Our JudgeLM is efficient and the JudgeLM-7B only needs 3 minutes to judge 5K samples with 8 A100 GPUs. JudgeLM obtains high agreement with the teacher judge, achieving an agreement exceeding 90% that even surpasses human-to-human agreement. JudgeLM also demonstrates extended capabilities in being judges of the single answer, multimodal models, multiple answers, multi-turn chat, etc. Code is available at https://github.com/baaivision/JudgeLM."
+    }
+  ],
+  "unparsed": [],
+  "receipt": {
+    "schema": "roleos-citation-receipt/v1",
+    "kind": "citation-verification",
+    "tool": "roleos verify-citations",
+    "input": "E:/AI/prism-verify/design/sycophancy-wedge-dispatch.md",
+    "verdict": "accept",
+    "blocking": false,
+    "advisory": false,
+    "citations_sha256": "a0fa45cbaf0c4707eb61202f078dd06fc9f6c48a07f33f62a1ee89555a7d6d26",
+    "prism_receipt": {
+      "id": "prism-01ktjnbandk3fbdccvdmzk1jyv",
+      "signature": "fbfc35f7c0b54594e285b73cad7c411c9c47b6670db6ee66f2985551f871c0c1ce87a980c72c9587e82eaa4b352838fbbf3983312135528a5592f35f48fa5100",
+      "verdict": "accept"
+    },
+    "retrieval_pins": [
+      {
+        "id": "c1",
+        "identifier": "arXiv:2310.13548",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.13548",
+        "source_sha256": "f851fac6e67f554a7640c6fa20be9eccac7f6fadf2a507c33288616ad6f8ddce",
+        "existence": "resolved"
+      },
+      {
+        "id": "c2",
+        "identifier": "arXiv:2605.21778",
+        "query": "https://export.arxiv.org/api/query?id_list=2605.21778",
+        "source_sha256": "725d71e81abfb0413973f837dc02d567c3d93a373e3eb11db5570571f073d05c",
+        "existence": "resolved"
+      },
+      {
+        "id": "c3",
+        "identifier": "arXiv:2502.08177",
+        "query": "https://export.arxiv.org/api/query?id_list=2502.08177",
+        "source_sha256": "bd210cf7bcf2f8fd0ad2f1425ceabf45446b2e7ac5f5a0c550075116ddb1cf7e",
+        "existence": "resolved"
+      },
+      {
+        "id": "c4",
+        "identifier": "arXiv:2311.08596",
+        "query": "https://export.arxiv.org/api/query?id_list=2311.08596",
+        "source_sha256": "ba670f63481eaf67ff9bb72276dc61995ab5641cc37b043125e05f131358d42e",
+        "existence": "resolved"
+      },
+      {
+        "id": "c5",
+        "identifier": "arXiv:2505.13995",
+        "query": "https://export.arxiv.org/api/query?id_list=2505.13995",
+        "source_sha256": "f57505baa57dc58626115d39b05f1d9af49b2ca70e385c597a09e4d9770fe587",
+        "existence": "resolved"
+      },
+      {
+        "id": "c6",
+        "identifier": "arXiv:2510.04721",
+        "query": "https://export.arxiv.org/api/query?id_list=2510.04721",
+        "source_sha256": "a80225c8fb1d60f312f72f5e4f3f39314a2e6bd76d0a99bac86a296c7053037f",
+        "existence": "resolved"
+      },
+      {
+        "id": "c7",
+        "identifier": "arXiv:2509.21305",
+        "query": "https://export.arxiv.org/api/query?id_list=2509.21305",
+        "source_sha256": "94ee99a697d12af8bbc7fa6a0ef7a0e1515a09e3ebffc14d1f3629cc6d96d517",
+        "existence": "resolved"
+      },
+      {
+        "id": "c8",
+        "identifier": "arXiv:2404.13076",
+        "query": "https://export.arxiv.org/api/query?id_list=2404.13076",
+        "source_sha256": "11aa0a7a17c5399cde1a63401f91ad983b9d5ca673eefe3e5e299bc247e1bb57",
+        "existence": "resolved"
+      },
+      {
+        "id": "c9",
+        "identifier": "arXiv:2410.21819",
+        "query": "https://export.arxiv.org/api/query?id_list=2410.21819",
+        "source_sha256": "53599600f7da3548b2955f98857ee11fb652c851b1be606508579e3b134fee98",
+        "existence": "resolved"
+      },
+      {
+        "id": "c10",
+        "identifier": "arXiv:2310.01798",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.01798",
+        "source_sha256": "1a7acec43828912ac4795d5aa5558844985e499353bccd609ec18e5272c33937",
+        "existence": "resolved"
+      },
+      {
+        "id": "c11",
+        "identifier": "arXiv:2402.08115",
+        "query": "https://export.arxiv.org/api/query?id_list=2402.08115",
+        "source_sha256": "8de53e52cca4d11f926db5311a70478b8f4d230187551d80c90f9db8f32f3126",
+        "existence": "resolved"
+      },
+      {
+        "id": "c12",
+        "identifier": "arXiv:2406.01297",
+        "query": "https://export.arxiv.org/api/query?id_list=2406.01297",
+        "source_sha256": "1a2496fec75348c0efd1575e03e8a03cf2fe413a2f7e8ff86cf9a859b9d05993",
+        "existence": "resolved"
+      },
+      {
+        "id": "c13",
+        "identifier": "arXiv:2404.18796",
+        "query": "https://export.arxiv.org/api/query?id_list=2404.18796",
+        "source_sha256": "ee9a25bb1329ca03677c2425fb3d1d2632d4d76b40e624e212a68545165597bb",
+        "existence": "resolved"
+      },
+      {
+        "id": "c14",
+        "identifier": "arXiv:2308.03958",
+        "query": "https://export.arxiv.org/api/query?id_list=2308.03958",
+        "source_sha256": "cbba48c081745dde1d06fe67368567f969baad8305746febd238a1e78829a8d0",
+        "existence": "resolved"
+      },
+      {
+        "id": "c15",
+        "identifier": "arXiv:2604.05279",
+        "query": "https://export.arxiv.org/api/query?id_list=2604.05279",
+        "source_sha256": "0f5685137d0290dbe521b9ded9bbd3b3c210bec3e4f48bfa15de6bec2f4738f5",
+        "existence": "resolved"
+      },
+      {
+        "id": "c16",
+        "identifier": "arXiv:2412.00967",
+        "query": "https://export.arxiv.org/api/query?id_list=2412.00967",
+        "source_sha256": "d620a93de33590461a9c2d691e09e0773b60ba523d95bcef919b7eb32cef7dbd",
+        "existence": "resolved"
+      },
+      {
+        "id": "c17",
+        "identifier": "arXiv:2601.16644",
+        "query": "https://export.arxiv.org/api/query?id_list=2601.16644",
+        "source_sha256": "c863e5421ba6510304ff21839e397a8c713aa25ab0f4fc7a2eaa7d408143becf",
+        "existence": "resolved"
+      },
+      {
+        "id": "c18",
+        "identifier": "arXiv:2509.16533",
+        "query": "https://export.arxiv.org/api/query?id_list=2509.16533",
+        "source_sha256": "e237c205012bbbe2235a03d082a50f16f011f9e63fce26caf0350952aa1a9768",
+        "existence": "resolved"
+      },
+      {
+        "id": "c19",
+        "identifier": "arXiv:2407.01085",
+        "query": "https://export.arxiv.org/api/query?id_list=2407.01085",
+        "source_sha256": "2ebfd3115d39ab20128d2111bfdf27ec3ad6151a8faf35d9d1e10d366a553e15",
+        "existence": "resolved"
+      },
+      {
+        "id": "c20",
+        "identifier": "arXiv:2601.21183",
+        "query": "https://export.arxiv.org/api/query?id_list=2601.21183",
+        "source_sha256": "64e5d3c1f3533e83d351169e4214f97e4d79b16eed67accfaed45245ee3963d6",
+        "existence": "resolved"
+      },
+      {
+        "id": "c21",
+        "identifier": "arXiv:2310.17631",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.17631",
+        "source_sha256": "7dd7015584b3bd62449ba2ea78d53da7adc0e5bf271cea8e8710d0e6a1f3f5a3",
+        "existence": "resolved"
+      }
+    ],
+    "local_panel": null,
+    "chain_sha256": "90a18899623912ab14cca5af73106c36b280d2ea07719909f3cada266448eb9d"
+  },
+  "duration": 33693
+}

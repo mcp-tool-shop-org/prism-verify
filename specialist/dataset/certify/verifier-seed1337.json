@@ -1,0 +1,73 @@
+{
+  "label": "verifier-seed1337",
+  "n": 358,
+  "query_errors": 0,
+  "cost_fp_over_fn": 5,
+  "rungs": {
+    "1": {
+      "n": 108,
+      "acc": 0.981,
+      "ci95": [
+        0.954,
+        1.0
+      ],
+      "flip_consistency": null,
+      "false_supported": 0,
+      "at_risk": 0,
+      "false_supported_rate": 0.0
+    },
+    "2": {
+      "n": 122,
+      "acc": 0.984,
+      "ci95": [
+        0.959,
+        1.0
+      ],
+      "flip_consistency": 0.984,
+      "false_supported": 2,
+      "at_risk": 122,
+      "false_supported_rate": 0.016
+    },
+    "3": {
+      "n": 42,
+      "acc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "flip_consistency": 1.0,
+      "false_supported": 0,
+      "at_risk": 21,
+      "false_supported_rate": 0.0
+    },
+    "4": {
+      "n": 40,
+      "acc": 0.975,
+      "ci95": [
+        0.925,
+        1.0
+      ],
+      "flip_consistency": 0.95,
+      "false_supported": 0,
+      "at_risk": 20,
+      "false_supported_rate": 0.0
+    },
+    "5": {
+      "n": 46,
+      "acc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "flip_consistency": 0.935,
+      "false_supported": 0,
+      "at_risk": 46,
+      "false_supported_rate": 0.0
+    }
+  },
+  "overall": 0.986,
+  "flip_consistency_overall": 0.966,
+  "false_supported_total": 2,
+  "false_supported_rate_overall": 0.01,
+  "cost_weighted_error": 0.0355
+}

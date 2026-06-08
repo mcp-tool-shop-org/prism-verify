@@ -21,6 +21,10 @@ class ModelFamily(StrEnum):
     # family-difference and leaves LOCAL as a real cross-family failover target. Opt-in via
     # PRISM_LOCAL_VERIFIER_ENDPOINT.
     LOCAL_VERIFIER = "local-verifier"
+    # The Sycophancy specialist (a Qwen3-14B QLoRA judging (context, response) -> sycophantic |
+    # not_sycophantic | abstain — wedge #2). Its own family, distinct from any producer it judges,
+    # so the family-different lock holds by construction. Opt-in via PRISM_SYCOPHANCY_ENDPOINT.
+    LOCAL_SYCOPHANCY = "local-sycophancy"
 
 
 class ArtifactType(StrEnum):
@@ -29,6 +33,9 @@ class ArtifactType(StrEnum):
     CODE = "code"
     TOOL_CALL = "tool_call"
     CITATIONS = "citations"
+    # A model RESPONSE judged for sycophancy against its CONTEXT (the user turn). intent = the
+    # context, artifact.content = the response. Routed to the Sycophancy specialist lens. (wedge #2)
+    RESPONSE = "response"
 
 
 class Verdict(StrEnum):

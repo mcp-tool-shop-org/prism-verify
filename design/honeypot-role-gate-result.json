@@ -1,0 +1,224 @@
+{
+  "verdict": "escalate",
+  "pass": false,
+  "blocking": false,
+  "advisory": true,
+  "citations": [
+    {
+      "id": "c1",
+      "identifier": "arXiv:2104.03594",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "Three Decades of Deception Techniques in Active Cyber Defense -- Retrospect and Outlook",
+      "source_abstract": "Deception techniques have been widely seen as a game changer in cyber defense. In this paper, we review representative techniques in honeypots, honeytokens, and moving target defense, spanning from the late 1980s to the year 2021. Techniques from these three domains complement with each other and may be leveraged to build a holistic deception based defense. However, to the best of our knowledge, there has not been a work that provides a systematic retrospect of these three domains all together and investigates their integrated usage for orchestrated deceptions. Our paper aims to fill this gap. By utilizing a tailored cyber kill chain model which can reflect the current threat landscape and a four-layer deception stack, a two-dimensional taxonomy is developed, based on which the deception techniques are classified. The taxonomy literally answers which phases of a cyber attack campaign the techniques can disrupt and which layers of the deception stack they belong to. Cyber defenders may use the taxonomy as a reference to design an organized and comprehensive deception plan, or to prioritize deception efforts for a budget conscious solution. We also discuss two important points for achieving active and resilient cyber defense, namely deception in depth and deception lifecycle, where several notable proposals are illustrated. Finally, some outlooks on future research directions are presented, including dynamic integration of different deception techniques, quantified deception effects and deception operation cost, hardware-supported deception techniques, as well as techniques developed based on better understanding of the human element."
+    },
+    {
+      "id": "c2",
+      "identifier": "arXiv:2603.28013",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We introduce a kill-chain canary methodology that tracks a cryptographic token through four stages (EXPOSED -> PERSISTED -> RELAYED -> EXECUTED) across 950 runs, five frontier LLMs... Claude blocks all injections at memory-write (0/164 ASR), GPT-4o-mini propagates at 53%",
+      "source_title": "Kill-Chain Canaries: Stage-Level Tracking of Prompt Injection Across Attack Surfaces and Model Safety Tiers",
+      "source_abstract": "Multi-agent LLM systems are entering production -- processing documents, managing workflows, acting on behalf of users -- yet their resilience to prompt injection is still evaluated with a single binary: did the attack succeed? This leaves architects without the diagnostic information needed to harden real pipelines. We introduce a kill-chain canary methodology that tracks a cryptographic token through four stages (EXPOSED -> PERSISTED -> RELAYED -> EXECUTED) across 950 runs, five frontier LLMs, six attack surfaces, and five defense conditions. The results reframe prompt injection as a pipeline-architecture problem: every model is fully exposed, yet outcomes diverge downstream -- Claude blocks all injections at memory-write (0/164 ASR), GPT-4o-mini propagates at 53%, and DeepSeek exhibits 0%/100% across surfaces from the same model. Three findings matter for deployment: (1) write-node placement is the highest-leverage safety decision -- routing writes through a verified model eliminates propagation; (2) all four defenses fail on at least one surface due to channel mismatch alone, no adversarial adaptation required; (3) invisible whitefont PDF payloads match or exceed visible-text ASR, meaning rendered-layer screening is insufficient. These dynamics apply directly to production: institutional investors and financial firms already run NLP pipelines over earnings calls, SEC filings, and analyst reports -- the document-ingestion workflows now migrating to LLM agents. Code, run logs, and tooling are publicly released."
+    },
+    {
+      "id": "c3",
+      "identifier": "arXiv:2309.00155",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "LLM in the Shell: Generative Honeypots",
+      "source_abstract": "Honeypots are essential tools in cybersecurity for early detection, threat intelligence gathering, and analysis of attacker's behavior. However, most of them lack the required realism to engage and fool human attackers long-term. Being easy to distinguish honeypots strongly hinders their effectiveness. This can happen because they are too deterministic, lack adaptability, or lack deepness. This work introduces shelLM, a dynamic and realistic software honeypot based on Large Language Models that generates Linux-like shell output. We designed and implemented shelLM using cloud-based LLMs. We evaluated if shelLM can generate output as expected from a real Linux shell. The evaluation was done by asking cybersecurity researchers to use the honeypot and give feedback if each answer from the honeypot was the expected one from a Linux shell. Results indicate that shelLM can create credible and dynamic answers capable of addressing the limitations of current honeypots. ShelLM reached a TNR of 0.90, convincing humans it was consistent with a real Linux shell. The source code and prompts for replicating the experiments have been publicly available."
+    },
+    {
+      "id": "c4",
+      "identifier": "arXiv:1802.08232",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "The Secret Sharer: Evaluating and Testing Unintended Memorization in Neural Networks",
+      "source_abstract": "This paper describes a testing methodology for quantitatively assessing the risk that rare or unique training-data sequences are unintentionally memorized by generative sequence models---a common type of machine-learning model. Because such models are sometimes trained on sensitive data (e.g., the text of users' private messages), this methodology can benefit privacy by allowing deep-learning practitioners to select means of training that minimize such memorization.\n  In experiments, we show that unintended memorization is a persistent, hard-to-avoid issue that can have serious consequences. Specifically, for models trained without consideration of memorization, we describe new, efficient procedures that can extract unique, secret sequences, such as credit card numbers. We show that our testing strategy is a practical and easy-to-use first line of defense, e.g., by describing its application to quantitatively limit data exposure in Google's Smart Compose, a commercial text-completion neural network trained on millions of users' email messages."
+    },
+    {
+      "id": "c5",
+      "identifier": "arXiv:2507.05630",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "How Not to Detect Prompt Injections with an LLM",
+      "source_abstract": "LLM-integrated applications and agents are vulnerable to prompt injection attacks, where adversaries embed malicious instructions within seemingly benign input data to manipulate the LLM's intended behavior. Recent defenses based on known-answer detection (KAD) scheme have reported near-perfect performance by observing an LLM's output to classify input data as clean or contaminated. KAD attempts to repurpose the very susceptibility to prompt injection as a defensive mechanism. We formally characterize the KAD scheme and uncover a structural vulnerability that invalidates its core security premise. To exploit this fundamental vulnerability, we methodically design an adaptive attack, DataFlip. It consistently evades KAD defenses, achieving detection rates as low as $0\\%$ while reliably inducing malicious behavior with a success rate of $91\\%$, all without requiring white-box access to the LLM or any optimization procedures."
+    },
+    {
+      "id": "c6",
+      "identifier": "arXiv:2510.09023",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "By systematically tuning and scaling general optimization techniques-gradient descent, reinforcement learning, random search, and human-guided exploration-we bypass 12 recent defenses (based on a diverse set of techniques) with attack success rate above 90% for most;",
+      "source_title": "The Attacker Moves Second: Stronger Adaptive Attacks Bypass Defenses Against Llm Jailbreaks and Prompt Injections",
+      "source_abstract": "How should we evaluate the robustness of language model defenses? Current defenses against jailbreaks and prompt injections (which aim to prevent an attacker from eliciting harmful knowledge or remotely triggering malicious actions, respectively) are typically evaluated either against a static set of harmful attack strings, or against computationally weak optimization methods that were not designed with the defense in mind. We argue that this evaluation process is flawed.\n  Instead, we should evaluate defenses against adaptive attackers who explicitly modify their attack strategy to counter a defense's design while spending considerable resources to optimize their objective. By systematically tuning and scaling general optimization techniques-gradient descent, reinforcement learning, random search, and human-guided exploration-we bypass 12 recent defenses (based on a diverse set of techniques) with attack success rate above 90% for most; importantly, the majority of defenses originally reported near-zero attack success rates. We believe that future defense work must consider stronger attacks, such as the ones we describe, in order to make reliable and convincing claims of robustness."
+    },
+    {
+      "id": "c7",
+      "identifier": "arXiv:1905.00964",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Moving Target Defense (MTD) continuously shifts the configuration of the underlying system, in turn reducing the success rate of cyberattacks.",
+      "source_title": "A Survey of Moving Target Defenses for Network Security",
+      "source_abstract": "Network defenses based on traditional tools, techniques, and procedures fail to account for the attacker's inherent advantage present due to the static nature of network services and configurations. To take away this asymmetric advantage, Moving Target Defense (MTD) continuously shifts the configuration of the underlying system, in turn reducing the success rate of cyberattacks. In this survey, we analyze the recent advancements made in the development of MTDs and define categorizations that capture the key aspects of such defenses. We first categorize these defenses into different sub-classes depending on what they move, when they move and how they move. In trying to answer the latter question, we showcase the use of domain knowledge and game-theoretic modeling can help the defender come up with effective and efficient movement strategies. Second, to understand the practicality of these defense methods, we discuss how various MTDs have been implemented and find that networking technologies such as Software Defined Networking and Network Function Virtualization act as key enablers for implementing these dynamic defenses. We then briefly highlight MTD test-beds and case-studies to aid readers who want to examine or deploy existing MTD techniques. Third, our survey categorizes proposed MTDs based on the qualitative and quantitative metrics they utilize to evaluate their effectiveness in terms of security and performance. We use well-defined metrics such as risk analysis and performance costs for qualitative evaluation and metrics based on Confidentiality, Integrity, Availability (CIA), attack representation, QoS impact, and targeted threat models for quantitative evaluation. Finally, we show that our categorization of MTDs is effective in identifying novel research areas and highlight directions for future research."
+    },
+    {
+      "id": "c8",
+      "identifier": "arXiv:2412.16430",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "WiP: Deception-in-Depth Using Multiple Layers of Deception",
+      "source_abstract": "Deception is being increasingly explored as a cyberdefense strategy to protect operational systems. We are studying implementation of deception-in-depth strategies with initially three logical layers: network, host, and data. We draw ideas from military deception, network orchestration, software deception, file deception, fake honeypots, and moving-target defenses. We are building a prototype representing our ideas and will be testing it in several adversarial environments. We hope to show that deploying a broad range of deception techniques can be more effective in protecting systems than deploying single techniques. Unlike traditional deception methods that try to encourage active engagement from attackers to collect intelligence, we focus on deceptions that can be used on real machines to discourage attacks."
+    },
+    {
+      "id": "c9",
+      "identifier": "arXiv:2503.18813",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "CaMeL explicitly extracts the control and data flows from the (trusted) query; therefore, the untrusted data retrieved by the LLM can never impact the program flow.",
+      "source_title": "Defeating Prompt Injections by Design",
+      "source_abstract": "Large Language Models (LLMs) are increasingly deployed in agentic systems that interact with an untrusted environment. However, LLM agents are vulnerable to prompt injection attacks when handling untrusted data. In this paper we propose CaMeL, a robust defense that creates a protective system layer around the LLM, securing it even when underlying models are susceptible to attacks. To operate, CaMeL explicitly extracts the control and data flows from the (trusted) query; therefore, the untrusted data retrieved by the LLM can never impact the program flow. To further improve security, CaMeL uses a notion of a capability to prevent the exfiltration of private data over unauthorized data flows by enforcing security policies when tools are called. We demonstrate effectiveness of CaMeL by solving $77\\%$ of tasks with provable security (compared to $84\\%$ with an undefended system) in AgentDojo. We release CaMeL at https://github.com/google-research/camel-prompt-injection."
+    },
+    {
+      "id": "c10",
+      "identifier": "arXiv:2604.13301",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We introduce the honeypot protocol, which tests for context-dependent behavior by varying only the system prompt across three conditions (evaluation, synthetic deployment, explicit no-monitoring) while holding the task, environment, and scoring identical.",
+      "source_title": "Honeypot Protocol",
+      "source_abstract": "Trusted monitoring, the standard defense in AI control, is vulnerable to adaptive attacks, collusion, and strategic attack selection. All of these exploit the fact that monitoring is passive: it observes model behavior but never probes whether the model would behave differently under different perceived conditions. We introduce the honeypot protocol, which tests for context-dependent behavior by varying only the system prompt across three conditions (evaluation, synthetic deployment, explicit no-monitoring) while holding the task, environment, and scoring identical. We evaluate Claude Opus 4.6 in BashArena across all three conditions in both honest and attack modes. The model achieved 100% main task success and triggered zero side tasks uniformly across conditions, providing a baseline for future comparisons with stronger attack policies and additional models."
+    }
+  ],
+  "unparsed": [
+    "**Canary tokens are unique embeddable tripwires (URLs, docs, keys) that fire on access and almost never on benign activity, because triggering requires an attacker to actively use them.** Thinkst Applied Research 2025 (canarytokens.org / canary.tools docs).† → The operational form to copy: a unique, rotated marker whose mere appearance downstream fires the trip — exact-string detection, no model self-verification (satisfies EXTERNAL_VERIFIER).",
+    "**Cloak-Honey-Trap embeds string payloads into untrusted assets to defend against autonomous LLM agents; its \"Honey\" stage plants tokens that fingerprint a hijacked agent — distinct from \"Trap\" (state-corrupting token landmines).** Ayzenshteyn, Weiss & Mirsky 2025 (USENIX Security 2025, CHeaT). → The closest direct analogue: validates planting a honey-token only a hijacked LLM acts on. **Borrow \"Honey\"; explicitly DROP \"Trap\"** (state corruption violates fail-open + no-self-poisoning).",
+    "(item cites multiple sources — only the first was verified) **LLM-powered honeypots (shelLM) and agent honeypots monitor real attacker/agent interaction in the wild (the LLM Agent ",
+    "(item cites multiple sources — only the first was verified) **The Secret Sharer + The Canary's Echo: planted canary sequences measure unintended memorization / privacy leakage in m"
+  ],
+  "receipt": {
+    "schema": "roleos-citation-receipt/v1",
+    "kind": "citation-verification",
+    "tool": "roleos verify-citations",
+    "input": "E:/AI/prism-verify/design/honeypot-role-dispatch.md",
+    "verdict": "escalate",
+    "blocking": false,
+    "advisory": true,
+    "citations_sha256": "a7b642e7db70b83a3ef488bcb30f729a280d9b54ef4d1af1100d7e177cc898c3",
+    "prism_receipt": {
+      "id": "prism-01ktkspbqa2j3kwf66bqrgpf01",
+      "signature": "07c0ec19acd71120ef45354fc6a6713ff728fe777e75222c6d792ac282266a112bab014aca436db5c8445b6aac0a1c4f272355a7301717c7c412a89a7b7d9406",
+      "verdict": "escalate"
+    },
+    "retrieval_pins": [
+      {
+        "id": "c1",
+        "identifier": "arXiv:2104.03594",
+        "query": "https://export.arxiv.org/api/query?id_list=2104.03594",
+        "source_sha256": "62460567b6799382e81ba83afdc1027210c880a0c5f682709e72aac453199853",
+        "existence": "resolved"
+      },
+      {
+        "id": "c2",
+        "identifier": "arXiv:2603.28013",
+        "query": "https://export.arxiv.org/api/query?id_list=2603.28013",
+        "source_sha256": "8ce8dec035dedbe71922e0339de0af7b44b089a724cc3c93d3d9bf8019037f2c",
+        "existence": "resolved"
+      },
+      {
+        "id": "c3",
+        "identifier": "arXiv:2309.00155",
+        "query": "https://export.arxiv.org/api/query?id_list=2309.00155",
+        "source_sha256": "9f8feacc597ad15332edd322a89a58cc2d4d2d0d500f03d988cae388a313515f",
+        "existence": "resolved"
+      },
+      {
+        "id": "c4",
+        "identifier": "arXiv:1802.08232",
+        "query": "https://export.arxiv.org/api/query?id_list=1802.08232",
+        "source_sha256": "892775181dd1eeff00c48645983b043f15edf98b59cf49151146e3743514d747",
+        "existence": "resolved"
+      },
+      {
+        "id": "c5",
+        "identifier": "arXiv:2507.05630",
+        "query": "https://export.arxiv.org/api/query?id_list=2507.05630",
+        "source_sha256": "d687c353d44c35b1f8d8a5d9422046a8b119e60cf0ca99e482af7cdb4c49251b",
+        "existence": "resolved"
+      },
+      {
+        "id": "c6",
+        "identifier": "arXiv:2510.09023",
+        "query": "https://export.arxiv.org/api/query?id_list=2510.09023",
+        "source_sha256": "4870e3a5f76b399f4c3b7fadb4cce08e5b1f5b2e407ba7e5ba2b01be4d4f0fbd",
+        "existence": "resolved"
+      },
+      {
+        "id": "c7",
+        "identifier": "arXiv:1905.00964",
+        "query": "https://export.arxiv.org/api/query?id_list=1905.00964",
+        "source_sha256": "2a565cb64515ee97e47c6477535f6848c86ee111d02bac38d5e561dad92ca12f",
+        "existence": "resolved"
+      },
+      {
+        "id": "c8",
+        "identifier": "arXiv:2412.16430",
+        "query": "https://export.arxiv.org/api/query?id_list=2412.16430",
+        "source_sha256": "529492dbf431d079d995ab6b2bf93b619d9e7e78b4f7231fbd6a2fa6c20d9557",
+        "existence": "resolved"
+      },
+      {
+        "id": "c9",
+        "identifier": "arXiv:2503.18813",
+        "query": "https://export.arxiv.org/api/query?id_list=2503.18813",
+        "source_sha256": "fab7bb70e6569cedb4a5e30ec7b4b8f24e7beae1f59fd23d8c50a56fa0053003",
+        "existence": "resolved"
+      },
+      {
+        "id": "c10",
+        "identifier": "arXiv:2604.13301",
+        "query": "https://export.arxiv.org/api/query?id_list=2604.13301",
+        "source_sha256": "eeb5f876b7a68b8c20472d5fd6dea510776dc9a02d1101dd5d61ffe5bc68a1a8",
+        "existence": "resolved"
+      }
+    ],
+    "local_panel": null,
+    "chain_sha256": "a361f0ce8decced3820be7c263d3e6f4929ac6d28106f3319c50652fda0bb2b9"
+  },
+  "duration": 21423
+}

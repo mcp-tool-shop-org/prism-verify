@@ -1,0 +1,817 @@
+[
+  {
+    "claim": "The cargo freighter Velmoth Carrack departed Bryndal Harbor at dawn on the fourth of Tessrin.",
+    "ev_support": "The cargo freighter Velmoth Carrack departed Bryndal Harbor at dawn on the fourth of Tessrin.",
+    "ev_silent": "The Quillon Almanac lists nine recognized varieties of frost-pear cultivated in the Aldwick uplands."
+  },
+  {
+    "claim": "Dr. Renske Halloway is the chief metallurgist at the Pendrath Forgeworks.",
+    "ev_support": "Dr. Renske Halloway is the chief metallurgist at the Pendrath Forgeworks.",
+    "ev_silent": "The Marrowmere ferry charges a flat toll of three brass tokens regardless of cart weight."
+  },
+  {
+    "claim": "The Sundering Glass observatory operates two parallax telescopes on the Korrin Ridge.",
+    "ev_support": "The Sundering Glass observatory operates two parallax telescopes on the Korrin Ridge.",
+    "ev_silent": "Chef Odalie Vance won the Brass Ladle prize for her saltbread at the Lowmarket festival."
+  },
+  {
+    "claim": "The Greycowl Mutual Society has 4,212 dues-paying members across the Velt provinces.",
+    "ev_support": "The Greycowl Mutual Society has 4,212 dues-paying members across the Velt provinces.",
+    "ev_silent": "A Thornwick longbow requires roughly six weeks of seasoning before the yew stave is bent."
+  },
+  {
+    "claim": "The submersible Pallas Drift was commissioned by the Marrowdeep Survey Guild in the year 1188.",
+    "ev_support": "The submersible Pallas Drift was commissioned by the Marrowdeep Survey Guild in the year 1188.",
+    "ev_silent": "The Vendric dialect retains a distinct dual-number suffix that neighboring tongues abandoned."
+  },
+  {
+    "claim": "The Ashvale Distillery ships its amber cordial to seventeen coastal trading posts.",
+    "ev_support": "The Ashvale Distillery ships its amber cordial to seventeen coastal trading posts.",
+    "ev_silent": "Mayor Tibel Crayne dedicated the new clock tower on the steps of Harrowgate Hall."
+  },
+  {
+    "claim": "The Orlandine Bridge spans 340 meters across the Vesper Gorge.",
+    "ev_support": "The Orlandine Bridge spans 340 meters across the Vesper Gorge.",
+    "ev_silent": "The Sable Lantern inn keeps a resident grey cat named Pemberton who guards the cellar."
+  },
+  {
+    "claim": "Engineer Calla Renforth designed the tidal mill at Quenby Sands.",
+    "ev_support": "Engineer Calla Renforth designed the tidal mill at Quenby Sands.",
+    "ev_silent": "The Dorrick Codex contains 1,400 illuminated pages bound in oxblood leather."
+  },
+  {
+    "claim": "The merchant house Vexler & Stane holds the monopoly on indigo dye in Port Helmsby.",
+    "ev_support": "The merchant house Vexler & Stane holds the monopoly on indigo dye in Port Helmsby.",
+    "ev_silent": "A grown silverback marmot stores nearly nine kilograms of seed in its winter burrow."
+  },
+  {
+    "claim": "The airship Cindra Lark runs a weekly mail circuit between Talloway and Fenmoor.",
+    "ev_support": "The airship Cindra Lark runs a weekly mail circuit between Talloway and Fenmoor.",
+    "ev_silent": "Master glazier Bram Tully fires his enamels at a low kiln for two full days."
+  },
+  {
+    "claim": "The Mosswell Reservoir holds 62 million liters at its summer crest.",
+    "ev_support": "The Mosswell Reservoir holds 62 million liters at its summer crest.",
+    "ev_silent": "The poet Saskia Lund published her final cycle of verses under the name Greywind."
+  },
+  {
+    "claim": "Captain Iorwen Maddox commands the patrol cutter Brindlewatch.",
+    "ev_support": "Captain Iorwen Maddox commands the patrol cutter Brindlewatch.",
+    "ev_silent": "The Calderwood orchard yields a tart russet apple prized for its long keeping."
+  },
+  {
+    "claim": "The Threnody Mining Concern operates three deep shafts beneath Coldhollow.",
+    "ev_support": "The Threnody Mining Concern operates three deep shafts beneath Coldhollow.",
+    "ev_silent": "A Wrenfield loom can weave a bolt of twill in a little under four days."
+  },
+  {
+    "claim": "The festival of Lantern's Reach is held annually in the township of Durnsey.",
+    "ev_support": "The festival of Lantern's Reach is held annually in the township of Durnsey.",
+    "ev_silent": "Surgeon Petra Vasco perfected the marrow-splint technique at the Halverton infirmary."
+  },
+  {
+    "claim": "The Pellarine Conservatory has trained 88 master luthiers since its founding.",
+    "ev_support": "The Pellarine Conservatory has trained 88 master luthiers since its founding.",
+    "ev_silent": "The river barge Otterlmoss carries grain upstream against the Caldwell current."
+  },
+  {
+    "claim": "The Calverton Aqueduct supplies fresh water to the upper terraces of Hesk.",
+    "ev_support": "The Calverton Aqueduct supplies fresh water to the upper terraces of Hesk.",
+    "ev_silent": "The Marbury fiddle is tuned a full tone below the standard concert pitch."
+  },
+  {
+    "claim": "Botanist Yuna Threlkeld discovered the pale moonferns of the Driftwell marsh.",
+    "ev_support": "Botanist Yuna Threlkeld discovered the pale moonferns of the Driftwell marsh.",
+    "ev_silent": "The brigantine Saltcrow anchors each night in the lee of Gannet Point."
+  },
+  {
+    "claim": "The Verrith Clockmakers' Guild charges a 12 percent levy on imported brass gears.",
+    "ev_support": "The Verrith Clockmakers' Guild charges a 12 percent levy on imported brass gears.",
+    "ev_silent": "Shepherd Olwen Hask drives his flock to the high pastures above Larrenfold each spring."
+  },
+  {
+    "claim": "The lighthouse at Cape Vornell stands 71 meters above the tide line.",
+    "ev_support": "The lighthouse at Cape Vornell stands 71 meters above the tide line.",
+    "ev_silent": "The Tarnberry Players staged their winter masque in the courtyard of Estwick Keep."
+  },
+  {
+    "claim": "The Hollowmere Ironworks was founded by the smith Garreth Pyle.",
+    "ev_support": "The Hollowmere Ironworks was founded by the smith Garreth Pyle.",
+    "ev_silent": "A Quillsby goose lays a clutch of seven speckled eggs in the rushes of Endermoor."
+  },
+  {
+    "claim": "The caravan route through the Sable Steppe is patrolled by the Wardens of Renn.",
+    "ev_support": "The caravan route through the Sable Steppe is patrolled by the Wardens of Renn.",
+    "ev_silent": "The clockwork orrery in Pellham Hall models the courses of four wandering moons."
+  },
+  {
+    "claim": "The Drennock Cartwrights have produced 3,500 supply wagons for the eastern garrisons.",
+    "ev_support": "The Drennock Cartwrights have produced 3,500 supply wagons for the eastern garrisons.",
+    "ev_silent": "Vintner Mireille Saconne ages her plumwine in casks of charred blackthorn."
+  },
+  {
+    "claim": "The research station Eldwyn Hollow is staffed by 24 resident naturalists.",
+    "ev_support": "The research station Eldwyn Hollow is staffed by 24 resident naturalists.",
+    "ev_silent": "The tinsmith of Yarrowgate stamps each kettle with a small running hare."
+  },
+  {
+    "claim": "The schooner Marrowind ferries timber from Ostwood to the docks of Kelvgrave.",
+    "ev_support": "The schooner Marrowind ferries timber from Ostwood to the docks of Kelvgrave.",
+    "ev_silent": "Cartographer Bede Ashlow charted the hidden tarns of the Sennox highlands."
+  },
+  {
+    "claim": "The Vantry Telegraph Company has strung 900 kilometers of copper line across the moors.",
+    "ev_support": "The Vantry Telegraph Company has strung 900 kilometers of copper line across the moors.",
+    "ev_silent": "The miller's daughter at Wenbrook keeps a ledger of every sack ground since midwinter."
+  },
+  {
+    "claim": "The Brackenfell Brewery brews its dark stout using barley from the Henwick fields.",
+    "ev_support": "The Brackenfell Brewery brews its dark stout using barley from the Henwick fields.",
+    "ev_silent": "The Stelmoor lighthouse keeper logs the passage of every vessel rounding the cape."
+  },
+  {
+    "claim": "Archmason Dovrin Kale rebuilt the collapsed nave of the Eastmark cathedral.",
+    "ev_support": "Archmason Dovrin Kale rebuilt the collapsed nave of the Eastmark cathedral.",
+    "ev_silent": "The Pellow saltworks evaporates brine in shallow pans across the Tovern flats."
+  },
+  {
+    "claim": "The frigate Tellurine Spear is berthed at the naval yard of Corvane.",
+    "ev_support": "The frigate Tellurine Spear is berthed at the naval yard of Corvane.",
+    "ev_silent": "Weaver Inessa Brackmoor dyes her wool with lichen gathered on the Druin crags."
+  },
+  {
+    "claim": "The Halloway Pottery operates four wood-fired kilns on the banks of the Wend.",
+    "ev_support": "The Halloway Pottery operates four wood-fired kilns on the banks of the Wend.",
+    "ev_silent": "The astronomer of Vesketh recorded a bright comet over the Marran sea in 1206."
+  },
+  {
+    "claim": "The mountain pass of Greven's Notch is closed by snow for five months each year.",
+    "ev_support": "The mountain pass of Greven's Notch is closed by snow for five months each year.",
+    "ev_silent": "The horologist Tamsin Reeve assembles each pocket chronometer from 142 hand-cut parts."
+  },
+  {
+    "claim": "The survey vessel Marrowdeep departed Cailen Harbor at dawn on the third of Vembrest.",
+    "ev_support": "According to the port log, the survey vessel Marrowdeep departed Cailen Harbor at dawn on the third of Vembrest.",
+    "ev_silent": "The Holvane Conservatory awards its annual Tessaract Prize to a single woodwind student each spring."
+  },
+  {
+    "claim": "The Brennick Foundry ships its cast hubs to the Orlay assembly line every Thursday.",
+    "ev_support": "The Brennick Foundry ships its cast hubs to the Orlay assembly line every Thursday without exception.",
+    "ev_silent": "A grove of pale-barked silvercap trees lines the eastern ridge above Lake Wennoch."
+  },
+  {
+    "claim": "The Vantressa Codex was sealed inside the Drummond vault in the year 412 of the Lowland Reckoning.",
+    "ev_support": "Records confirm the Vantressa Codex was sealed inside the Drummond vault in the year 412 of the Lowland Reckoning.",
+    "ev_silent": "The mineral fluorent glows a faint teal when struck with a quartz hammer."
+  },
+  {
+    "claim": "The Pellington Observatory operates a forty-two-meter mirror on the Calder Plateau.",
+    "ev_support": "The Pellington Observatory operates a forty-two-meter mirror on the Calder Plateau, its largest instrument.",
+    "ev_silent": "Chef Doran Vesk garnishes the harvest stew with candied thornberries at the Mossgate Inn."
+  },
+  {
+    "claim": "The Thelvane Express runs between Korrin Station and the Eddric Terminus six times daily.",
+    "ev_support": "The transit board states the Thelvane Express runs between Korrin Station and the Eddric Terminus six times daily.",
+    "ev_silent": "The Brevald Cup tournament is decided by a single elimination bracket of thirty-two players."
+  },
+  {
+    "claim": "The frigate Sallowmere was decommissioned by the Marenport Authority in the spring of 1188.",
+    "ev_support": "The naval registry shows the frigate Sallowmere was decommissioned by the Marenport Authority in the spring of 1188.",
+    "ev_silent": "The Quillis spider weaves its lattice nests exclusively in hollow drumwood stumps."
+  },
+  {
+    "claim": "The Andovar Press has published the Lornfield Almanac annually since its founding.",
+    "ev_support": "The Andovar Press has published the Lornfield Almanac annually since its founding in a small workshop.",
+    "ev_silent": "A single ledger of glacier melt is kept by the wardens of the Verrin Pass."
+  },
+  {
+    "claim": "The Castellane Bridge spans the Yarrow Gorge at a height of two hundred and ten meters.",
+    "ev_support": "Engineers measured that the Castellane Bridge spans the Yarrow Gorge at a height of two hundred and ten meters.",
+    "ev_silent": "The Dunmoor cooperative trades dried kelp for spun glasswool every autumn."
+  },
+  {
+    "claim": "The biologist Selra Quintock has cataloged every moth species on the Ferrune Atoll.",
+    "ev_support": "It is documented that the biologist Selra Quintock has cataloged every moth species on the Ferrune Atoll.",
+    "ev_silent": "The Hattheld Gallery rotates its standing exhibits on a ninety-day cycle."
+  },
+  {
+    "claim": "The Wexford Mill runs three water wheels along the Brindle Stream.",
+    "ev_support": "The survey notes that the Wexford Mill runs three water wheels along the Brindle Stream.",
+    "ev_silent": "Captain Inola Frask commands the dirigible Greywind on its mountain crossings."
+  },
+  {
+    "claim": "The Tannock Accord was ratified by all eleven river guilds in the autumn of 905.",
+    "ev_support": "Historians record that the Tannock Accord was ratified by all eleven river guilds in the autumn of 905.",
+    "ev_silent": "The Velmore Bakery sells out of its saffron loaves before the second bell each market day."
+  },
+  {
+    "claim": "The probe Calliven is mapping the dust rings around the gas giant Orrendel.",
+    "ev_support": "Mission control reports that the probe Calliven is mapping the dust rings around the gas giant Orrendel.",
+    "ev_silent": "The Sedgwick Choir performs the Hollow Vespers in the old chapel each midwinter."
+  },
+  {
+    "claim": "The Marrowfield clinic has treated patients from the Dell Counties for over sixty years.",
+    "ev_support": "Locals attest that the Marrowfield clinic has treated patients from the Dell Counties for over sixty years.",
+    "ev_silent": "The alloy brennite resists corrosion when submerged in brackish water."
+  },
+  {
+    "claim": "The cartographer Edmund Yale was commissioned to chart the Sennick Marshes in 1503.",
+    "ev_support": "The commission letter shows the cartographer Edmund Yale was commissioned to chart the Sennick Marshes in 1503.",
+    "ev_silent": "The Pallow Reef hosts a spawning run of silver-finned glassfish every other year."
+  },
+  {
+    "claim": "The Drevane Cooperative operates four windmills on the Halloway Downs.",
+    "ev_support": "The land register confirms the Drevane Cooperative operates four windmills on the Halloway Downs.",
+    "ev_silent": "Scholars at the Inswith Athenaeum debate the authorship of the Threnody Scrolls."
+  },
+  {
+    "claim": "The tanker Brisbane Star is registered to the Helmswick Shipping Concern.",
+    "ev_support": "The maritime manifest lists that the tanker Brisbane Star is registered to the Helmswick Shipping Concern.",
+    "ev_silent": "The Fennimore orchard grafts its blush pears onto wild crabroot stock."
+  },
+  {
+    "claim": "The Quorrel Institute was awarded the Vannett Grant for its tidal research in 1976.",
+    "ev_support": "The grant announcement states the Quorrel Institute was awarded the Vannett Grant for its tidal research in 1976.",
+    "ev_silent": "The roan mare Saffron Drift won the Pelham Trials by a length and a half."
+  },
+  {
+    "claim": "The Aldermoor Lighthouse has guided vessels into Pellic Bay since the reign of the third steward.",
+    "ev_support": "It is recorded that the Aldermoor Lighthouse has guided vessels into Pellic Bay since the reign of the third steward.",
+    "ev_silent": "The Wenlock printing house binds its ledgers in oxblood leather and brass clasps."
+  },
+  {
+    "claim": "The engineer Petra Vossler designed the lifting cranes for the Korrindale Docks.",
+    "ev_support": "The dock archives note that the engineer Petra Vossler designed the lifting cranes for the Korrindale Docks.",
+    "ev_silent": "The Bellmont vineyard ferments its summer vintage in clay amphorae underground."
+  },
+  {
+    "claim": "The Hessmark Library houses the only surviving copy of the Greywater Concordance.",
+    "ev_support": "Curators confirm the Hessmark Library houses the only surviving copy of the Greywater Concordance.",
+    "ev_silent": "The Ostlund ferry crosses the Narrows on a chain pulled by a treadwheel crew."
+  },
+  {
+    "claim": "The Cindervale Refinery processes ore brought down from the Tarn Highlands.",
+    "ev_support": "The operations brief states the Cindervale Refinery processes ore brought down from the Tarn Highlands.",
+    "ev_silent": "The composer Marisol Penhaligon scored the Lantern Festival overture in nine movements."
+  },
+  {
+    "claim": "The schooner Wrenhollow was launched from the Dellamy Shipyard in the year 1641.",
+    "ev_support": "The shipwright's records show the schooner Wrenhollow was launched from the Dellamy Shipyard in the year 1641.",
+    "ev_silent": "The Quemby market trades polished riverstones as tokens during the harvest fair."
+  },
+  {
+    "claim": "The Velkern Academy admits exactly ninety apprentices in each founding cohort.",
+    "ev_support": "The charter specifies the Velkern Academy admits exactly ninety apprentices in each founding cohort.",
+    "ev_silent": "The blue-throated marsh heron nests in the reed beds of the Ossic Fen."
+  },
+  {
+    "claim": "The botanist Halden Orcutt has cultivated the rare nightbloom orchid in the Sworth Conservatory.",
+    "ev_support": "The conservatory log notes that the botanist Halden Orcutt has cultivated the rare nightbloom orchid in the Sworth Conservatory.",
+    "ev_silent": "The Drenwick foundry casts its bells from a tin-rich blend it calls peal-bronze."
+  },
+  {
+    "claim": "The Marrant Aqueduct carries water to the city of Vell across eighteen stone arches.",
+    "ev_support": "The civic survey records that the Marrant Aqueduct carries water to the city of Vell across eighteen stone arches.",
+    "ev_silent": "The fiddler Oswin Thrale leads the reel at the Brackenheath barn dance every solstice."
+  },
+  {
+    "claim": "The Caldonia Trading House operates a chain of warehouses along the Sennet River.",
+    "ev_support": "The ledger confirms the Caldonia Trading House operates a chain of warehouses along the Sennet River.",
+    "ev_silent": "The Vorral telescope array tracks meteor showers from the high desert of Quith."
+  },
+  {
+    "claim": "The general Tomas Reddick commanded the garrison at Fort Ellesmore for twelve years.",
+    "ev_support": "The muster rolls show the general Tomas Reddick commanded the garrison at Fort Ellesmore for twelve years.",
+    "ev_silent": "The Hollindale weavers dye their wool with crushed marrowroot for a deep ochre."
+  },
+  {
+    "claim": "The Penwick Glassworks produces stained panels for chapels across the Lowfield region.",
+    "ev_support": "The trade catalog states the Penwick Glassworks produces stained panels for chapels across the Lowfield region.",
+    "ev_silent": "The river otter colony at Brimble Pond has expanded to four lodges this season."
+  },
+  {
+    "claim": "The expedition under Mara Cresswell reached the summit of Mount Avenell in 1822.",
+    "ev_support": "The journal entry confirms the expedition under Mara Cresswell reached the summit of Mount Avenell in 1822.",
+    "ev_silent": "The Tamsin clockmaker engraves each movement plate with a tiny wheatsheaf mark."
+  },
+  {
+    "claim": "The Orsbury Canal connects the harbor at Thren to the inland depots of Valcourt.",
+    "ev_support": "The transport map shows the Orsbury Canal connects the harbor at Thren to the inland depots of Valcourt.",
+    "ev_silent": "The mountaineer's guild at Crennow stocks rope spun from braided hemp and waxed flax."
+  },
+  {
+    "claim": "The Wraithmoor Distillery has aged its amber spirit in charred oak casks for a full decade.",
+    "ev_support": "The tasting notes confirm the Wraithmoor Distillery has aged its amber spirit in charred oak casks for a full decade.",
+    "ev_silent": "The astronomer Cellis Brand named the binary star pair the Lantern and the Moth."
+  },
+  {
+    "claim": "The cargo vessel Marrowind Drift departed Port Helsby at 04:12 on the spring tide.",
+    "ev_support": "The cargo vessel Marrowind Drift departed Port Helsby at 04:12 on the spring tide, fully laden with ore.",
+    "ev_silent": "The Quenly Orchard yielded 8,400 baskets of crimson pears in its third harvest year."
+  },
+  {
+    "claim": "Veltora Dynamics operates 14 fabrication plants across the Sable Corridor.",
+    "ev_support": "Veltora Dynamics operates 14 fabrication plants across the Sable Corridor, each running two shifts.",
+    "ev_silent": "The Brindlemoor lighthouse rotates its lamp once every nine seconds during fog warnings."
+  },
+  {
+    "claim": "Engineer Corwin Thatchley is the lead author of the Hollowmere bridge survey.",
+    "ev_support": "Engineer Corwin Thatchley is the lead author of the Hollowmere bridge survey published last quarter.",
+    "ev_silent": "The Pellisade reef hosts roughly 220 species of banded coral in its northern shelf."
+  },
+  {
+    "claim": "The Grendwick Observatory has cataloged 3,902 faint nebular smudges.",
+    "ev_support": "The Grendwick Observatory has cataloged 3,902 faint nebular smudges since its dome reopened.",
+    "ev_silent": "Chef Dalia Foss seasons the Mirebrook stew with seven measures of smoked thistle salt."
+  },
+  {
+    "claim": "The Tarnholt rail line runs 312 kilometers between Vossbury and Glint Falls.",
+    "ev_support": "The Tarnholt rail line runs 312 kilometers between Vossbury and Glint Falls without a single tunnel.",
+    "ev_silent": "Pianist Renault Ashby recorded the Ember Sonata in a single uninterrupted take."
+  },
+  {
+    "claim": "Mayor Inola Brackwater was elected to the Cindermoor council for a fourth term.",
+    "ev_support": "Mayor Inola Brackwater was elected to the Cindermoor council for a fourth term by a wide margin.",
+    "ev_silent": "The Quillan loom factory weaves 600 meters of indigo broadcloth per working day."
+  },
+  {
+    "claim": "Halvard Petronics ships its Aurix-9 controller to 27 regional distributors.",
+    "ev_support": "Halvard Petronics ships its Aurix-9 controller to 27 regional distributors every fiscal quarter.",
+    "ev_silent": "The Marlowe canal locks raise barges through eleven graduated chambers."
+  },
+  {
+    "claim": "The Ferrowind turbine array generates 540 megawatts at peak gust.",
+    "ev_support": "The Ferrowind turbine array generates 540 megawatts at peak gust along the Caldun ridge.",
+    "ev_silent": "Archivist Pell Doverly cataloged 1,180 brittle scrolls in the Yarrow vault."
+  },
+  {
+    "claim": "Captain Renske Vauldt commands the survey cutter Pale Quintain.",
+    "ev_support": "Captain Renske Vauldt commands the survey cutter Pale Quintain on its mapping circuit.",
+    "ev_silent": "The Tessborough bakery sells 340 honey-glazed twists before the morning bell."
+  },
+  {
+    "claim": "The Drovesly Aqueduct carries water across 19 stone arches.",
+    "ev_support": "The Drovesly Aqueduct carries water across 19 stone arches into the lower terraces.",
+    "ev_silent": "Violinist Marek Solven tunes his instrument a quarter-tone below the standard pitch."
+  },
+  {
+    "claim": "Northgate Salvage has recovered 71 sunken anchors from the Ghren Strait.",
+    "ev_support": "Northgate Salvage has recovered 71 sunken anchors from the Ghren Strait this season.",
+    "ev_silent": "The Almsbury greenhouse maintains a steady 24 degrees through the cold months."
+  },
+  {
+    "claim": "The Wrenfield Press publishes the quarterly Tideline Almanac.",
+    "ev_support": "The Wrenfield Press publishes the quarterly Tideline Almanac under a single editor.",
+    "ev_silent": "Surveyor Bram Holloway measured the Kestrel dune at 47 meters of drifting sand."
+  },
+  {
+    "claim": "The mining outpost Doldren Hollow employs 488 contracted laborers.",
+    "ev_support": "The mining outpost Doldren Hollow employs 488 contracted laborers across three faces.",
+    "ev_silent": "The Pennick ferry crosses the Auldwater channel sixteen times each day."
+  },
+  {
+    "claim": "Dr. Selka Marrowby was appointed director of the Vennholt clinic.",
+    "ev_support": "Dr. Selka Marrowby was appointed director of the Vennholt clinic after the spring review.",
+    "ev_silent": "The Caldermere vineyard pressed 12,000 liters of amber wine last autumn."
+  },
+  {
+    "claim": "The airship Stratus Caravelle is anchored at the Drenby mooring tower.",
+    "ev_support": "The airship Stratus Caravelle is anchored at the Drenby mooring tower for its annual inspection.",
+    "ev_silent": "Cobbler Tam Wrenley stitches 18 pairs of riding boots in a full week."
+  },
+  {
+    "claim": "The Halloway Foundry has cast 2,140 bronze bells since its furnace relit.",
+    "ev_support": "The Halloway Foundry has cast 2,140 bronze bells since its furnace relit two years ago.",
+    "ev_silent": "The Quentin marsh shelters a colony of 90 nesting silver herons."
+  },
+  {
+    "claim": "Provost Eldas Crannock runs the Thornbury academy of cartography.",
+    "ev_support": "Provost Eldas Crannock runs the Thornbury academy of cartography with a faculty of nine.",
+    "ev_silent": "The Sallow brook mill grinds 700 sacks of barley flour each market day."
+  },
+  {
+    "claim": "The trade cog Brindle Marrow departed Calwick Quay before dawn.",
+    "ev_support": "The trade cog Brindle Marrow departed Calwick Quay before dawn under a north wind.",
+    "ev_silent": "Astronomer Vera Lindqual charted a slow comet crossing the Hessen meridian."
+  },
+  {
+    "claim": "The Pellbright Reservoir holds 6.2 billion liters at full pool.",
+    "ev_support": "The Pellbright Reservoir holds 6.2 billion liters at full pool behind its earthen dam.",
+    "ev_silent": "The Marwick tannery cures 230 hides in its riverside drying sheds."
+  },
+  {
+    "claim": "Inspector Halden Roe is assigned to the Cresswick customs office.",
+    "ev_support": "Inspector Halden Roe is assigned to the Cresswick customs office on the harbor front.",
+    "ev_silent": "The Olenby choir rehearses 14 motets for the midwinter festival."
+  },
+  {
+    "claim": "The Veshorn Greenway spans 88 kilometers of restored parkland.",
+    "ev_support": "The Veshorn Greenway spans 88 kilometers of restored parkland along the old canal bed.",
+    "ev_silent": "Watchmaker Soren Plett assembles 9 brass chronometers each lunar cycle."
+  },
+  {
+    "claim": "Brackmoor Optics has shipped 15,600 ground lenses to the Talvenport guild.",
+    "ev_support": "Brackmoor Optics has shipped 15,600 ground lenses to the Talvenport guild this year.",
+    "ev_silent": "The Dunmere apiary harvested 410 jars of dark heather honey."
+  },
+  {
+    "claim": "The frigate Velrune Sentinel is stationed at the Harrowmouth naval yard.",
+    "ev_support": "The frigate Velrune Sentinel is stationed at the Harrowmouth naval yard for repairs.",
+    "ev_silent": "Gardener Pell Adwick pruned 62 espaliered pear trees along the Lome wall."
+  },
+  {
+    "claim": "The Quellveld Botanic Reserve protects 1,290 hectares of upland fen.",
+    "ev_support": "The Quellveld Botanic Reserve protects 1,290 hectares of upland fen under royal charter.",
+    "ev_silent": "The Stennick brewery casks 18 barrels of spiced porter every fortnight."
+  },
+  {
+    "claim": "Foreman Dace Hollingbroke oversees the Marlent quarry night crew.",
+    "ev_support": "Foreman Dace Hollingbroke oversees the Marlent quarry night crew of thirty men.",
+    "ev_silent": "The Velby observatory clock loses two seconds across a full season."
+  },
+  {
+    "claim": "The riverboat Cindra Wend departed Lowmere Landing at high water.",
+    "ev_support": "The riverboat Cindra Wend departed Lowmere Landing at high water bound downstream.",
+    "ev_silent": "The Othwick forge tempers 44 plow blades in a single firing run."
+  },
+  {
+    "claim": "Granvale Textiles operates 9 dye houses along the Threll riverbank.",
+    "ev_support": "Granvale Textiles operates 9 dye houses along the Threll riverbank under one license.",
+    "ev_silent": "The Vennor abbey library holds 2,700 illuminated psalters in its east wing."
+  },
+  {
+    "claim": "The Harnby Telescope has logged 612 nights of clear observation.",
+    "ev_support": "The Harnby Telescope has logged 612 nights of clear observation since its mirror was recoated.",
+    "ev_silent": "Smith Oran Velby cast 130 iron hinges for the Drennock gatehouse."
+  },
+  {
+    "claim": "Councilor Maeve Drennish chairs the Saltworth harbor commission.",
+    "ev_support": "Councilor Maeve Drennish chairs the Saltworth harbor commission for the coming year.",
+    "ev_silent": "The Pellow orchard grafted 88 new apple stocks onto wild rootlings."
+  },
+  {
+    "claim": "The freight hauler Onyx Marrowgate departed the Brevn depot fully loaded.",
+    "ev_support": "The freight hauler Onyx Marrowgate departed the Brevn depot fully loaded at first light.",
+    "ev_silent": "Weaver Liss Tarrow finished 26 woolen blankets for the Holm market."
+  },
+  {
+    "claim": "The Vorlund Glassworks has produced 4,300 stained panes for the new hall.",
+    "ev_support": "The Vorlund Glassworks has produced 4,300 stained panes for the new hall on schedule.",
+    "ev_silent": "The Crannish ferry pilot guided 19 barges through the Sable narrows."
+  },
+  {
+    "claim": "Curator Hollis Vandermere runs the Ashbury maritime museum.",
+    "ev_support": "Curator Hollis Vandermere runs the Ashbury maritime museum with two assistants.",
+    "ev_silent": "The Drovewell mill pond freezes solid for 40 days in the deep cold."
+  },
+  {
+    "claim": "The Pellucid Spire rises 214 meters above the Calden plaza.",
+    "ev_support": "The Pellucid Spire rises 214 meters above the Calden plaza on its granite base.",
+    "ev_silent": "Beekeeper Nessa Trill tends 33 hives along the Worrow hedgerow."
+  },
+  {
+    "claim": "The survey schooner Wraithmoor Lark is berthed at the Tindle wharf.",
+    "ev_support": "The survey schooner Wraithmoor Lark is berthed at the Tindle wharf awaiting fair weather.",
+    "ev_silent": "The Hollenby printworks set 1,900 type blocks for the new chartbook."
+  },
+  {
+    "claim": "The cargo vessel Marrowind departed Pellance Harbor on the third morning of the dry season.",
+    "ev_support": "According to the dockmaster's ledger, the cargo vessel Marrowind departed Pellance Harbor on the third morning of the dry season.",
+    "ev_silent": "The Velruth Conservatory awards its Brindle Prize for contrabass composition every alternate spring."
+  },
+  {
+    "claim": "The Quillhaven Observatory operates a forty-meter mirror array on the Sennick Plateau.",
+    "ev_support": "The Quillhaven Observatory operates a forty-meter mirror array on the Sennick Plateau, completed after eleven years of construction.",
+    "ev_silent": "Saltmarsh fennel grows densely along the eastern banks of the Dorrow estuary."
+  },
+  {
+    "claim": "The accountant Hesper Mallowby was appointed treasurer of the Tindale Weavers' Guild in the autumn quarter.",
+    "ev_support": "Records confirm that Hesper Mallowby was appointed treasurer of the Tindale Weavers' Guild in the autumn quarter.",
+    "ev_silent": "The Korvane Funicular climbs nine hundred meters from the valley floor to the upper terraces."
+  },
+  {
+    "claim": "The Brennick reactor at Dunmore Flats runs on a thorium blend refined at the Caldweather plant.",
+    "ev_support": "The Brennick reactor at Dunmore Flats runs on a thorium blend refined at the Caldweather plant some sixty kilometers north.",
+    "ev_silent": "A pod of grey-finned merlows was sighted near the Astrel Shoals last winter."
+  },
+  {
+    "claim": "The novelist Oren Faycroft has published seventeen volumes in the Hollow Lantern sequence.",
+    "ev_support": "The novelist Oren Faycroft has published seventeen volumes in the Hollow Lantern sequence over four decades.",
+    "ev_silent": "The Pemberton Locks regulate water levels across three connected reservoirs in the Quail Basin."
+  },
+  {
+    "claim": "The Stannard Bridge spans the Verrow Gorge at a height of two hundred and forty meters.",
+    "ev_support": "Engineers note that the Stannard Bridge spans the Verrow Gorge at a height of two hundred and forty meters.",
+    "ev_silent": "The chef Lindara Vosk earned three rosettes for her tasting menu at the Almond Court."
+  },
+  {
+    "claim": "The mining concern Drelmont Holdings operates four open pits in the Sable Range.",
+    "ev_support": "The mining concern Drelmont Holdings operates four open pits in the Sable Range under a renewable charter.",
+    "ev_silent": "The annual Wexford Kite Trials draw competitors from the coastal townships each midsummer."
+  },
+  {
+    "claim": "The frigate TCS Halloway is stationed at the Mirent Naval Yard for refit.",
+    "ev_support": "Fleet bulletins indicate the frigate TCS Halloway is stationed at the Mirent Naval Yard for refit through the next cycle.",
+    "ev_silent": "The botanist Pell Garrow catalogued nine new orchid varieties in the Tamsin Highlands."
+  },
+  {
+    "claim": "The composer Wynne Tarrigan was commissioned to score the Ostley Pageant in its centennial year.",
+    "ev_support": "It is recorded that Wynne Tarrigan was commissioned to score the Ostley Pageant in its centennial year.",
+    "ev_silent": "The Halberd Tramway carries ore from the Cresswick Quarry to the smelting docks."
+  },
+  {
+    "claim": "The biotech firm Lensmere Labs has patented a frost-resistant strain of barleywort.",
+    "ev_support": "The biotech firm Lensmere Labs has patented a frost-resistant strain of barleywort developed at its Caddenbrook facility.",
+    "ev_silent": "The cartographer Idris Polvey rendered the first contour map of the Sunder Reefs."
+  },
+  {
+    "claim": "The express train Cindermark runs between Halverston and the Pell Junction twice daily.",
+    "ev_support": "The express train Cindermark runs between Halverston and the Pell Junction twice daily on the trunk line.",
+    "ev_silent": "The vintner Cassia Drewhill bottles a smoked plum brandy aged in larchwood casks."
+  },
+  {
+    "claim": "The architect Soren Maddick designed the spiral atrium of the Velthorne Library.",
+    "ev_support": "The architect Soren Maddick designed the spiral atrium of the Velthorne Library, his final major project.",
+    "ev_silent": "A rare blue-shell tortoise was bred successfully at the Marrow Glen sanctuary."
+  },
+  {
+    "claim": "The brewery Tannock & Pell ships its oat stout to twelve provincial markets.",
+    "ev_support": "The brewery Tannock & Pell ships its oat stout to twelve provincial markets each season.",
+    "ev_silent": "The mathematician Lurel Vance proved the convergence of the Drennan series in her dissertation."
+  },
+  {
+    "claim": "The research station Halewick is buried beneath forty meters of ice on the Corran Shelf.",
+    "ev_support": "The research station Halewick is buried beneath forty meters of ice on the Corran Shelf and accessed by a heated shaft.",
+    "ev_silent": "The puppeteer Mabel Quist toured the river towns with her shadow-play of the Glass Heron."
+  },
+  {
+    "claim": "The airship Verlanne is moored at the Crestwell Aerodrome awaiting inspection.",
+    "ev_support": "The airship Verlanne is moored at the Crestwell Aerodrome awaiting inspection by the harbor authority.",
+    "ev_silent": "The Hollick Falls drop in three tiers down the western face of Mount Sedwyn."
+  },
+  {
+    "claim": "The surgeon Adelle Brockmoor pioneered the Tarrant suture technique at the Welby Infirmary.",
+    "ev_support": "The surgeon Adelle Brockmoor pioneered the Tarrant suture technique at the Welby Infirmary over a decade of practice.",
+    "ev_silent": "The Penmarrow Dam holds back a reservoir feeding the entire Lessit valley."
+  },
+  {
+    "claim": "The publishing house Garnet & Sloe was founded in the river district of Calbridge.",
+    "ev_support": "The publishing house Garnet & Sloe was founded in the river district of Calbridge by two former typesetters.",
+    "ev_silent": "The astronomer Telford Wynne mapped the dust lanes of the Orrin Nebula from the Sennett array."
+  },
+  {
+    "claim": "The cooperative Marrowdale Farms supplies winter root crops to the Thessom markets.",
+    "ev_support": "The cooperative Marrowdale Farms supplies winter root crops to the Thessom markets under a standing contract.",
+    "ev_silent": "The clockmaker Felix Ondry built the chiming carillon in the Brae Cathedral tower."
+  },
+  {
+    "claim": "The submarine Latchkey was launched from the Verren Drydock in the spring trials.",
+    "ev_support": "The submarine Latchkey was launched from the Verren Drydock during the spring trials without incident.",
+    "ev_silent": "The poet Wrenna Castel composed her elegy cycle while wintering at the Aldmoor lodge."
+  },
+  {
+    "claim": "The engineer Cobb Trennick holds the patent for the Helverson valve assembly.",
+    "ev_support": "The engineer Cobb Trennick holds the patent for the Helverson valve assembly used across the district pumps.",
+    "ev_silent": "The Drisby Carnival closes each year with a procession of lantern-bearing barges."
+  },
+  {
+    "claim": "The mountain refuge Greywither sits at the head of the Tannock Pass.",
+    "ev_support": "The mountain refuge Greywither sits at the head of the Tannock Pass, accessible only in the warm months.",
+    "ev_silent": "The jeweler Esme Vandry set the famed Corrigan opal into a ceremonial collar."
+  },
+  {
+    "claim": "The distillery Hollow Reed ages its rye spirit in the cellars beneath Drennick Manor.",
+    "ev_support": "The distillery Hollow Reed ages its rye spirit in the cellars beneath Drennick Manor for a minimum of nine years.",
+    "ev_silent": "The glassblower Tarn Veskit perfected an iridescent enamel at his Mossgate workshop."
+  },
+  {
+    "claim": "The satellite Brindlecorr was placed in a polar orbit by the Velsom launch consortium.",
+    "ev_support": "The satellite Brindlecorr was placed in a polar orbit by the Velsom launch consortium last quarter.",
+    "ev_silent": "The herbalist Ona Mallet grows medicinal sage on the terraced slopes of Quillet Hill."
+  },
+  {
+    "claim": "The textile mill Carrowfield employs over six hundred workers in the Lessom valley.",
+    "ev_support": "The textile mill Carrowfield employs over six hundred workers in the Lessom valley across two shifts.",
+    "ev_silent": "The ferry Wandermere crosses the Brae Channel four times between dawn and dusk."
+  },
+  {
+    "claim": "The cartwright Joss Pendry built the racing sulkies for the Harrowby Circuit.",
+    "ev_support": "The cartwright Joss Pendry built the racing sulkies for the Harrowby Circuit over the past two seasons.",
+    "ev_silent": "The Sennett Aqueduct carries spring water nineteen kilometers to the city cisterns."
+  },
+  {
+    "claim": "The greenhouse complex at Vellbrook grows tropical citrus through the cold months.",
+    "ev_support": "The greenhouse complex at Vellbrook grows tropical citrus through the cold months under sodium lamps.",
+    "ev_silent": "The fencer Marius Holt won the Drennan saber title in three consecutive tournaments."
+  },
+  {
+    "claim": "The lighthouse at Carrick Point was automated after the last keeper retired.",
+    "ev_support": "The lighthouse at Carrick Point was automated after the last keeper retired from his forty-year post.",
+    "ev_silent": "The luthier Pell Garrick crafts cedar-topped mandolins in the Wexley artisan quarter."
+  },
+  {
+    "claim": "The mineralogist Tamsin Holloway discovered the Vesper deposit in the Drumlin foothills.",
+    "ev_support": "The mineralogist Tamsin Holloway discovered the Vesper deposit in the Drumlin foothills during a survey expedition.",
+    "ev_silent": "The bakery Crumb & Thistle sells a honeyed barley loaf only on market mornings."
+  },
+  {
+    "claim": "The opera house Lindenvault seats nineteen hundred patrons across three balconies.",
+    "ev_support": "The opera house Lindenvault seats nineteen hundred patrons across three balconies and a parterre.",
+    "ev_silent": "The trawler Mistral Run hauls cold-water flounder from the Drennick Banks each autumn."
+  },
+  {
+    "claim": "The cargo airline Falport Freight operates a hub at the Westmoor depot.",
+    "ev_support": "The cargo airline Falport Freight operates a hub at the Westmoor depot serving the inland provinces.",
+    "ev_silent": "The sculptor Vell Tarrant carved the granite herons that flank the Ossery Gate."
+  },
+  {
+    "claim": "The vineyard Sablecourt was replanted with hardy frost grapes after the cold spell.",
+    "ev_support": "The vineyard Sablecourt was replanted with hardy frost grapes after the cold spell ruined the old vines.",
+    "ev_silent": "The watchmaker Idony Pell repairs marine chronometers at her Harborgate bench."
+  },
+  {
+    "claim": "The exploration vessel Drennoch is charting the trench off the Wendel Coast.",
+    "ev_support": "The exploration vessel Drennoch is charting the trench off the Wendel Coast with a deep-tow sonar array.",
+    "ev_silent": "The choreographer Senna Voll staged a winter ballet at the Tarrowmoor theater."
+  },
+  {
+    "claim": "The printmaker Lucan Brae issued a limited run of etchings of the Sennick coastline.",
+    "ev_support": "The printmaker Lucan Brae issued a limited run of etchings of the Sennick coastline for the harvest exhibition.",
+    "ev_silent": "The tunnel beneath Mount Velwick connects the two halves of the Drennan rail network."
+  },
+  {
+    "claim": "The dairy collective Hollowmere produces aged sheep cheese in the Wessit highlands.",
+    "ev_support": "The dairy collective Hollowmere produces aged sheep cheese in the Wessit highlands using cave-curing methods.",
+    "ev_silent": "The cosmonaut Petra Sallow logged three hundred days aboard the Verren orbital platform."
+  },
+  {
+    "claim": "The freighter Meridian Harlow departed Castle Branwick at dawn on the third tide.",
+    "ev_support": "The freighter Meridian Harlow departed Castle Branwick at dawn on the third tide.",
+    "ev_silent": "The Velluthi orchards yield a pale amber resin used to sweeten ceremonial bread."
+  },
+  {
+    "claim": "The Tovren Archives are housed inside the old Pellgrove signal tower.",
+    "ev_support": "Records confirm that the Tovren Archives are housed inside the old Pellgrove signal tower.",
+    "ev_silent": "A clutch of sandfin lizards nests beneath the cracked tiles of the Aurum bathhouse."
+  },
+  {
+    "claim": "The Drellan Foundry ships its brass fittings in crates of exactly forty-eight.",
+    "ev_support": "The Drellan Foundry ships its brass fittings in crates of exactly forty-eight.",
+    "ev_silent": "Snowmelt from the Karth Plateau feeds the slow green current of the Iss?ng River."
+  },
+  {
+    "claim": "Governor Ysolde Marrick was sworn in at the Halberd Court last winter.",
+    "ev_support": "Governor Ysolde Marrick was sworn in at the Halberd Court last winter.",
+    "ev_silent": "The reed flutes of Comb Hollow are tuned to a scale of nine descending notes."
+  },
+  {
+    "claim": "The research vessel Cobalt Wren has logged six hundred days at the Thessaly Shelf.",
+    "ev_support": "The research vessel Cobalt Wren has logged six hundred days at the Thessaly Shelf.",
+    "ev_silent": "Lacquered Borenne tea boxes are stamped with a coiled fern on the inner lid."
+  },
+  {
+    "claim": "The Halloway Spire is painted a deep ochre to match the surrounding cliffs.",
+    "ev_support": "The Halloway Spire is painted a deep ochre to match the surrounding cliffs.",
+    "ev_silent": "Migrating glass moths cross the Sundermere basin every fourth autumn."
+  },
+  {
+    "claim": "The Pinwheel Collective operates a tram line between Coldridge and Marn Junction.",
+    "ev_support": "The Pinwheel Collective operates a tram line between Coldridge and Marn Junction.",
+    "ev_silent": "A single barrel of Othmark cider ferments for two hundred and ten days underground."
+  },
+  {
+    "claim": "Captain Idris Velo runs the night patrol along the Saltgate seawall.",
+    "ev_support": "Captain Idris Velo runs the night patrol along the Saltgate seawall.",
+    "ev_silent": "The Quillern dye-makers grind crushed beetle shells into a violet powder."
+  },
+  {
+    "claim": "The Marlowe Observatory is perched on the western ridge of Mount Tendrel.",
+    "ev_support": "The Marlowe Observatory is perched on the western ridge of Mount Tendrel.",
+    "ev_silent": "Each Brennick loom produces a bolt of striped wool in under three days."
+  },
+  {
+    "claim": "The trading house Orsk & Pell was founded by two retired cartographers.",
+    "ev_support": "The trading house Orsk & Pell was founded by two retired cartographers.",
+    "ev_silent": "The hot springs at Veldenwood stay warm even through the deepest frost."
+  },
+  {
+    "claim": "The dirigible Saffron Lark departed Greythorn Field with twelve passengers aboard.",
+    "ev_support": "The dirigible Saffron Lark departed Greythorn Field with twelve passengers aboard.",
+    "ev_silent": "Polished Nareth river stones are sorted by weight into seven grading bins."
+  },
+  {
+    "claim": "The Cinderfell Mill grinds barley for the entire Westmarch valley.",
+    "ev_support": "The Cinderfell Mill grinds barley for the entire Westmarch valley.",
+    "ev_silent": "A flock of crested terns roosts on the lantern buoys of Pellican Bay."
+  },
+  {
+    "claim": "Archivist Toman Quail has cataloged over nine thousand pressed leaves.",
+    "ev_support": "Archivist Toman Quail has cataloged over nine thousand pressed leaves.",
+    "ev_silent": "The brass clocks of Hennard chime a half-tone flat in damp weather."
+  },
+  {
+    "claim": "The Vellmoor Lighthouse runs on a clockwork lamp wound twice each night.",
+    "ev_support": "The Vellmoor Lighthouse runs on a clockwork lamp wound twice each night.",
+    "ev_silent": "Wild thistle honey from the Corran fens carries a faint smoky aftertaste."
+  },
+  {
+    "claim": "The mining town of Brackwater was abandoned after the eastern shaft flooded.",
+    "ev_support": "The mining town of Brackwater was abandoned after the eastern shaft flooded.",
+    "ev_silent": "The Selwick puppet theater performs only during the long market fairs."
+  },
+  {
+    "claim": "The schooner Ashen Petrel is moored at the third pier of Dunhaven Harbor.",
+    "ev_support": "The schooner Ashen Petrel is moored at the third pier of Dunhaven Harbor.",
+    "ev_silent": "Each Throndle beehive is wrapped in oiled cloth before the first snow."
+  },
+  {
+    "claim": "The Lanthe Conservatory has trained seventy bellringers since its founding.",
+    "ev_support": "The Lanthe Conservatory has trained seventy bellringers since its founding.",
+    "ev_silent": "The salt pans of Merrow Flat dry into pale crusts by midsummer."
+  },
+  {
+    "claim": "The cartwright Bren Oskill ships his wheels stacked five to a pallet.",
+    "ev_support": "The cartwright Bren Oskill ships his wheels stacked five to a pallet.",
+    "ev_silent": "A pair of slate herons nests atop the broken aqueduct near Faldwick."
+  },
+  {
+    "claim": "The garrison at Thornkeep was relieved by the second autumn column.",
+    "ev_support": "The garrison at Thornkeep was relieved by the second autumn column.",
+    "ev_silent": "The Pemberose vineyards trellis their vines along south-facing terraces."
+  },
+  {
+    "claim": "The ferry Wrenmark Tide runs four crossings daily over the Saldren Strait.",
+    "ev_support": "The ferry Wrenmark Tide runs four crossings daily over the Saldren Strait.",
+    "ev_silent": "The copper kettles of Hadwell are hammered from a single sheet."
+  },
+  {
+    "claim": "The botanist Marisel Donne has grafted three rare pear varieties at Lowmere.",
+    "ev_support": "The botanist Marisel Donne has grafted three rare pear varieties at Lowmere.",
+    "ev_silent": "The night markets of Calbridge are lit by floating paper lanterns."
+  },
+  {
+    "claim": "The clipper Indigo Marlowe was launched from the Kettleford slipway in spring.",
+    "ev_support": "The clipper Indigo Marlowe was launched from the Kettleford slipway in spring.",
+    "ev_silent": "The bell foundry at Oxmere casts only during the cold months."
+  },
+  {
+    "claim": "The Hollowbrook Press prints its almanac in runs of two thousand copies.",
+    "ev_support": "The Hollowbrook Press prints its almanac in runs of two thousand copies.",
+    "ev_silent": "Wild boar trails crisscross the beech forest above Tannery Gulch."
+  },
+  {
+    "claim": "Steward Calla Renwick operates the granary scales at Pell Market.",
+    "ev_support": "Steward Calla Renwick operates the granary scales at Pell Market.",
+    "ev_silent": "The glassblowers of Ardenmere favor a faint blue tint in their bottles."
+  },
+  {
+    "claim": "The barge Quiet Sennet hauls limestone down the Vorrel Canal each week.",
+    "ev_support": "The barge Quiet Sennet hauls limestone down the Vorrel Canal each week.",
+    "ev_silent": "A single Mossgate orchard holds eleven varieties of cooking apple."
+  },
+  {
+    "claim": "The watchtower of Greymantle was rebuilt after the cliff slide of two seasons past.",
+    "ev_support": "The watchtower of Greymantle was rebuilt after the cliff slide of two seasons past.",
+    "ev_silent": "The weavers of Sundholt knot their rugs in patterns of interlocking diamonds."
+  },
+  {
+    "claim": "The apothecary Edrin Voss has stocked forty-two tinctures behind the Larkspur counter.",
+    "ev_support": "The apothecary Edrin Voss has stocked forty-two tinctures behind the Larkspur counter.",
+    "ev_silent": "The tide pools at Crannock Point glow faintly on warm, still nights."
+  },
+  {
+    "claim": "The Wending Rail operates a single locomotive across the Drust moors.",
+    "ev_support": "The Wending Rail operates a single locomotive across the Drust moors.",
+    "ev_silent": "Each Halloran cheese wheel is aged in a cellar lined with pale chalk."
+  },
+  {
+    "claim": "The cooperage of Talven & Roe ships its casks bound in iron hoops.",
+    "ev_support": "The cooperage of Talven & Roe ships its casks bound in iron hoops.",
+    "ev_silent": "The kite-makers of Bryn Hollow stretch their silk over split bamboo frames."
+  },
+  {
+    "claim": "The harbor master Olen Skarne was appointed to oversee the Coldwater docks.",
+    "ev_support": "The harbor master Olen Skarne was appointed to oversee the Coldwater docks.",
+    "ev_silent": "A grove of silver birches shelters the spring well at Marrowdale."
+  },
+  {
+    "claim": "The Greenfen Sanctuary has sheltered nesting cranes for thirty consecutive years.",
+    "ev_support": "The Greenfen Sanctuary has sheltered nesting cranes for thirty consecutive years.",
+    "ev_silent": "The candlemakers of Threll scent their tapers with crushed pine needles."
+  },
+  {
+    "claim": "The packet ship Lorrel Dawn departed Quenby Roads under a heavy fog.",
+    "ev_support": "The packet ship Lorrel Dawn departed Quenby Roads under a heavy fog.",
+    "ev_silent": "The stonemasons of Cairnwick quarry a speckled grey granite from the south face."
+  },
+  {
+    "claim": "The clockmaker Sefton Murr has built the great tower clock of Eddingsford.",
+    "ev_support": "The clockmaker Sefton Murr has built the great tower clock of Eddingsford.",
+    "ev_silent": "Sweetgrass baskets from the Linnet marsh are woven tightest at the rim."
+  },
+  {
+    "claim": "The salvage crew of the Dunmara is licensed to work the Brackish Shoals.",
+    "ev_support": "The salvage crew of the Dunmara is licensed to work the Brackish Shoals.",
+    "ev_silent": "The ink-makers of Pellow boil oak galls into a deep blue-black dye."
+  }
+]
