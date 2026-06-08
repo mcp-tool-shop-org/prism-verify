@@ -48,6 +48,7 @@ from prism.lenses.sycophancy import SycophancyLens
 from prism.providers.base import CompletionRequest, ModelProvider, ProviderError
 from prism.receipts.store import ReceiptStore
 from prism.retrieval.oracle import CitationOracle, ExistenceResult
+from prism.security import CERTIFIED_FROZEN_FAMILIES
 
 # Minimum lenses required (Lock 3)
 MIN_LENSES = 3
@@ -687,8 +688,14 @@ class VerificationEngine:
                 None,
             )
 
+        # Harden the groundedness prompt (de-smuggle + content-derived unforgeable markers) ONLY for
+        # a non-certified general-model verifier; a frozen specialist's input is never transformed,
+        # so its OOD certification holds (design/specialist-injection-hardening-dispatch.md).
         system, user = build_citation_groundedness_prompts(
-            citation.claim, existence.source_title or "", existence.source_abstract
+            citation.claim,
+            existence.source_title or "",
+            existence.source_abstract,
+            spotlight=route.family not in CERTIFIED_FROZEN_FAMILIES,
         )
         prompt_hash = compute_prompt_hash(system, user)
         lens_name = f"citation_groundedness:{index}:{cid or ident or '?'}"
