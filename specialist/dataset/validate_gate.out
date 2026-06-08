@@ -1,0 +1,59 @@
+[gen] generating with qwen3.6:latest over 24 evidence ...
+  [gen] 1/24  (28s)
+  [gen] 2/24  (45s)
+  [gen] 3/24  (62s)
+  [gen] 4/24  (78s)
+  [gen] 5/24  (95s)
+  [gen] 6/24  (111s)
+  [gen] 7/24  (128s)
+  [gen] 8/24  (144s)
+  [gen] 9/24  (161s)
+  [gen] 10/24  (177s)
+  [gen] 11/24  (194s)
+  [gen] 12/24  (210s)
+  [gen] 13/24  (227s)
+  [gen] 14/24  (243s)
+  [gen] 15/24  (260s)
+  [gen] 16/24  (276s)
+  [gen] 17/24  (295s)
+  [gen] 18/24  (311s)
+  [gen] 19/24  (328s)
+  [gen] 20/24  (344s)
+  [gen] 21/24  (361s)
+  [gen] 22/24  (377s)
+  [gen] 23/24  (394s)
+  [gen] 24/24  (410s)
+[gate] judging 168 claims with mistral-small:24b ...
+  [gate] 25/168  (494s)
+  [gate] 50/168  (552s)
+  [gate] 75/168  (607s)
+  [gate] 100/168  (662s)
+  [gate] 125/168  (717s)
+  [gate] 150/168  (771s)
+
+========== CROSS-FAMILY GATE VALIDATION ==========
+generator = qwen3.6:latest
+gate      = mistral-small:24b
+evidence  = 24   total generated = 168   elapsed = 811s
+
+SUPPORTED-agreement (gate confirms faithful claim is 'supported'):
+  confirmed   24/24 = 1.00   <- yield of L1 sup records
+  over-strict 0/24 = 0.00   (gate called a faithful claim UNSUPPORTED -> discarded; high = bad gate)
+  abstain     0/24 = 0.00
+
+CORRUPTED per error-type (gate confirms 'unsupported' = kept; else discarded):
+  type                    confirm%  unsup  supported  abstain  (n)
+  entity                      0.46     11         10        3  (24)
+  quantifier                  0.46     11         12        1  (24)
+  relation-direction          0.54     13          9        2  (24)
+  temporal                    0.21      5         10        9  (24)
+  attribution                 0.50     12         12        0  (24)
+  scope                       0.21      5         17        2  (24)
+
+OVERALL corruption keep-rate: 57/144 = 0.40  (generation multiplier ~= 2.53x to hit a target count)
+gate-called-'supported' corruptions: 70/144 = 0.49  (weak/failed corruptions, safely discarded)
+
+VERDICT: usable if SUPPORTED-confirm is high (>~0.85), over-strict is low (<~0.15),
+and most error types keep at a workable rate (down-weight or swap-gate the weak ones).
+
+[persisted] gate_validation_records.json + gate_validation_report.txt

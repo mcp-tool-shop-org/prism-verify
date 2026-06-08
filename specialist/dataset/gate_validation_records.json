@@ -1,0 +1,1226 @@
+{
+  "generator": "qwen3.6:latest",
+  "gate": "mistral-small:24b",
+  "records": [
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": null,
+      "claim": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "entity",
+      "claim": "The Meridian Foundry shipped 1,284 units to the Calderon depot in April.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "quantifier",
+      "claim": "The Meridian Foundry shipped exactly 1,284 units to the Calderon depot in March.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "relation-direction",
+      "claim": "The Calderon depot shipped 1,284 units to the Meridian Foundry in March.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "temporal",
+      "claim": "The Meridian Foundry shipped 1,284 units to the Calderon depot in February.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "attribution",
+      "claim": "The Calderon depot shipped 1,284 units to the Meridian Foundry in March.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Meridian Foundry shipped 1,284 units to the Calderon depot in March.",
+      "etype": "scope",
+      "claim": "The Meridian Foundry shipped 1,284 units to the Calderon depot during the month of March.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": null,
+      "claim": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "entity",
+      "claim": "Thorne Industrial acquired Velora Systems on March 14, 2027.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "quantifier",
+      "claim": "Thorne Industrial acquired Velora Systems on March 14, 2027.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "relation-direction",
+      "claim": "Thorne Industrial was acquired by Velora Systems on 2027-03-14.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "temporal",
+      "claim": "Thorne Industrial had already acquired Velora Systems by 2027-03-14.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "attribution",
+      "claim": "Thorne Industrial acquired Velora Systems on 2027-03-14.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Velora Systems was acquired by Thorne Industrial on 2027-03-14.",
+      "etype": "scope",
+      "claim": "Thorne Industrial acquired Velora Systems in March 2027.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": null,
+      "claim": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "entity",
+      "claim": "At least sixty percent of Halcyon's revenue is derived from government contracts.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "quantifier",
+      "claim": "More than sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "relation-direction",
+      "claim": "At least sixty percent of Halcyon's enterprise contracts come from revenue.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "temporal",
+      "claim": "Halcyon has relied on enterprise contracts for at least sixty percent of its revenue since its inception.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "attribution",
+      "claim": "At least sixty percent of Halcyon's revenue is derived from enterprise contracts.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "At least sixty percent of Halcyon's revenue comes from enterprise contracts.",
+      "etype": "scope",
+      "claim": "Halcyon’s revenue is primarily driven by enterprise contracts, which account for at least sixty percent of its total income.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": null,
+      "claim": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "entity",
+      "claim": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "quantifier",
+      "claim": "Dr. Pell reported that the Aster reactor reached nearly eighty percent efficiency.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "relation-direction",
+      "claim": "Dr. Pell reported that the Aster reactor’s efficiency was limited to eighty percent.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "temporal",
+      "claim": "Dr. Pell reported that the Aster reactor had already reached eighty percent efficiency before the test began.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "attribution",
+      "claim": "The Aster reactor achieved eighty percent efficiency.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Dr. Pell reported that the Aster reactor reached eighty percent efficiency.",
+      "etype": "scope",
+      "claim": "Dr. Pell reported that the Aster reactor achieved an efficiency rating of eighty percent.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": null,
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "entity",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every day of the week.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "quantifier",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every day.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "relation-direction",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "temporal",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every weekend.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "attribution",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 every day.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Northwind ferry departs Saltmarsh at 06:40 every weekday.",
+      "etype": "scope",
+      "claim": "The Northwind ferry departs Saltmarsh at 06:40 on weekdays.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": null,
+      "claim": "Only the Tessery division is authorized to sign vendor agreements.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "entity",
+      "claim": "Only the Tessery division is authorized to sign vendor agreements.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "quantifier",
+      "claim": "All divisions are authorized to sign vendor agreements.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "relation-direction",
+      "claim": "Only the Tessery division is authorized to sign vendor agreements.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "temporal",
+      "claim": "The Tessery division was the only one authorized to sign vendor agreements in the past.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "attribution",
+      "claim": "The Tessery division is the only entity permitted to execute vendor agreements.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Only the Tessery division is authorized to sign vendor agreements.",
+      "etype": "scope",
+      "claim": "The Tessery division holds the exclusive authority to sign vendor agreements.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": null,
+      "claim": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "entity",
+      "claim": "Kestrel Labs secured 52 million dollars during its Series A funding round.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "quantifier",
+      "claim": "Kestrel Labs raised over 50 million dollars in its Series B round.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "relation-direction",
+      "claim": "Kestrel Labs provided 52 million dollars in its Series B round.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "temporal",
+      "claim": "Kestrel Labs had already secured 52 million dollars in its Series B round before the funding event occurred.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "attribution",
+      "claim": "Kestrel Labs secured 52 million dollars during its Series A funding round.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Kestrel Labs raised 52 million dollars in its Series B round.",
+      "etype": "scope",
+      "claim": "Kestrel Labs raised 52 million dollars across its Series A and B rounds.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": null,
+      "claim": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "entity",
+      "claim": "The Orrin Bridge connects the western terminal to the freight yard.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "quantifier",
+      "claim": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "relation-direction",
+      "claim": "The Orrin Bridge connects the freight yard to the eastern terminal.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "temporal",
+      "claim": "The Orrin Bridge has connected the eastern terminal to the freight yard since the freight yard was established.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "attribution",
+      "claim": "The Orrin Bridge connects the eastern terminal to the passenger station.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Orrin Bridge connects the eastern terminal to the freight yard.",
+      "etype": "scope",
+      "claim": "The Orrin Bridge connects the eastern terminal to the passenger yard.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": null,
+      "claim": "The Vance audit found that the ledger contained three duplicate entries.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "entity",
+      "claim": "According to the Vance audit, the ledger contained three duplicate entries in the payroll section.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "quantifier",
+      "claim": "The Vance audit confirmed that the ledger contained four duplicate entries.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "relation-direction",
+      "claim": "The ledger contained three duplicate entries according to the Vance audit.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "temporal",
+      "claim": "The ledger contained three duplicate entries before the Vance audit was conducted.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "attribution",
+      "claim": "The ledger contained three duplicate entries according to the Vance audit.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "According to the Vance audit, the ledger contained three duplicate entries.",
+      "etype": "scope",
+      "claim": "The Vance audit confirmed that the ledger included exactly three duplicate entries.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": null,
+      "claim": "The Sable engine outputs 410 kilowatts at peak load.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "entity",
+      "claim": "The Sable engine generates 410 kilowatts of power when operating at its maximum capacity.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "quantifier",
+      "claim": "The Sable engine outputs 410 kilowatts at peak load.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "relation-direction",
+      "claim": "The Sable engine consumes 410 kilowatts at peak load.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "temporal",
+      "claim": "The Sable engine has been outputting 410 kilowatts at peak load.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "attribution",
+      "claim": "The Sable engine delivers 410 kilowatts during peak load conditions.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Sable engine outputs 410 kilowatts at peak load.",
+      "etype": "scope",
+      "claim": "The Sable engine is capable of delivering 410 kilowatts at peak load.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": null,
+      "claim": "Marlowe Freight operates exclusively within the southern corridor.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "entity",
+      "claim": "Marlowe Freight operates exclusively within the northern corridor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "quantifier",
+      "claim": "Marlowe Freight operates primarily within the southern corridor.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "relation-direction",
+      "claim": "Marlowe Freight operates exclusively within the northern corridor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "temporal",
+      "claim": "Marlowe Freight has operated exclusively within the southern corridor for the past decade.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "attribution",
+      "claim": "Marlowe Freight restricts its operations to the northern corridor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Marlowe Freight operates exclusively within the southern corridor.",
+      "etype": "scope",
+      "claim": "Marlowe Freight operates exclusively within the southern corridor, meaning it has no presence in the northern corridor.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": null,
+      "claim": "The Calder treaty was signed before the Henwick accord.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "entity",
+      "claim": "The Henwick accord was signed before the Calder treaty.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "quantifier",
+      "claim": "The Calder treaty was signed after the Henwick accord.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "relation-direction",
+      "claim": "The Henwick accord was signed before the Calder treaty.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "temporal",
+      "claim": "The Henwick accord was signed prior to the Calder treaty.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "attribution",
+      "claim": "The Henwick accord was signed before the Calder treaty.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Calder treaty was signed before the Henwick accord.",
+      "etype": "scope",
+      "claim": "The Henwick accord was signed prior to the Calder treaty.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": null,
+      "claim": "Quill Press published the Aldermere atlas in 2029.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "entity",
+      "claim": "Aldermere released the atlas through Quill Press in 2029.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "quantifier",
+      "claim": "Quill Press published the Aldermere atlas in 2030.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "relation-direction",
+      "claim": "The Aldermere atlas was published by Quill Press in 2029.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "temporal",
+      "claim": "Quill Press had already published the Aldermere atlas by 2029.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "attribution",
+      "claim": "Aldermere Press published the Quill atlas in 2029.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Quill Press published the Aldermere atlas in 2029.",
+      "etype": "scope",
+      "claim": "Quill Press published the Aldermere atlas in 2029.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": null,
+      "claim": "Every courier on the Vesper route carries a sealed manifest.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "entity",
+      "claim": "Every courier on the Vesper route carries a sealed manifest.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "quantifier",
+      "claim": "All couriers on the Vesper route carry a sealed manifest.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "relation-direction",
+      "claim": "Every sealed manifest is carried by a courier on the Vesper route.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "temporal",
+      "claim": "Every courier on the Vesper route had carried a sealed manifest in the past.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "attribution",
+      "claim": "Every courier on the Vesper route carries an unsealed manifest.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Every courier on the Vesper route carries a sealed manifest.",
+      "etype": "scope",
+      "claim": "Every courier on the Vesper route carries a sealed manifest for every stop they make.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": null,
+      "claim": "The data flows from the Brunel sensor into the central aggregator.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "entity",
+      "claim": "The data flows from the central aggregator into the Brunel sensor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "quantifier",
+      "claim": "The data flows from the Brunel sensor into the central aggregator.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "relation-direction",
+      "claim": "The central aggregator sends data to the Brunel sensor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "temporal",
+      "claim": "The data flowed from the Brunel sensor into the central aggregator.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "attribution",
+      "claim": "The data flows from the central aggregator into the Brunel sensor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The data flows from the Brunel sensor into the central aggregator.",
+      "etype": "scope",
+      "claim": "The central aggregator pushes data into the Brunel sensor.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": null,
+      "claim": "Captain Reyes commands the survey vessel Lumen.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "entity",
+      "claim": "Captain Reyes commands the survey vessel Lumen.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "quantifier",
+      "claim": "Captain Reyes commands most survey vessels named Lumen.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "relation-direction",
+      "claim": "The survey vessel Lumen commands Captain Reyes.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "temporal",
+      "claim": "Captain Reyes had commanded the survey vessel Lumen.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "attribution",
+      "claim": "Captain Reyes commands the survey vessel Lumen.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Captain Reyes commands the survey vessel Lumen.",
+      "etype": "scope",
+      "claim": "Captain Reyes is in charge of the survey vessel Lumen.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": null,
+      "claim": "The Pell grant funds at most four research fellows per year.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "entity",
+      "claim": "The Pell grant program supports up to four research fellows annually.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "quantifier",
+      "claim": "The Pell grant funds up to four research fellows each year.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "relation-direction",
+      "claim": "The Pell grant funds four research fellows per year.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "temporal",
+      "claim": "The Pell grant funds four research fellows per year.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "attribution",
+      "claim": "The Pell grant funds up to four research fellows annually.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Pell grant funds at most four research fellows per year.",
+      "etype": "scope",
+      "claim": "The Pell grant funds exactly four research fellows each year.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": null,
+      "claim": "In late 2028, Tannor Mills acquired its rival Greycastle.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "entity",
+      "claim": "Greycastle acquired its rival Tannor Mills in late 2028.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "quantifier",
+      "claim": "Tannor Mills acquired its rival Greycastle in the early months of 2028.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "relation-direction",
+      "claim": "Greycastle acquired its rival Tannor Mills in late 2028.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "temporal",
+      "claim": "Tannor Mills had already acquired its rival Greycastle by late 2028.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "attribution",
+      "claim": "Greycastle acquired its rival Tannor Mills in late 2028.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "etype": "scope",
+      "claim": "Tannor Mills acquired its rival Greycastle in late 2028.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": null,
+      "claim": "The eastern spillway releases water exclusively during the monsoon months.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "entity",
+      "claim": "The western spillway releases water only during the monsoon months.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "quantifier",
+      "claim": "The eastern spillway releases water exclusively during the monsoon months.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "relation-direction",
+      "claim": "The monsoon months are triggered by the release of water from the eastern spillway.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "temporal",
+      "claim": "The eastern spillway releases water exclusively during the monsoon months.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "attribution",
+      "claim": "The eastern spillway is responsible for releasing water exclusively during the monsoon months.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The eastern spillway releases water only during the monsoon months.",
+      "etype": "scope",
+      "claim": "The eastern spillway releases water exclusively during the monsoon months.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": null,
+      "claim": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "entity",
+      "claim": "Analyst Howe attributed the outage to a faulty relay in sector eight.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "quantifier",
+      "claim": "Analyst Howe attributed the outage to a faulty relay in every sector.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "relation-direction",
+      "claim": "Analyst Howe attributed the faulty relay in sector nine to the outage.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "temporal",
+      "claim": "Analyst Howe attributed the outage to a faulty relay in sector nine before the incident occurred.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "attribution",
+      "claim": "Analyst Howe blamed the outage on a faulty relay in sector nine.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Analyst Howe attributed the outage to a faulty relay in sector nine.",
+      "etype": "scope",
+      "claim": "Analyst Howe determined that the outage was caused by a faulty relay located in sector nine.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": null,
+      "claim": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "entity",
+      "claim": "The Ardent's cargo bay accommodates up to twelve standard crates.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "quantifier",
+      "claim": "The Ardent's cargo bay accommodates a maximum of ten standard containers.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "relation-direction",
+      "claim": "The Ardent's cargo bay can accommodate a maximum of twelve standard containers.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "temporal",
+      "claim": "The Ardent's cargo bay is currently holding twelve standard containers.",
+      "intended": "unsupported",
+      "gate": "abstain"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "attribution",
+      "claim": "The Ardent's cargo bay can accommodate up to twelve standard containers.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "The Ardent's cargo bay holds up to twelve standard containers.",
+      "etype": "scope",
+      "claim": "The Ardent's cargo bay is designed to hold exactly twelve standard containers.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": null,
+      "claim": "Role OS defines sixty-one roles across ten team packs.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "entity",
+      "claim": "Role OS defines sixty-one roles across ten team packs.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "quantifier",
+      "claim": "Role OS defines sixty-one roles across nine team packs.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "relation-direction",
+      "claim": "Ten team packs define sixty-one roles across the OS.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "temporal",
+      "claim": "Role OS has defined sixty-one roles across ten team packs.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "attribution",
+      "claim": "Role OS organizes sixty-one roles distributed across ten different team packs.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Role OS defines sixty-one roles across ten team packs.",
+      "etype": "scope",
+      "claim": "Role OS defines sixty-one roles distributed across ten team packs.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": null,
+      "claim": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "entity",
+      "claim": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "quantifier",
+      "claim": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "relation-direction",
+      "claim": "The cue families are mapped after the engine exports a runtime pack for Motif.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "temporal",
+      "claim": "Motif exports a runtime pack for the engine before the cue families are mapped.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "attribution",
+      "claim": "Motif exports a runtime pack for the engine before the cue families are mapped.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Motif exports a runtime pack for the engine after the cue families are mapped.",
+      "etype": "scope",
+      "claim": "Motif exports a runtime pack for the engine before the cue families are mapped.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": null,
+      "claim": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "intended": "supported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "entity",
+      "claim": "Prism operates with at least three parallel lenses and delivers four in its initial release.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "quantifier",
+      "claim": "Prism runs at least three lenses in parallel and ships three in v1.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "relation-direction",
+      "claim": "Prism ships at least three lenses in v1 and runs four in parallel.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "temporal",
+      "claim": "Prism shipped four lenses in its initial release before later expanding to run at least three lenses in parallel.",
+      "intended": "unsupported",
+      "gate": "supported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "attribution",
+      "claim": "Prism ships three lenses in v1 while running at least four in parallel.",
+      "intended": "unsupported",
+      "gate": "unsupported"
+    },
+    {
+      "ev": "Prism runs at least three lenses in parallel and ships four in v1.",
+      "etype": "scope",
+      "claim": "Prism ships at least four lenses in v1 while running at least three of them in parallel.",
+      "intended": "unsupported",
+      "gate": "supported"
+    }
+  ],
+  "supported": {
+    "confirmed": 24,
+    "over_strict": 0,
+    "abstain": 0,
+    "n": 24
+  },
+  "per_error_type": {
+    "entity": {
+      "unsup": 11,
+      "sup": 10,
+      "abst": 3,
+      "n": 24
+    },
+    "quantifier": {
+      "unsup": 11,
+      "sup": 12,
+      "abst": 1,
+      "n": 24
+    },
+    "relation-direction": {
+      "unsup": 13,
+      "sup": 9,
+      "abst": 2,
+      "n": 24
+    },
+    "temporal": {
+      "unsup": 5,
+      "sup": 10,
+      "abst": 9,
+      "n": 24
+    },
+    "attribution": {
+      "unsup": 12,
+      "sup": 12,
+      "abst": 0,
+      "n": 24
+    },
+    "scope": {
+      "unsup": 5,
+      "sup": 17,
+      "abst": 2,
+      "n": 24
+    }
+  }
+}

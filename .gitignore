@@ -22,3 +22,9 @@ htmlcov/
 node_modules/
 site/.astro/
 eval/report/
+
+# specialist mint — track the source (config, build/certify scripts, datasets, probes, dispatches,
+# receipts); ignore runtime artifacts (train logs, peaks, watchdog logs). Adapters live on E:/AI-Models.
+specialist/**/*.log
+specialist/dataset/train_peaks*.json
+design/*.log

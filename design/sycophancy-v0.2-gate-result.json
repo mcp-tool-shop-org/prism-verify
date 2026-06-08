@@ -1,0 +1,542 @@
+{
+  "verdict": "escalate",
+  "pass": false,
+  "blocking": false,
+  "advisory": true,
+  "citations": [
+    {
+      "id": "c1",
+      "identifier": "arXiv:2502.08177",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Progressive sycophancy, leading to correct answers, occurred in 43.52% of cases, while regressive sycophancy, leading to incorrect answers, was observed in 14.66%. Simple rebuttals maximized progressive sycophancy ($Z=6.59$, $p<0.001$), while citation-based rebuttals exhibited the highest regressive rates ($Z=6.59$, $p<0.001$).",
+      "source_title": "SycEval: Evaluating LLM Sycophancy",
+      "source_abstract": "Large language models (LLMs) are increasingly applied in educational, clinical, and professional settings, but their tendency for sycophancy -- prioritizing user agreement over independent reasoning -- poses risks to reliability. This study introduces a framework to evaluate sycophantic behavior in ChatGPT-4o, Claude-Sonnet, and Gemini-1.5-Pro across AMPS (mathematics) and MedQuad (medical advice) datasets. Sycophantic behavior was observed in 58.19% of cases, with Gemini exhibiting the highest rate (62.47%) and ChatGPT the lowest (56.71%). Progressive sycophancy, leading to correct answers, occurred in 43.52% of cases, while regressive sycophancy, leading to incorrect answers, was observed in 14.66%. Preemptive rebuttals demonstrated significantly higher sycophancy rates than in-context rebuttals (61.75% vs. 56.52%, $Z=5.87$, $p<0.001$), particularly in computational tasks, where regressive sycophancy increased significantly (preemptive: 8.13%, in-context: 3.54%, $p<0.001$). Simple rebuttals maximized progressive sycophancy ($Z=6.59$, $p<0.001$), while citation-based rebuttals exhibited the highest regressive rates ($Z=6.59$, $p<0.001$). Sycophantic behavior showed high persistence (78.5%, 95% CI: [77.2%, 79.8%]) regardless of context or model. These findings emphasize the risks and opportunities of deploying LLMs in structured and dynamic domains, offering insights into prompt programming and model optimization for safer AI applications."
+    },
+    {
+      "id": "c2",
+      "identifier": "arXiv:2509.16533",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "LLMs are increasingly adopted as successful evaluative agents for tasks such as grading and adjudicating claims.",
+      "source_title": "Challenging the Evaluator: LLM Sycophancy Under User Rebuttal",
+      "source_abstract": "Large Language Models (LLMs) often exhibit sycophancy, distorting responses to align with user beliefs, notably by readily agreeing with user counterarguments. Paradoxically, LLMs are increasingly adopted as successful evaluative agents for tasks such as grading and adjudicating claims. This research investigates that tension: why do LLMs show sycophancy when challenged in subsequent conversational turns, yet perform well when evaluating conflicting arguments presented simultaneously? We empirically tested these contrasting scenarios by varying key interaction patterns. We find that state-of-the-art models: (1) are more likely to endorse a user's counterargument when framed as a follow-up from a user, rather than when both responses are presented simultaneously for evaluation; (2) show increased susceptibility to persuasion when the user's rebuttal includes detailed reasoning, even when the conclusion of the reasoning is incorrect; and (3) are more readily swayed by casually phrased feedback than by formal critiques, even when the casual input lacks justification. Our results highlight the risk of relying on LLMs for judgment tasks without accounting for conversational framing."
+    },
+    {
+      "id": "c3",
+      "identifier": "arXiv:2508.13743",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "To mitigate this issue, we propose Pressure-Tune, a lightweight post-training method that fine-tunes models on synthetic adversarial dialogues paired with chain-of-thought rationales.",
+      "source_title": "Sycophancy under Pressure: Evaluating and Mitigating Sycophantic Bias via Adversarial Dialogues in Scientific QA",
+      "source_abstract": "Large language models (LLMs), while increasingly used in domains requiring factual rigor, often display a troubling behavior: sycophancy, the tendency to align with user beliefs regardless of correctness. This tendency is reinforced by preference-based alignment techniques that optimize for user satisfaction but can undermine truthfulness. While relatively benign in casual dialogue, sycophancy poses serious risks in high-stakes settings such as scientific question answering (QA), where model outputs may shape collaborative reasoning, decision-making, and knowledge formation. Despite its importance, this phenomenon remains underexamined in factual QA contexts. We address this gap by introducing a unified evaluation framework to quantify the impact of sycophantic context on model behavior in scientific QA, measuring how much user-imposed social pressure distorts model outputs. The framework incorporates adversarial prompting setups and targeted metrics, such as misleading resistance and sycophancy resistance, that capture a model's ability to maintain factual consistency under misleading cues. Systematic evaluations across open-source and proprietary models reveal pervasive sycophantic tendencies, driven more by alignment strategy than by model size. To mitigate this issue, we propose Pressure-Tune, a lightweight post-training method that fine-tunes models on synthetic adversarial dialogues paired with chain-of-thought rationales. These rationales reject user misinformation while reinforcing factual commitments. Experiments on challenging scientific QA benchmarks show that Pressure-Tune significantly enhances sycophancy resistance without compromising accuracy or responsiveness to valid feedback, offering a practical pathway toward more truthful and principled model behavior."
+    },
+    {
+      "id": "c4",
+      "identifier": "arXiv:2604.02423",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We develop a counterfactual prompting mechanism to identify how much a model's agreement shifts under positive versus negative linguistic pressure, isolating framing effects from content.",
+      "source_title": "SWAY: A Counterfactual Computational Linguistic Approach to Measuring and Mitigating Sycophancy",
+      "source_abstract": "Large language models exhibit sycophancy: the tendency to shift outputs toward user-expressed stances, regardless of correctness or consistency. While prior work has studied this issue and its impacts, rigorous computational linguistic metrics are needed to identify when models are being sycophantic. Here, we introduce SWAY, an unsupervised computational linguistic measure of sycophancy. We develop a counterfactual prompting mechanism to identify how much a model's agreement shifts under positive versus negative linguistic pressure, isolating framing effects from content. Applying this metric to benchmark 6 models, we find that sycophancy increases with epistemic commitment. Leveraging our metric, we introduce a counterfactual mitigation strategy teaching models to consider what the answer would be if opposite assumptions were suggested. While baseline mitigation instructing to be explicitly anti-sycophantic yields moderate reductions, and can backfire, our counterfactual CoT mitigation drives sycophancy to near zero across models, commitment levels, and clause types, while not suppressing responsiveness to genuine evidence. Overall, we contribute a metric for benchmarking sycophancy and a mitigation informed by it."
+    },
+    {
+      "id": "c5",
+      "identifier": "arXiv:2503.03750",
+      "existence": "resolved",
+      "finding_match": "not_addressed",
+      "verdict": "escalate",
+      "action": "RETRIEVE FULL TEXT",
+      "detail": "claim is not addressed in the title+abstract",
+      "span": null,
+      "source_title": "The MASK Benchmark: Disentangling Honesty From Accuracy in AI Systems",
+      "source_abstract": "As large language models (LLMs) become more capable and agentic, the requirement for trust in their outputs grows significantly, yet at the same time concerns have been mounting that models may learn to lie in pursuit of their goals. To address these concerns, a body of work has emerged around the notion of \"honesty\" in LLMs, along with interventions aimed at mitigating deceptive behaviors. However, some benchmarks claiming to measure honesty in fact simply measure accuracy--the correctness of a model's beliefs--in disguise. Moreover, no benchmarks currently exist for directly measuring whether language models lie. In this work, we introduce a large-scale human-collected dataset for directly measuring lying, allowing us to disentangle accuracy from honesty. Across a diverse set of LLMs, we find that while larger models obtain higher accuracy on our benchmark, they do not become more honest. Surprisingly, most frontier LLMs obtain high scores on truthfulness benchmarks yet exhibit a substantial propensity to lie under pressure, resulting in low honesty scores on our benchmark. We find that simple methods, such as representation engineering interventions, can improve honesty. These results underscore the growing need for robust evaluations and effective interventions to ensure LLMs remain trustworthy."
+    },
+    {
+      "id": "c6",
+      "identifier": "arXiv:2511.17220",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "PARROT (i) isolates causal effects by comparing the neutral version of the same question with an authoritatively false version using a double-blind evaluation, (ii) quantifies confidence shifts toward the correct and imposed false responses using log-likelihood-based calibration tracking, and (iii) systematically classifies failure modes (e.g., robust correct, sycophantic agreement, reinforced error, stubborn error, self-correction, etc.) using an eight-state behavioral taxonomy.",
+      "source_title": "PARROT: Persuasion and Agreement Robustness Rating of Output Truth -- A Sycophancy Robustness Benchmark for LLMs",
+      "source_abstract": "This study presents PARROT (Persuasion and Agreement Robustness Rating of Output Truth), a robustness focused framework designed to measure the degradation in accuracy that occurs under social pressure exerted on users through authority and persuasion in large language models (LLMs) the phenomenon of sycophancy (excessive conformity). PARROT (i) isolates causal effects by comparing the neutral version of the same question with an authoritatively false version using a double-blind evaluation, (ii) quantifies confidence shifts toward the correct and imposed false responses using log-likelihood-based calibration tracking, and (iii) systematically classifies failure modes (e.g., robust correct, sycophantic agreement, reinforced error, stubborn error, self-correction, etc.) using an eight-state behavioral taxonomy. We evaluated 22 models using 1,302 MMLU-style multiple-choice questions across 13 domains and domain-specific authority templates. Findings show marked heterogeneity: advanced models (e.g., GPT-5, GPT-4.1, Claude Sonnet 4.5) exhibit low \"follow rates\" ($\\leq 11\\%$, GPT-5: 4\\%) and minimal accuracy loss, while older/smaller models show severe epistemic collapse (GPT-4: 80\\%, Qwen 2.5-1.5B: 94\\%). The danger is not limited to response changes; weak models reduce confidence in the correct response while increasing confidence in the imposed incorrect response. While international law and global knowledge at the domain level exhibit high fragility, elementary mathematics is relatively resilient. Consequently, we argue that the goal of \"resistance to overfitting pressure\" should be addressed as a primary objective alongside accuracy, harm avoidance, and privacy for safe deployment in the real world."
+    },
+    {
+      "id": "c7",
+      "identifier": "arXiv:2201.05955",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "training a model on WANLI improves performance on eight out-of-domain test sets we consider, including by 11% on HANS and 9% on Adversarial NLI, compared to training on the 4x larger MultiNLI.",
+      "source_title": "WANLI: Worker and AI Collaboration for Natural Language Inference Dataset Creation",
+      "source_abstract": "A recurring challenge of crowdsourcing NLP datasets at scale is that human writers often rely on repetitive patterns when crafting examples, leading to a lack of linguistic diversity. We introduce a novel approach for dataset creation based on worker and AI collaboration, which brings together the generative strength of language models and the evaluative strength of humans. Starting with an existing dataset, MultiNLI for natural language inference (NLI), our approach uses dataset cartography to automatically identify examples that demonstrate challenging reasoning patterns, and instructs GPT-3 to compose new examples with similar patterns. Machine generated examples are then automatically filtered, and finally revised and labeled by human crowdworkers. The resulting dataset, WANLI, consists of 107,885 NLI examples and presents unique empirical strengths over existing NLI datasets. Remarkably, training a model on WANLI improves performance on eight out-of-domain test sets we consider, including by 11% on HANS and 9% on Adversarial NLI, compared to training on the 4x larger MultiNLI. Moreover, it continues to be more effective than MultiNLI augmented with other NLI datasets. Our results demonstrate the promise of leveraging natural language generation techniques and re-imagining the role of humans in the dataset creation process."
+    },
+    {
+      "id": "c8",
+      "identifier": "arXiv:2009.10795",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "First, our data maps show the presence of 'ambiguous' regions with respect to the model, which contribute the most towards out-of-distribution generalization... Finally, data maps uncover a region with instances that the model finds 'hard to learn'; these often correspond to labeling errors.",
+      "source_title": "Dataset Cartography: Mapping and Diagnosing Datasets with Training Dynamics",
+      "source_abstract": "Large datasets have become commonplace in NLP research. However, the increased emphasis on data quantity has made it challenging to assess the quality of data. We introduce Data Maps---a model-based tool to characterize and diagnose datasets. We leverage a largely ignored source of information: the behavior of the model on individual instances during training (training dynamics) for building data maps. This yields two intuitive measures for each example---the model's confidence in the true class, and the variability of this confidence across epochs---obtained in a single run of training. Experiments across four datasets show that these model-dependent measures reveal three distinct regions in the data map, each with pronounced characteristics. First, our data maps show the presence of \"ambiguous\" regions with respect to the model, which contribute the most towards out-of-distribution generalization. Second, the most populous regions in the data are \"easy to learn\" for the model, and play an important role in model optimization. Finally, data maps uncover a region with instances that the model finds \"hard to learn\"; these often correspond to labeling errors. Our results indicate that a shift in focus from quantity to quality of data could lead to robust models and improved out-of-distribution generalization."
+    },
+    {
+      "id": "c9",
+      "identifier": "arXiv:1909.12434",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Given documents and their initial labels, we task humans with revising each document so that it (i) accords with a counterfactual target label; (ii) retains internal coherence; and (iii) avoids unnecessary changes.",
+      "source_title": "Learning the Difference that Makes a Difference with Counterfactually-Augmented Data",
+      "source_abstract": "Despite alarm over the reliance of machine learning systems on so-called spurious patterns, the term lacks coherent meaning in standard statistical frameworks. However, the language of causality offers clarity: spurious associations are due to confounding (e.g., a common cause), but not direct or indirect causal effects. In this paper, we focus on natural language processing, introducing methods and resources for training models less sensitive to spurious patterns. Given documents and their initial labels, we task humans with revising each document so that it (i) accords with a counterfactual target label; (ii) retains internal coherence; and (iii) avoids unnecessary changes. Interestingly, on sentiment analysis and natural language inference tasks, classifiers trained on original data fail on their counterfactually-revised counterparts and vice versa. Classifiers trained on combined datasets perform remarkably well, just shy of those specialized to either domain. While classifiers trained on either original or manipulated data alone are sensitive to spurious features (e.g., mentions of genre), models trained on the combined data are less sensitive to this signal. Both datasets are publicly available."
+    },
+    {
+      "id": "c10",
+      "identifier": "arXiv:2107.00753",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "On two crowdsourced CAD datasets, our results show that the lack of perturbation diversity limits their effectiveness on OOD generalization, calling for innovative crowdsourcing procedures to elicit diverse perturbation of examples.",
+      "source_title": "An Investigation of the (In)effectiveness of Counterfactually Augmented Data",
+      "source_abstract": "While pretrained language models achieve excellent performance on natural language understanding benchmarks, they tend to rely on spurious correlations and generalize poorly to out-of-distribution (OOD) data. Recent work has explored using counterfactually-augmented data (CAD) -- data generated by minimally perturbing examples to flip the ground-truth label -- to identify robust features that are invariant under distribution shift. However, empirical results using CAD for OOD generalization have been mixed. To explain this discrepancy, we draw insights from a linear Gaussian model and demonstrate the pitfalls of CAD. Specifically, we show that (a) while CAD is effective at identifying robust features, it may prevent the model from learning unperturbed robust features; and (b) CAD may exacerbate existing spurious correlations in the data. On two crowdsourced CAD datasets, our results show that the lack of perturbation diversity limits their effectiveness on OOD generalization, calling for innovative crowdsourcing procedures to elicit diverse perturbation of examples."
+    },
+    {
+      "id": "c11",
+      "identifier": "arXiv:2308.03958",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Adding these data in a lightweight finetuning step can significantly reduce sycophantic behavior on held-out prompts.",
+      "source_title": "Simple synthetic data reduces sycophancy in large language models",
+      "source_abstract": "Sycophancy is an undesirable behavior where models tailor their responses to follow a human user's view even when that view is not objectively correct (e.g., adapting liberal views once a user reveals that they are liberal). In this paper, we study the prevalence of sycophancy in language models and propose a simple synthetic-data intervention to reduce this behavior.\n  First, on a set of three sycophancy tasks (Perez et al., 2022) where models are asked for an opinion on statements with no correct answers (e.g., politics), we observe that both model scaling and instruction tuning significantly increase sycophancy for PaLM models up to 540B parameters. Second, we extend sycophancy evaluations to simple addition statements that are objectively incorrect, finding that despite knowing that these statements are wrong, language models will still agree with them if the user does as well.\n  To reduce sycophancy, we present a straightforward synthetic-data intervention that takes public NLP tasks and encourages models to be robust to user opinions on these tasks. Adding these data in a lightweight finetuning step can significantly reduce sycophantic behavior on held-out prompts. Code for generating synthetic data for intervention can be found at https://github.com/google/sycophancy-intervention."
+    },
+    {
+      "id": "c12",
+      "identifier": "arXiv:2004.07780",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Shortcuts are decision rules that perform well on standard benchmarks but fail to transfer to more challenging testing conditions, such as real-world scenarios.",
+      "source_title": "Shortcut Learning in Deep Neural Networks",
+      "source_abstract": "Deep learning has triggered the current rise of artificial intelligence and is the workhorse of today's machine intelligence. Numerous success stories have rapidly spread all over science, industry and society, but its limitations have only recently come into focus. In this perspective we seek to distill how many of deep learning's problems can be seen as different symptoms of the same underlying problem: shortcut learning. Shortcuts are decision rules that perform well on standard benchmarks but fail to transfer to more challenging testing conditions, such as real-world scenarios. Related issues are known in Comparative Psychology, Education and Linguistics, suggesting that shortcut learning may be a common characteristic of learning systems, biological and artificial alike. Based on these observations, we develop a set of recommendations for model interpretation and benchmarking, highlighting recent advances in machine learning to improve robustness and transferability from the lab to real-world applications."
+    },
+    {
+      "id": "c13",
+      "identifier": "arXiv:2004.02709",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Although our contrast sets are not explicitly adversarial, model performance is significantly lower on them than on the original test sets---up to 25% in some cases.",
+      "source_title": "Evaluating Models' Local Decision Boundaries via Contrast Sets",
+      "source_abstract": "Standard test sets for supervised learning evaluate in-distribution generalization. Unfortunately, when a dataset has systematic gaps (e.g., annotation artifacts), these evaluations are misleading: a model can learn simple decision rules that perform well on the test set but do not capture a dataset's intended capabilities. We propose a new annotation paradigm for NLP that helps to close systematic gaps in the test data. In particular, after a dataset is constructed, we recommend that the dataset authors manually perturb the test instances in small but meaningful ways that (typically) change the gold label, creating contrast sets. Contrast sets provide a local view of a model's decision boundary, which can be used to more accurately evaluate a model's true linguistic capabilities. We demonstrate the efficacy of contrast sets by creating them for 10 diverse NLP datasets (e.g., DROP reading comprehension, UD parsing, IMDb sentiment analysis). Although our contrast sets are not explicitly adversarial, model performance is significantly lower on them than on the original test sets---up to 25\\% in some cases. We release our contrast sets as new evaluation benchmarks and encourage future dataset construction efforts to follow similar annotation processes."
+    },
+    {
+      "id": "c14",
+      "identifier": "arXiv:1911.08731",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Instead, the poor worst-case performance arises from poor generalization on some groups. By coupling group DRO models with increased regularization---a stronger-than-typical L2 penalty or early stopping---we achieve substantially higher worst-group accuracies",
+      "source_title": "Distributionally Robust Neural Networks for Group Shifts: On the Importance of Regularization for Worst-Case Generalization",
+      "source_abstract": "Overparameterized neural networks can be highly accurate on average on an i.i.d. test set yet consistently fail on atypical groups of the data (e.g., by learning spurious correlations that hold on average but not in such groups). Distributionally robust optimization (DRO) allows us to learn models that instead minimize the worst-case training loss over a set of pre-defined groups. However, we find that naively applying group DRO to overparameterized neural networks fails: these models can perfectly fit the training data, and any model with vanishing average training loss also already has vanishing worst-case training loss. Instead, the poor worst-case performance arises from poor generalization on some groups. By coupling group DRO models with increased regularization---a stronger-than-typical L2 penalty or early stopping---we achieve substantially higher worst-group accuracies, with 10-40 percentage point improvements on a natural language inference task and two image tasks, while maintaining high average accuracies. Our results suggest that regularization is important for worst-group generalization in the overparameterized regime, even if it is not needed for average generalization. Finally, we introduce a stochastic optimization algorithm, with convergence guarantees, to efficiently train group DRO models."
+    },
+    {
+      "id": "c15",
+      "identifier": "arXiv:1705.08500",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "Our method allows a user to set a desired risk level.",
+      "source_title": "Selective Classification for Deep Neural Networks",
+      "source_abstract": "Selective classification techniques (also known as reject option) have not yet been considered in the context of deep neural networks (DNNs). These techniques can potentially significantly improve DNNs prediction performance by trading-off coverage. In this paper we propose a method to construct a selective classifier given a trained neural network. Our method allows a user to set a desired risk level. At test time, the classifier rejects instances as needed, to grant the desired risk (with high probability). Empirical results over CIFAR and ImageNet convincingly demonstrate the viability of our method, which opens up possibilities to operate DNNs in mission-critical applications. For example, using our method an unprecedented 2% error in top-5 ImageNet classification can be guaranteed with probability 99.9%, and almost 60% test coverage."
+    },
+    {
+      "id": "c16",
+      "identifier": "arXiv:2602.13110",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "SCOPE accepts up to $2.4\times$ more judgments under the same risk constraint, demonstrating that BPE enables reliable and high-coverage LLM-based evaluation.",
+      "source_title": "SCOPE: Selective Conformal Optimized Pairwise LLM Judging",
+      "source_abstract": "Large language models (LLMs) are increasingly used as scalable judges in pairwise evaluation, but they remain prone to miscalibration and biases. We propose SCOPE (Selective Conformal Optimized Pairwise Evaluation), a framework that calibrates an acceptance threshold so that, under exchangeability, the error rate among non-abstained judgments is at most a user-specified level $α$. To supply SCOPE with a bias-neutral uncertainty signal, we introduce Bidirectional Preference Entropy (BPE), which queries the judge under both response positions and converts the order-averaged preference probability into an entropy-based score. Across various pairwise judging benchmarks, BPE outperforms standard confidence proxies in calibration and discrimination, while SCOPE consistently satisfies the target risk bound (empirical FDR $\\approx 0.097$ to $0.099$ at $α= 0.10$) and retains substantial coverage. Compared to vanilla baselines, SCOPE accepts up to $2.4\\times$ more judgments under the same risk constraint, demonstrating that BPE enables reliable and high-coverage LLM-based evaluation."
+    },
+    {
+      "id": "c17",
+      "identifier": "arXiv:2508.06225",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "where predicted confidence significantly overstates actual correctness, undermining reliability in practical deployment.",
+      "source_title": "Overconfidence in LLM-as-a-Judge: Diagnosis and Confidence-Driven Solution",
+      "source_abstract": "Large Language Models (LLMs) are widely used as automated judges, where practical value depends on both accuracy and trustworthy, risk-aware judgments. Existing approaches predominantly focus on accuracy, overlooking the necessity of well-calibrated confidence, which is vital for adaptive and reliable evaluation pipelines. In this work, we advocate a shift from accuracy-centric evaluation to confidence-driven, risk-aware LLM-as-a-Judge systems, emphasizing the necessity of well-calibrated confidence for trustworthy and adaptive evaluation. We systematically identify the Overconfidence Phenomenon in current LLM-as-a-Judges, where predicted confidence significantly overstates actual correctness, undermining reliability in practical deployment. To quantify this phenomenon, we introduce TH-Score, a novel metric measuring confidence-accuracy alignment. Furthermore, we propose LLM-as-a-Fuser, an ensemble framework that transforms LLMs into reliable, risk-aware evaluators. Extensive experiments demonstrate that our approach substantially improves calibration and enables adaptive, confidence-driven evaluation pipelines, achieving superior reliability and accuracy compared to existing baselines."
+    },
+    {
+      "id": "c18",
+      "identifier": "arXiv:2512.22245",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "We introduce linear probes trained with a Brier score-based loss to provide calibrated uncertainty estimates from reasoning judges' hidden states, requiring no additional model training.",
+      "source_title": "Calibrating LLM Judges: Linear Probes for Fast and Reliable Uncertainty Estimation",
+      "source_abstract": "As LLM-based judges become integral to industry applications, obtaining well-calibrated uncertainty estimates efficiently has become critical for production deployment. However, existing techniques, such as verbalized confidence and multi-generation methods, are often either poorly calibrated or computationally expensive. We introduce linear probes trained with a Brier score-based loss to provide calibrated uncertainty estimates from reasoning judges' hidden states, requiring no additional model training. We evaluate our approach on both objective tasks (reasoning, mathematics, factuality, coding) and subjective human preference judgments. Our results demonstrate that probes achieve superior calibration compared to existing methods with $\\approx10$x computational savings, generalize robustly to unseen evaluation domains, and deliver higher accuracy on high-confidence predictions. However, probes produce conservative estimates that underperform on easier datasets but may benefit safety-critical deployments prioritizing low false-positive rates. Overall, our work demonstrates that interpretability-based uncertainty estimation provides a practical and scalable plug-and-play solution for LLM judges in production."
+    },
+    {
+      "id": "c19",
+      "identifier": "arXiv:2208.12084",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "By doing so, we aim to make predictions with {well-calibrated} uncertainty estimates over the distribution of accepted examples... We achieve this through a training strategy inspired by distributionally robust optimization, in which we apply simulated input perturbations to the known, in-domain training data.",
+      "source_title": "Calibrated Selective Classification",
+      "source_abstract": "Selective classification allows models to abstain from making predictions (e.g., say \"I don't know\") when in doubt in order to obtain better effective accuracy. While typical selective models can be effective at producing more accurate predictions on average, they may still allow for wrong predictions that have high confidence, or skip correct predictions that have low confidence. Providing calibrated uncertainty estimates alongside predictions -- probabilities that correspond to true frequencies -- can be as important as having predictions that are simply accurate on average. However, uncertainty estimates can be unreliable for certain inputs. In this paper, we develop a new approach to selective classification in which we propose a method for rejecting examples with \"uncertain\" uncertainties. By doing so, we aim to make predictions with {well-calibrated} uncertainty estimates over the distribution of accepted examples, a property we call selective calibration. We present a framework for learning selectively calibrated models, where a separate selector network is trained to improve the selective calibration error of a given base model. In particular, our work focuses on achieving robust calibration, where the model is intentionally designed to be tested on out-of-domain data. We achieve this through a training strategy inspired by distributionally robust optimization, in which we apply simulated input perturbations to the known, in-domain training data. We demonstrate the empirical effectiveness of our approach on multiple image classification and lung cancer risk assessment tasks."
+    },
+    {
+      "id": "c20",
+      "identifier": "arXiv:2404.18796",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "we find that using a PoLL composed of a larger number of smaller models outperforms a single large judge, exhibits less intra-model bias due to its composition of disjoint model families, and does so while being over seven times less expensive.",
+      "source_title": "Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models",
+      "source_abstract": "As Large Language Models (LLMs) have become more advanced, they have outpaced our abilities to accurately evaluate their quality. Not only is finding data to adequately probe particular model properties difficult, but evaluating the correctness of a model's freeform generation alone is a challenge. To address this, many evaluations now rely on using LLMs themselves as judges to score the quality of outputs from other LLMs. Evaluations most commonly use a single large model like GPT4. While this method has grown in popularity, it is costly, has been shown to introduce intramodel bias, and in this work, we find that very large models are often unnecessary. We propose instead to evaluate models using a Panel of LLm evaluators (PoLL). Across three distinct judge settings and spanning six different datasets, we find that using a PoLL composed of a larger number of smaller models outperforms a single large judge, exhibits less intra-model bias due to its composition of disjoint model families, and does so while being over seven times less expensive."
+    },
+    {
+      "id": "c21",
+      "identifier": "arXiv:2604.07650",
+      "existence": "resolved",
+      "finding_match": "supported",
+      "verdict": "accept",
+      "action": "OK",
+      "detail": "source supports the claim",
+      "span": "In practice, this manifests as correlated reasoning patterns and synchronized failures, where apparent agreement reflects shared error modes rather than independent validation.",
+      "source_title": "How Independent are Large Language Models? A Statistical Framework for Auditing Behavioral Entanglement and Reweighting Verifier Ensembles",
+      "source_abstract": "The rapid growth of the large language model (LLM) ecosystem raises a critical question: are seemingly diverse models truly independent? Shared pretraining data, distillation, and alignment pipelines can induce hidden behavioral dependencies, latent entanglement, that undermine multi-model systems such as LLM-as-a-judge pipelines and ensemble verification, which implicitly assume independent signals. In practice, this manifests as correlated reasoning patterns and synchronized failures, where apparent agreement reflects shared error modes rather than independent validation. To address this, we develop a statistical framework for auditing behavioral entanglement among black-box LLMs. Our approach introduces a multi-resolution hierarchy that characterizes the joint failure manifold through two information-theoretic metrics: (i) a Difficulty-Weighted Behavioral Entanglement Index, which amplifies synchronized failures on easy tasks, and (ii) a Cumulative Information Gain (CIG) metric, which captures directional alignment in erroneous responses. Through extensive experiments on 18 LLMs from six model families, we identify widespread behavioral entanglement and analyze its impact on LLM-as-a-judge evaluation. We find that CIG exhibits a statistically significant association with degradation in judge precision, with Spearman coefficient of 0.64 (p < 0.001) for GPT-4o-mini and 0.71 (p < 0.01) for Llama3-based judges, indicating that stronger dependency corresponds to increased over-endorsement bias. Finally, we demonstrate a practical use case of entanglement through de-entangled verifier ensemble reweighting. By adjusting model contributions based on inferred independence, the proposed method mitigates correlated bias and improves verification performance, achieving up to a 4.5% accuracy gain over majority voting."
+    },
+    {
+      "id": "c22",
+      "identifier": "arXiv:2303.08896",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    },
+    {
+      "id": "c23",
+      "identifier": "arXiv:2005.04118",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    },
+    {
+      "id": "c24",
+      "identifier": "arXiv:2310.13548",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    },
+    {
+      "id": "c25",
+      "identifier": "arXiv:2510.04721",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    },
+    {
+      "id": "c26",
+      "identifier": "arXiv:2505.13995",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    },
+    {
+      "id": "c27",
+      "identifier": "arXiv:2404.13076",
+      "existence": "unresolvable",
+      "finding_match": "unchecked",
+      "verdict": "escalate",
+      "action": "RETRIEVE MANUALLY",
+      "detail": "arXiv oracle unreachable: HTTPStatusError",
+      "span": null,
+      "source_title": null,
+      "source_abstract": null
+    }
+  ],
+  "unparsed": [],
+  "receipt": {
+    "schema": "roleos-citation-receipt/v1",
+    "kind": "citation-verification",
+    "tool": "roleos verify-citations",
+    "input": "design/sycophancy-v0.2-dispatch.md",
+    "verdict": "escalate",
+    "blocking": false,
+    "advisory": true,
+    "citations_sha256": "7098e0b5f8ed7c9d4861c9ceb2922e81dfcd39ac04542ef0e451f9422a8ebf1d",
+    "prism_receipt": {
+      "id": "prism-01ktk42hhhe0dr74jgjy1crcjf",
+      "signature": "87602e54d9ba73b21f753cc14580b5b7450581982586ec9172f2cff62c327c211e88c76c13158633e21823ee1555319fdc0b9199a87a131df58fb3ae439d3c0c",
+      "verdict": "escalate"
+    },
+    "retrieval_pins": [
+      {
+        "id": "c1",
+        "identifier": "arXiv:2502.08177",
+        "query": "https://export.arxiv.org/api/query?id_list=2502.08177",
+        "source_sha256": "bd210cf7bcf2f8fd0ad2f1425ceabf45446b2e7ac5f5a0c550075116ddb1cf7e",
+        "existence": "resolved"
+      },
+      {
+        "id": "c2",
+        "identifier": "arXiv:2509.16533",
+        "query": "https://export.arxiv.org/api/query?id_list=2509.16533",
+        "source_sha256": "e237c205012bbbe2235a03d082a50f16f011f9e63fce26caf0350952aa1a9768",
+        "existence": "resolved"
+      },
+      {
+        "id": "c3",
+        "identifier": "arXiv:2508.13743",
+        "query": "https://export.arxiv.org/api/query?id_list=2508.13743",
+        "source_sha256": "8198c24b50f5f97a6c52d46f0e4201611ee302e0438dec25ad9b35fb22166eb9",
+        "existence": "resolved"
+      },
+      {
+        "id": "c4",
+        "identifier": "arXiv:2604.02423",
+        "query": "https://export.arxiv.org/api/query?id_list=2604.02423",
+        "source_sha256": "ae5b0641da8ea80c2227c2e5a95ec21404d213c4a6f84dc5e9772856e66fc9eb",
+        "existence": "resolved"
+      },
+      {
+        "id": "c5",
+        "identifier": "arXiv:2503.03750",
+        "query": "https://export.arxiv.org/api/query?id_list=2503.03750",
+        "source_sha256": "0fa8ec20974cfa2d1e857438c847b65ab247bae92640991f1eebfdb134204eca",
+        "existence": "resolved"
+      },
+      {
+        "id": "c6",
+        "identifier": "arXiv:2511.17220",
+        "query": "https://export.arxiv.org/api/query?id_list=2511.17220",
+        "source_sha256": "0ab2042b70e5eb88298e2cf4328ff4c6677bd8da805a7201207363446c58c2f8",
+        "existence": "resolved"
+      },
+      {
+        "id": "c7",
+        "identifier": "arXiv:2201.05955",
+        "query": "https://export.arxiv.org/api/query?id_list=2201.05955",
+        "source_sha256": "3f4e614b98330f69dcc2dc7502fcd47906add573b7d0eced3a32747a721150ef",
+        "existence": "resolved"
+      },
+      {
+        "id": "c8",
+        "identifier": "arXiv:2009.10795",
+        "query": "https://export.arxiv.org/api/query?id_list=2009.10795",
+        "source_sha256": "80417fe4bd043268b8d93ee55258313d5317378aa8d61cfa2d57e6083a2bf13d",
+        "existence": "resolved"
+      },
+      {
+        "id": "c9",
+        "identifier": "arXiv:1909.12434",
+        "query": "https://export.arxiv.org/api/query?id_list=1909.12434",
+        "source_sha256": "756422ecc31fafd7cfb7f7873f8a64abcd661a2f68a47aff88684a3f9e5c013a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c10",
+        "identifier": "arXiv:2107.00753",
+        "query": "https://export.arxiv.org/api/query?id_list=2107.00753",
+        "source_sha256": "195bf6fd316dd40bbba492fcc5bb2996e61e5f26e10c051768c800e1f1961a15",
+        "existence": "resolved"
+      },
+      {
+        "id": "c11",
+        "identifier": "arXiv:2308.03958",
+        "query": "https://export.arxiv.org/api/query?id_list=2308.03958",
+        "source_sha256": "cbba48c081745dde1d06fe67368567f969baad8305746febd238a1e78829a8d0",
+        "existence": "resolved"
+      },
+      {
+        "id": "c12",
+        "identifier": "arXiv:2004.07780",
+        "query": "https://export.arxiv.org/api/query?id_list=2004.07780",
+        "source_sha256": "4e52755cacd22550ee14c68b8e2d092db43ef66e8e391468b1be7cf6970ee27a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c13",
+        "identifier": "arXiv:2004.02709",
+        "query": "https://export.arxiv.org/api/query?id_list=2004.02709",
+        "source_sha256": "80f91d3ea73442d1c99b6ab28d90d7bbfafceb9d421ef6470d885e39e9c1c486",
+        "existence": "resolved"
+      },
+      {
+        "id": "c14",
+        "identifier": "arXiv:1911.08731",
+        "query": "https://export.arxiv.org/api/query?id_list=1911.08731",
+        "source_sha256": "9d73eedf9aa67b853ea6a7f493ed7d3a285aceef1ce3bc5b707e8c9172c0fdb2",
+        "existence": "resolved"
+      },
+      {
+        "id": "c15",
+        "identifier": "arXiv:1705.08500",
+        "query": "https://export.arxiv.org/api/query?id_list=1705.08500",
+        "source_sha256": "f85a0e2c94b202763ee9446ee9e03128d9fe73292a07ea6b991768180f9b7055",
+        "existence": "resolved"
+      },
+      {
+        "id": "c16",
+        "identifier": "arXiv:2602.13110",
+        "query": "https://export.arxiv.org/api/query?id_list=2602.13110",
+        "source_sha256": "b9095f330ad7655a00402cade0884e97ef60da021ae17ffdb7275929fcc822dc",
+        "existence": "resolved"
+      },
+      {
+        "id": "c17",
+        "identifier": "arXiv:2508.06225",
+        "query": "https://export.arxiv.org/api/query?id_list=2508.06225",
+        "source_sha256": "32ccc7fa6592de0340f316c0f58afcbbf50fe68fbd5e8da958b23fecae522ef4",
+        "existence": "resolved"
+      },
+      {
+        "id": "c18",
+        "identifier": "arXiv:2512.22245",
+        "query": "https://export.arxiv.org/api/query?id_list=2512.22245",
+        "source_sha256": "51a5abf96d0e99a9d27925b94f7622393f6f57c340f4902b6f54e3701a21817a",
+        "existence": "resolved"
+      },
+      {
+        "id": "c19",
+        "identifier": "arXiv:2208.12084",
+        "query": "https://export.arxiv.org/api/query?id_list=2208.12084",
+        "source_sha256": "ba86c29f5991aa777fb34a27018eb35368d0cdde081c472a68ca4238a151e2ea",
+        "existence": "resolved"
+      },
+      {
+        "id": "c20",
+        "identifier": "arXiv:2404.18796",
+        "query": "https://export.arxiv.org/api/query?id_list=2404.18796",
+        "source_sha256": "ee9a25bb1329ca03677c2425fb3d1d2632d4d76b40e624e212a68545165597bb",
+        "existence": "resolved"
+      },
+      {
+        "id": "c21",
+        "identifier": "arXiv:2604.07650",
+        "query": "https://export.arxiv.org/api/query?id_list=2604.07650",
+        "source_sha256": "6dad25c8470ebd12df4ca78ac5f65008c4f061fff45480d219291de2bf3aed27",
+        "existence": "resolved"
+      },
+      {
+        "id": "c22",
+        "identifier": "arXiv:2303.08896",
+        "query": "https://export.arxiv.org/api/query?id_list=2303.08896",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      },
+      {
+        "id": "c23",
+        "identifier": "arXiv:2005.04118",
+        "query": "https://export.arxiv.org/api/query?id_list=2005.04118",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      },
+      {
+        "id": "c24",
+        "identifier": "arXiv:2310.13548",
+        "query": "https://export.arxiv.org/api/query?id_list=2310.13548",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      },
+      {
+        "id": "c25",
+        "identifier": "arXiv:2510.04721",
+        "query": "https://export.arxiv.org/api/query?id_list=2510.04721",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      },
+      {
+        "id": "c26",
+        "identifier": "arXiv:2505.13995",
+        "query": "https://export.arxiv.org/api/query?id_list=2505.13995",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      },
+      {
+        "id": "c27",
+        "identifier": "arXiv:2404.13076",
+        "query": "https://export.arxiv.org/api/query?id_list=2404.13076",
+        "source_sha256": "",
+        "existence": "unresolvable"
+      }
+    ],
+    "local_panel": null,
+    "chain_sha256": "27cb1bbda0b3ba805429547e2b7c2e1c93bb84a1172b92e5e4021414e1036b9e"
+  },
+  "duration": 56653
+}

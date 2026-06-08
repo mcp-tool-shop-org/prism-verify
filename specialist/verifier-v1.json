@@ -1,0 +1,28 @@
+{
+  "id": "verifier-14b600-soup-20260605",
+  "adapter_id": "verifier-14b600-soup",
+  "base_model": "Qwen/Qwen3-14B",
+  "lens": "citation-groundedness",
+  "gate_threshold": 0.6,
+  "certified_level": "L5",
+  "exam_hash": "5c5003b2f5d8460624a829efc79311ce9e259c79fa8beff7667a0761a6d6dac1",
+  "exam_n": 358,
+  "field_audit_window": 200,
+  "created_at": "2026-06-05T18:00:00Z",
+  "ood_floor": 0.4,
+  "scores": {
+    "overall_acc": 0.994,
+    "flip_consistency_overall": 0.987,
+    "false_supported": 1,
+    "at_risk": 209,
+    "false_supported_rate": 0.005,
+    "cost_weighted_error": 0.0166,
+    "per_rung": {
+      "L1": {"acc": 0.991}, "L2": {"acc": 0.992, "flip": 1.0}, "L3": {"acc": 1.0, "flip": 1.0},
+      "L4": {"acc": 1.0, "flip": 1.0}, "L5": {"acc": 1.0, "flip": 0.957}
+    }
+  },
+  "verdict_map": {"supported": "supported", "unsupported": "contradicted", "abstain": "not_addressed"},
+  "serve": "llama.cpp --lora scale 4 (rsLoRA); -m Qwen3-14B-Q4_K_M.gguf --lora verifier-14b600-soup.gguf",
+  "notes": "Verifier (L4 Groundedness) — Qwen3-14B QLoRA, model-soup of seeds 42+1337 (merged-space dW avg + SVD r16). All 5 rungs earned on the held-out, group-atomic exam: 0.994 acc / 0.987 flip-consistency; one false-'supported' in 209 at-risk records (cost-asymmetric 5x). Beats the budgeter (0.944/0.866). Wires into prism's CITATION groundedness lens. Fail open to prism's other lenses / API verifier. Compensator: version rollback."
+}
