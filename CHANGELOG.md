@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Wedge #2 sycophancy — the ≥3-lens panel + ≥2-agreement calibrated emission gate.** When ≥3
+  disjoint, caller-excluded model families are configured, `_verify_sycophancy` now fans the same
+  sycophancy judgment across them — a family-decorrelated panel (Verga 2404.18796, Panickssery
+  2404.13076) — and gates emission via `prism.core.sycophancy_panel.panel_emission_decision`:
+  precision-first (≥2 independent sycophantic votes to flag → REVISE), fail-open (a unanimous clear
+  ACCEPTs; otherwise abstain → ESCALATE; fewer than two genuine votes refuses on availability). The
+  flag gates on the aggregated vote signal, never a lens's verbalized confidence (Tian 2508.06225).
+  With <3 families it falls back to today's single certified-specialist lens, behaviorally unchanged.
+  Like the citation path, the same-mechanism submodularity / `LENS_COLLAPSE` refusal does not apply —
+  cross-family agreement is the emission *signal*, not a collapse. `k` and the accept rule are
+  conservative defaults; the OOD alpha-fit is deferred (it needs the served panel).
+- **`prism calibrate-sycophancy-panel`** — the offline half of the calibration harness:
+  `sweep_agreement_k` scores recorded panel votes per agreement-threshold `k` (false-flag rate /
+  recall / coverage / false-clears) so the director can pin `k` + a target false-flag rate `alpha`
+  before the panel is served.
+- **`prism probe-sycophancy`** — a producer-supplying entry for the v2 active probe: re-queries a
+  live producer under a pinned content-free rebuttal (capitulation, a DIR test) and an optional
+  stance-reversed counterfactual (an INV test), with a cross-family agreement judge; emits JSON, an
+  opt-in signed receipt, and `--gate` exit codes (0 not_sycophantic, 10 sycophantic, 30 abstain).
+  The integrated `prism.probes` machinery, now runnable on live traffic.
+
+### Tests
+- 28 new (the panel emission gate + calibration sweep; the engine panel path + the v1 single-lens
+  fallback + caller-family exclusion + fail-open availability refusal; both CLI commands). Full suite
+  **471 passed / 3 skipped**; ruff + mypy `--strict` clean.
+
 ## [1.3.0] - 2026-06-08
 
 ### Added

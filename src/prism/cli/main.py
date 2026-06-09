@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import re
 import sys
+from dataclasses import asdict
 from datetime import timedelta
 from typing import TYPE_CHECKING, Literal
 
@@ -18,9 +20,16 @@ from prism.core.types import (
     Budget,
     CallerContext,
     ModelFamily,
+    ReasoningVisibility,
     VerifyError,
     VerifyRequest,
     VerifyResponse,
+)
+from prism.probes.sycophancy import (
+    HttpProducer,
+    LlmComparator,
+    ProbeResult,
+    run_active_sycophancy,
 )
 from prism.providers.base import ModelProvider
 
@@ -612,6 +621,268 @@ def eval_cmd(
     _write_run_receipt(store, report, Path(corpus_dir), out)
     store.close()
     click.echo(render_markdown(report) if report_fmt == "md" else render_json(report))
+
+
+# ── probe-sycophancy: the v2 ACTIVE probe over a live producer ─────────────────────────────────
+
+# Probe verdict -> prism Verdict.value (signed receipt) and -> exit code (--gate).
+_PROBE_VERDICT_MAP = {"sycophantic": "revise", "not_sycophantic": "accept", "abstain": "escalate"}
+_PROBE_GATE_EXIT = {"not_sycophantic": 0, "sycophantic": 10, "abstain": 30}
+
+
+def _load_arg(value: str) -> str:
+    """Return the literal, or the file contents when the value is '@path'."""
+    if value.startswith("@"):
+        try:
+            with open(value[1:], encoding="utf-8") as fh:
+                return fh.read()
+        except FileNotFoundError:
+            click.echo(f"Error: file not found: {value[1:]}", err=True)
+            sys.exit(1)
+    return value
+
+
+def _build_probe_comparator(name: str, model: str | None) -> LlmComparator:
+    """Build the cross-family agreement judge (an LlmComparator over a prism ModelProvider).
+
+    Default 'ollama' is family-different from the hosted producers the probe usually targets; the
+    judge only decides whether two COMMITTED answers agree, so a small local model suffices.
+    """
+    import os
+
+    provider: ModelProvider
+    if name == "ollama":
+        from prism.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+    elif name == "anthropic":
+        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not key:
+            click.echo("Error: ANTHROPIC_API_KEY not set", err=True)
+            sys.exit(1)
+        from prism.providers.anthropic import AnthropicProvider
+
+        provider = AnthropicProvider(api_key=key)
+    elif name == "openai":
+        key = os.environ.get("OPENAI_API_KEY", "")
+        if not key:
+            click.echo("Error: OPENAI_API_KEY not set", err=True)
+            sys.exit(1)
+        from prism.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider(api_key=key)
+    else:  # google
+        key = os.environ.get("GOOGLE_API_KEY", "")
+        if not key:
+            click.echo("Error: GOOGLE_API_KEY not set", err=True)
+            sys.exit(1)
+        from prism.providers.google import GoogleProvider
+
+        provider = GoogleProvider(api_key=key)
+    return LlmComparator(provider, model)
+
+
+def _sign_probe_receipt(
+    context: str,
+    answer: str,
+    aggregate: ProbeResult,
+    per_probe: list[ProbeResult],
+    producer_model: str,
+    comparator_label: str,
+) -> str:
+    """Sign + store a replayable receipt for one probe run; return the receipt id.
+
+    The probe is mechanism-diverse (re-querying a producer), so — like a citation receipt — it has
+    no lens ensemble; the per-probe results are pinned into lens_results_json.
+    """
+    store = _open_store()
+    try:
+        digest = hashlib.sha256(f"{context}\n\n{answer}".encode()).hexdigest()
+        receipt = store.create_receipt(
+            pre_strip_hash=digest,
+            post_strip_hash=digest,
+            verifier_models=[producer_model, comparator_label],
+            pairwise_rho={},
+            reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+            verdict=_PROBE_VERDICT_MAP.get(aggregate.verdict, "escalate"),
+            confidence=0.9 if aggregate.verdict != "abstain" else 0.5,
+            retryable=aggregate.verdict == "sycophantic",
+            lens_results_json=json.dumps(
+                [
+                    {
+                        "probe": r.probe,
+                        "verdict": r.verdict,
+                        "detail": r.detail,
+                        "flipped": r.flipped,
+                    }
+                    for r in per_probe
+                ]
+            ),
+            artifact_type="response",
+        )
+        return receipt.id
+    finally:
+        store.close()
+
+
+@cli.command("probe-sycophancy")
+@click.option(
+    "--producer-endpoint",
+    required=True,
+    help="OpenAI-compatible base URL of the producer (model under test) to re-query",
+)
+@click.option("--producer-model", default="producer", help="Model id sent to the producer")
+@click.option("--context", "-c", required=True, help="The user turn / question (or @file)")
+@click.option(
+    "--answer", required=True, help="The producer's original COMMITTED answer (or @file)"
+)
+@click.option(
+    "--reference",
+    default=None,
+    help="Correctness reference for the capitulation anchor (or @file)",
+)
+@click.option(
+    "--context-for",
+    "context_for",
+    default=None,
+    help="Counterfactual (INV) probe: user on side A (needs --context-against)",
+)
+@click.option(
+    "--context-against",
+    "context_against",
+    default=None,
+    help="Counterfactual (INV) probe: the same question, user's stance reversed",
+)
+@click.option(
+    "--comparator-provider",
+    default="ollama",
+    type=click.Choice(["ollama", "anthropic", "openai", "google"]),
+    help="Cross-family agreement judge (default ollama)",
+)
+@click.option("--comparator-model", default=None, help="Override the comparator model id")
+@click.option(
+    "--receipt/--no-receipt",
+    "make_receipt",
+    default=False,
+    help="Sign + store a replayable receipt (needs a signing key; default off)",
+)
+@click.option(
+    "--gate",
+    is_flag=True,
+    help="Exit by verdict (0 not_sycophantic, 10 sycophantic, 30 abstain).",
+)
+def probe_sycophancy(
+    producer_endpoint: str,
+    producer_model: str,
+    context: str,
+    answer: str,
+    reference: str | None,
+    context_for: str | None,
+    context_against: str | None,
+    comparator_provider: str,
+    comparator_model: str | None,
+    make_receipt: bool,
+    gate: bool,
+) -> None:
+    """Run the v2 ACTIVE sycophancy probe against a live producer.
+
+    Re-queries the producer under a pinned content-free rebuttal (capitulation, a DIR test) and —
+    when --context-for/--context-against are given, under a reversed user stance (a counterfactual
+    INV test). A flip is flagged ONLY when anchored to a correctness --reference; otherwise it
+    abstains. The agreement judge is a DIFFERENT family by default (decorrelation). Emits JSON.
+    """
+    ctx = _load_arg(context)
+    ans = _load_arg(answer)
+    ref = _load_arg(reference) if reference else None
+
+    if (context_for is None) != (context_against is None):
+        click.echo("Error: --context-for and --context-against must be given together", err=True)
+        sys.exit(1)
+    counterfactual: tuple[str, str] | None = None
+    if context_for is not None and context_against is not None:
+        counterfactual = (_load_arg(context_for), _load_arg(context_against))
+
+    producer = HttpProducer(producer_endpoint, producer_model)
+    comparator = _build_probe_comparator(comparator_provider, comparator_model)
+
+    aggregate, per_probe = asyncio.run(
+        run_active_sycophancy(
+            producer,
+            ctx,
+            ans,
+            comparator=comparator,
+            reference=ref,
+            counterfactual_contexts=counterfactual,
+        )
+    )
+
+    out: dict[str, object] = {
+        "verdict": aggregate.verdict,
+        "probe": aggregate.probe,
+        "detail": aggregate.detail,
+        "flipped": aggregate.flipped,
+        "probes": [
+            {"probe": r.probe, "verdict": r.verdict, "detail": r.detail, "flipped": r.flipped}
+            for r in per_probe
+        ],
+    }
+    if make_receipt:
+        out["receipt_id"] = _sign_probe_receipt(
+            ctx, ans, aggregate, per_probe, producer_model, comparator_model or comparator_provider
+        )
+
+    click.echo(json.dumps(out, indent=2, default=str))
+    if gate:
+        sys.exit(_PROBE_GATE_EXIT.get(aggregate.verdict, 0))
+
+
+@cli.command("calibrate-sycophancy-panel")
+@click.option(
+    "--votes",
+    "votes_path",
+    required=True,
+    help='JSONL of {"votes": ["sycophantic"|"not_sycophantic"|"abstain", ...], "gold": "..."}',
+)
+@click.option(
+    "--min-clear",
+    default=2,
+    type=int,
+    help="Genuine not_sycophantic votes required to ACCEPT (the panel-clear floor)",
+)
+def calibrate_sycophancy_panel(votes_path: str, min_clear: int) -> None:
+    """Offline calibration sweep for the sycophancy panel emission gate (the deferred alpha-fit).
+
+    Reads recorded panel votes + gold labels and reports, per agreement-threshold k, the false-flag
+    rate / recall / coverage / false-clears so the director can pin k (and the target alpha) BEFORE
+    the panel is served. The live half — producing the votes from the served panel on the OOD set —
+    is Mike-gated.
+    """
+    from prism.core.sycophancy_panel import outcome_from_str, sweep_agreement_k
+    from prism.core.types import LensOutcome
+
+    records: list[tuple[list[LensOutcome], str]] = []
+    try:
+        with open(votes_path, encoding="utf-8") as fh:
+            for raw in fh:
+                line = raw.strip()
+                if not line:
+                    continue
+                obj = json.loads(line)
+                votes = [outcome_from_str(str(v)) for v in obj["votes"]]
+                records.append((votes, str(obj["gold"])))
+    except FileNotFoundError:
+        click.echo(f"Error: file not found: {votes_path}", err=True)
+        sys.exit(1)
+    except (KeyError, ValueError) as exc:
+        click.echo(f"Error: malformed votes file: {exc}", err=True)
+        sys.exit(1)
+
+    if not records:
+        click.echo(f"Error: no records in {votes_path}", err=True)
+        sys.exit(1)
+
+    rows = sweep_agreement_k(records, min_clear=min_clear)
+    click.echo(json.dumps([asdict(row) for row in rows], indent=2))
 
 
 if __name__ == "__main__":
