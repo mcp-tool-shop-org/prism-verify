@@ -23,6 +23,7 @@ from prism.core.citations import (
 from prism.core.routing import FamilyRouter, RouteSelection, RoutingError
 from prism.core.stripping import StripVerificationError, strip_reasoning
 from prism.core.submodularity import compute_pairwise_rho
+from prism.core.sycophancy_panel import panel_emission_decision
 from prism.core.types import (
     Artifact,
     ArtifactType,
@@ -496,25 +497,53 @@ class VerificationEngine:
             receipt=receipt,
         )
 
+    def _sycophancy_panel_members(
+        self, caller_family: ModelFamily
+    ) -> list[tuple[ModelFamily, ModelProvider]]:
+        """The caller-excluded panel: ONE provider per DISJOINT family (Lock 1; Panickssery
+        2404.13076). The LOCAL_SYCOPHANCY specialist is never a producer family, so it is always
+        eligible. De-duping to one lens per family keeps the panel decorrelated (two same-family
+        lenses are entangled, not independent — Kuai 2604.07650) AND guarantees the per-family lens
+        names never collide, so no receipt hash is dropped. Deterministic (by provider key, then
+        family) for replayable receipts.
+        """
+        by_family: dict[ModelFamily, ModelProvider] = {}
+        for key in sorted(self._providers):
+            provider = self._providers[key]
+            if provider.family == caller_family:
+                continue
+            by_family.setdefault(provider.family, provider)
+        return sorted(by_family.items(), key=lambda fp: fp[0].value)
+
     async def _verify_sycophancy(
         self, request: VerifyRequest
     ) -> VerifyResponse | VerifyError:
-        """Response path: the Sycophancy specialist lens judges (context=intent, response=artifact).
-
-        One mechanism/family-decorrelated specialist (its own family LOCAL_SYCOPHANCY), so the
-        same-mechanism-panel locks (MIN_LENSES / submodularity) do not apply — the >=3-lens panel +
-        >=2-agreement emission gate is the v0.2 design (design/sycophancy-v0.2-dispatch.md). Opt-in:
-        an unconfigured specialist REFUSES (VERIFIER_UNAVAILABLE), never a silent ACCEPT. Fail-open:
-        a provider/parse fault refuses (availability), never a false 'not_sycophantic'.
+        """Response path. With >= ``MIN_LENSES`` disjoint, caller-excluded families the engine runs
+        the family-decorrelated PANEL + >=2-agreement emission gate
+        (design/sycophancy-v0.2-dispatch.md); otherwise it falls back to today's single
+        certified-specialist lens so the shipped v1 path is byte-for-byte unchanged. Opt-in: an
+        unconfigured specialist REFUSES (VERIFIER_UNAVAILABLE), never a silent ACCEPT. Fail-open: a
+        provider/parse fault refuses (availability), never a false 'not_sycophantic'.
         """
-        provider = self._providers.get(ModelFamily.LOCAL_SYCOPHANCY.value)
-        if provider is None:
+        specialist = self._providers.get(ModelFamily.LOCAL_SYCOPHANCY.value)
+        if specialist is None:
             return VerifyError(
                 reason=RefusalReason.VERIFIER_UNAVAILABLE,
                 detail="sycophancy specialist not configured (set PRISM_SYCOPHANCY_ENDPOINT)",
                 retryable=False,
             )
+        members = self._sycophancy_panel_members(request.caller.model_family)
+        if len(members) >= MIN_LENSES:
+            return await self._verify_sycophancy_panel(request, members)
+        return await self._verify_sycophancy_single(request, specialist)
 
+    async def _verify_sycophancy_single(
+        self, request: VerifyRequest, provider: ModelProvider
+    ) -> VerifyResponse | VerifyError:
+        """The v1 single-lens path: ONE certified specialist (its own family LOCAL_SYCOPHANCY), so
+        the same-mechanism-panel locks (MIN_LENSES / submodularity) do not apply. Used when fewer
+        than MIN_LENSES disjoint families are available; behavior is unchanged from v1.
+        """
         # Lock 2: strip producer reasoning from the response before the lens sees it.
         try:
             strip_result = strip_reasoning(request.artifact.content)
@@ -580,6 +609,147 @@ class VerificationEngine:
             retryable=retryable,
             revision_hint=revision_hint,
             lens_results=[lens_result],
+            pairwise_rho={},
+            citation_results=[],
+            receipt=receipt,
+        )
+
+    async def _verify_sycophancy_panel(
+        self,
+        request: VerifyRequest,
+        members: list[tuple[ModelFamily, ModelProvider]],
+    ) -> VerifyResponse | VerifyError:
+        """The >=3-lens family-decorrelated panel + >=2-agreement calibrated emission gate.
+
+        Runs the SAME SycophancyLens against each disjoint, caller-excluded family in parallel. Like
+        the citation path, the same-mechanism submodularity / LENS_COLLAPSE refusal does NOT apply —
+        the panel's decorrelation is by FAMILY construction (caller-excluded) and AGREEMENT across
+        families is the emission SIGNAL, not a collapse to refuse. Emission is precision-first +
+        fail-open: >=2-agreement to flag (REVISE), a unanimous clear to ACCEPT, else abstain
+        (ESCALATE). A fault that drops the panel below two genuine votes refuses on availability,
+        never a false clear.
+        """
+        # Lock 2: strip producer reasoning once; every panel lens judges the same stripped response.
+        try:
+            strip_result = strip_reasoning(request.artifact.content)
+        except StripVerificationError:
+            return VerifyError(
+                reason=RefusalReason.STRIP_VERIFICATION_FAILED,
+                detail="Reasoning patterns survived stripping — cannot proceed safely",
+                retryable=False,
+            )
+        stripped = Artifact(
+            type=request.artifact.type,
+            content=strip_result.content,
+            spec_hash=request.artifact.spec_hash,
+        )
+
+        lens = SycophancyLens()
+        system_prompt, user_prompt = lens.build_prompts(stripped, request.intent)
+        prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
+
+        async def run_member(family: ModelFamily, provider: ModelProvider) -> LensResult:
+            model_id = provider.available_models[0]
+            result = await lens.evaluate(
+                stripped, request.intent, family.value, model_id, provider
+            )
+            # Per-family lens name so receipts + per-lens hashes never collide across the panel.
+            return result.model_copy(
+                update={"lens": f"sycophancy:{family.value}", "prompt_hash": prompt_hash}
+            )
+
+        try:
+            gathered = await asyncio.wait_for(
+                asyncio.gather(
+                    *(run_member(family, provider) for family, provider in members),
+                    return_exceptions=True,
+                ),
+                timeout=request.budget.max_latency_ms / 1000,
+            )
+        except TimeoutError:
+            return VerifyError(
+                reason=RefusalReason.BUDGET_EXCEEDED,
+                detail=(
+                    f"Sycophancy panel exceeded the {request.budget.max_latency_ms}ms budget"
+                ),
+                retryable=True,
+            )
+
+        lens_results: list[LensResult] = []
+        for (family, _provider), res in zip(members, gathered, strict=True):
+            if isinstance(res, BaseException):
+                lens_results.append(
+                    LensResult(
+                        lens=f"sycophancy:{family.value}",
+                        model_family=family.value,
+                        model_id="",
+                        outcome=LensOutcome.UNCERTAIN,
+                        findings=[
+                            Finding(
+                                category="provider_error",
+                                evidence=f"sycophancy lens raised: {res}",
+                                severity="major",
+                            )
+                        ],
+                        confidence=0.0,
+                        errored=True,
+                        prompt_hash=prompt_hash,
+                    )
+                )
+            else:
+                lens_results.append(res)
+
+        genuine = [lr for lr in lens_results if not lr.errored]
+        if len(genuine) < 2:
+            # Fail-open to availability, never a false clear off a single surviving lens.
+            return VerifyError(
+                reason=RefusalReason.VERIFIER_UNAVAILABLE,
+                detail=(
+                    f"sycophancy panel: only {len(genuine)} of {len(lens_results)} lenses gave a "
+                    "genuine adjudication (need >= 2)"
+                ),
+                retryable=True,
+            )
+
+        decision = panel_emission_decision(lens_results)
+        verdict = decision.verdict
+        confidence = min((lr.confidence for lr in genuine), default=0.0)
+        retryable = verdict == Verdict.REVISE
+        revision_hint: str | None = None
+        if decision.flagged:
+            hints = [
+                f.evidence
+                for lr in genuine
+                if lr.outcome == LensOutcome.FAIL
+                for f in lr.findings
+            ]
+            revision_hint = ("; ".join(hints) if hints else decision.rationale)[:500]
+
+        pre = hashlib.sha256(request.artifact.content.encode()).hexdigest()
+        post = hashlib.sha256(strip_result.content.encode()).hexdigest()
+        lens_prompt_hashes = {
+            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
+        }
+        receipt = self._receipt_store.create_receipt(
+            pre_strip_hash=pre,
+            post_strip_hash=post,
+            verifier_models=[lr.model_id for lr in genuine],
+            pairwise_rho={},
+            reasoning_visibility_mode=request.reasoning_visibility,
+            verdict=verdict.value,
+            confidence=confidence,
+            retryable=retryable,
+            lens_results_json=json.dumps([lr.model_dump() for lr in lens_results], default=str),
+            lens_prompt_hashes=lens_prompt_hashes,
+            artifact_type=request.artifact.type.value,
+            retrieval_pins=[],
+        )
+        return VerifyResponse(
+            verdict=verdict,
+            confidence=confidence,
+            retryable=retryable,
+            revision_hint=revision_hint,
+            lens_results=lens_results,
             pairwise_rho={},
             citation_results=[],
             receipt=receipt,
