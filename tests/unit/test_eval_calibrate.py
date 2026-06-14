@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from prism.eval.calibrate import family_ab, pairwise_prefer, rho_threshold_sweep
+from prism.core.types import ModelFamily
+from prism.eval.calibrate import (
+    _mcnemar_delta_ci,
+    compute_family_ab,
+    discover_families,
+    pairwise_prefer,
+    pick_ab_pair,
+    rho_threshold_sweep,
+)
 from prism.eval.corpus import Sample
 from prism.eval.runner import EvalRun, RunRecord
 
@@ -119,7 +127,8 @@ class TestUnavailableExcluded:
         assert sweep.baseline_accuracy == 1.0
 
     def test_family_ab_accuracy_matches_genuine_only(self) -> None:
-        # family_ab reuses _accuracy(_sample_rows) — confirm the sibling migration covers it too.
+        # compute_family_ab reuses _correct_by_sample (the unavailable-exclusion rule) — confirm
+        # the pairing drops unavailable records on both arms.
         run = self._run_with_unavailable()
         # control run: same samples but s1's genuine modal verdict is wrong (accept on a positive).
         same = EvalRun(
@@ -133,20 +142,136 @@ class TestUnavailableExcluded:
             verifier_label="t",
             caller_family="anthropic",
         )
-        ab = family_ab(run, same)
+        ab = compute_family_ab(run, same)
+        assert ab.n_paired == 2  # both samples measured on BOTH arms (unavailable runs dropped)
         assert ab.family_different_accuracy == 1.0  # both genuine-correct
         assert ab.same_family_accuracy == 0.5  # s1 genuine-wrong, s2 correct (unavailable ignored)
         assert ab.delta == 0.5
+        assert ab.family_different_correct == 2
+        assert ab.same_family_correct == 1
 
 
 class TestFamilyAB:
     def test_positive_delta_when_family_different_wins(self) -> None:
         diff = _run([("s1", True, "refuse", 0.1), ("s2", True, "refuse", 0.1)])  # both correct
         same = _run([("s1", True, "accept", 0.1), ("s2", True, "refuse", 0.1)])  # one wrong
-        ab = family_ab(diff, same)
+        ab = compute_family_ab(diff, same)
+        assert ab.n_paired == 2
         assert ab.family_different_accuracy == 1.0
         assert ab.same_family_accuracy == 0.5
         assert ab.delta == 0.5
+
+    def test_paired_mcnemar_known_answer(self) -> None:
+        """Hand-computed paired delta + Wald CI on a 4-sample fixture.
+
+        T vs C correctness per sample (positive samples -> refuse=correct, accept=wrong):
+          s1: T correct,   C wrong    -> b (discordant, treatment-favoring)
+          s2: T correct,   C wrong    -> b
+          s3: T wrong,     C correct  -> c (discordant, control-favoring)
+          s4: T correct,   C correct  -> concordant
+        So n=4, b=2, c=1.
+          delta = (b - c)/n = (2 - 1)/4 = 0.25
+          fd_acc = 3/4 = 0.75 ; sf_acc = 2/4 = 0.50 ; fd_acc - sf_acc = 0.25  (matches delta)
+          Var = [(b+c) - (b-c)^2/n] / n^2 = [3 - 1/4] / 16 = 2.75/16 = 0.171875
+          SE  = sqrt(0.171875) = 0.4145781...
+          CI  = 0.25 +/- 1.96*SE = [-0.56257..., 1.06257...] -> hi clamped to 1.0
+        """
+        import math as _math
+        treatment = _run(
+            [
+                ("s1", True, "refuse", 0.1),  # correct
+                ("s2", True, "refuse", 0.1),  # correct
+                ("s3", True, "accept", 0.1),  # wrong
+                ("s4", True, "refuse", 0.1),  # correct
+            ]
+        )
+        control = _run(
+            [
+                ("s1", True, "accept", 0.1),  # wrong
+                ("s2", True, "accept", 0.1),  # wrong
+                ("s3", True, "refuse", 0.1),  # correct
+                ("s4", True, "refuse", 0.1),  # correct
+            ]
+        )
+        ab = compute_family_ab(treatment, control)
+        assert ab.n_paired == 4
+        assert ab.family_different_correct == 3
+        assert ab.same_family_correct == 2
+        assert ab.family_different_accuracy == 0.75
+        assert ab.same_family_accuracy == 0.50
+        assert ab.delta == 0.25
+        lo, hi = ab.delta_ci
+        expected_se = _math.sqrt(((2 + 1) - (2 - 1) ** 2 / 4) / 16)  # sqrt(2.75/16)
+        assert abs(lo - (0.25 - 1.96 * expected_se)) < 1e-9
+        assert hi == 1.0  # upper bound clamped to 1.0
+
+    def test_pairing_excludes_samples_not_measured_on_both_arms(self) -> None:
+        """Only the intersection of measured samples is paired; one-arm-only samples are dropped."""
+        treatment = _run([("s1", True, "refuse", 0.1), ("s2", True, "refuse", 0.1)])
+        # control measured only s1 (s2 never appears) -> intersection is {s1}.
+        control = _run([("s1", True, "refuse", 0.1)])
+        ab = compute_family_ab(treatment, control)
+        assert ab.n_paired == 1
+
+    def test_all_unavailable_control_yields_n_paired_zero(self) -> None:
+        """Control arm produced no genuine verdict anywhere -> empty intersection -> n_paired==0."""
+        treatment = _run([("s1", True, "refuse", 0.1), ("s2", True, "refuse", 0.1)])
+        control = EvalRun(
+            records=[
+                _rec("s1", "verifier_unavailable", 0.0, unavailable=True),
+                _rec("s2", "verifier_unavailable", 0.0, unavailable=True),
+            ],
+            samples={"s1": _sample("s1", positive=True), "s2": _sample("s2", positive=True)},
+            n_runs=1,
+            verifier_label="same-family-control",
+            caller_family="anthropic",
+        )
+        ab = compute_family_ab(treatment, control)
+        assert ab.n_paired == 0
+        assert ab.delta == 0.0
+        assert ab.delta_ci == (0.0, 0.0)
+
+
+class TestMcnemarCi:
+    def test_no_discordant_pairs_collapses_interval(self) -> None:
+        # b=c=0 over n concordant pairs: delta 0, variance 0 -> [0, 0].
+        assert _mcnemar_delta_ci(0, 0, 5) == (0.0, 0.0)
+
+    def test_symmetric_discordant_gives_zero_centered_interval(self) -> None:
+        lo, hi = _mcnemar_delta_ci(2, 2, 8)  # delta 0, but nonzero spread
+        assert lo < 0.0 < hi
+        assert abs(lo + hi) < 1e-9  # symmetric about 0
+
+
+class TestDiscovery:
+    def test_pick_ab_pair_first_cross_family_in_routing_order(self) -> None:
+        # anthropic routing order is GOOGLE, OPENAI, LOCAL. Only OPENAI + LOCAL available ->
+        # treatment is OPENAI (the first cross-family in routing order that is configured).
+        pair = pick_ab_pair(
+            ModelFamily.ANTHROPIC, {ModelFamily.ANTHROPIC, ModelFamily.OPENAI, ModelFamily.LOCAL}
+        )
+        assert pair.ok
+        assert pair.treatment == ModelFamily.OPENAI
+        assert pair.control == ModelFamily.ANTHROPIC
+
+    def test_pick_ab_pair_no_caller_provider_skips_with_reason(self) -> None:
+        pair = pick_ab_pair(ModelFamily.ANTHROPIC, {ModelFamily.OPENAI})
+        assert not pair.ok
+        assert pair.reason is not None and "caller family" in pair.reason
+
+    def test_pick_ab_pair_no_cross_family_skips_with_reason(self) -> None:
+        pair = pick_ab_pair(ModelFamily.ANTHROPIC, {ModelFamily.ANTHROPIC})
+        assert not pair.ok
+        assert pair.reason is not None and "cross-family" in pair.reason
+
+    def test_discover_families_from_providers(self) -> None:
+        from prism.eval.runner import MockProvider
+
+        providers = {
+            "local": MockProvider(family=ModelFamily.LOCAL),
+            "anthropic": MockProvider(family=ModelFamily.ANTHROPIC),
+        }
+        assert discover_families(providers) == {ModelFamily.LOCAL, ModelFamily.ANTHROPIC}
 
 
 class TestPairwisePrefer:

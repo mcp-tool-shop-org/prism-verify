@@ -382,11 +382,27 @@ def render_markdown(report: ReportData) -> str:
 
     ab = report.family_ab
     if ab is not None:
+        fd_models = ", ".join(ab.family_different_model_ids) or "(not recorded)"
+        sf_models = ", ".join(ab.same_family_model_ids) or "(not recorded)"
+        ci_lo, ci_hi = ab.delta_ci
         lines.append("## Family-different vs same-family (Lock 1 A/B)")
         lines.append("")
-        lines.append(f"- Family-different accuracy: **{_fmt(ab.family_different_accuracy)}**")
-        lines.append(f"- Same-family control accuracy: **{_fmt(ab.same_family_accuracy)}**")
-        lines.append(f"- Delta (family-different - same-family): **{_fmt(ab.delta)}**")
+        lines.append(
+            f"- Paired samples (measured by both arms): **{ab.n_paired}** "
+            "(McNemar-paired over the intersection)"
+        )
+        lines.append(
+            f"- Family-different accuracy: **{_fmt(ab.family_different_accuracy)}** "
+            f"({ab.family_different_correct}/{ab.n_paired} correct) — verifier(s): **{fd_models}**"
+        )
+        lines.append(
+            f"- Same-family control accuracy: **{_fmt(ab.same_family_accuracy)}** "
+            f"({ab.same_family_correct}/{ab.n_paired} correct) — verifier(s): **{sf_models}**"
+        )
+        lines.append(
+            f"- Delta (family-different - same-family): **{_fmt(ab.delta)}** "
+            f"(95% CI [{_fmt(ci_lo)}, {_fmt(ci_hi)}], paired McNemar Wald)"
+        )
         lines.append(f"- {ab.note}")
         lines.append("")
     return "\n".join(lines)

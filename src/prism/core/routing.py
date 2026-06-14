@@ -7,6 +7,13 @@ Justification:
 - Panickssery/Bowman/Feng NeurIPS 2024: self-recognition correlates linearly with self-preference
 - Wataoka 2024: self-preference bias is perplexity-driven (familiarity = correctness regression)
 - Li et al. ICLR 2026: same-lineage judges favor outputs even without identity disclosure
+
+MEASUREMENT-ONLY ESCAPE HATCH (``FamilyRouter(allow_same_family=True)``): the ONLY way to disable
+Lock 1. It exists solely so the ``prism eval --family-ab`` calibration can build a same-family
+*control* arm and MEASURE the cost of self-preference. It defaults OFF and is set True in exactly
+one place — ``_build_same_family_control`` in the eval CLI. It MUST NEVER be plumbed to the
+production engine, the HTTP surface, the MCP surface, or the ``prism verify`` path. If you find
+yourself passing ``allow_same_family=True`` outside the family-AB control, you are defeating Lock 1.
 """
 
 from __future__ import annotations
@@ -150,9 +157,22 @@ class FamilyRouter:
     def __init__(
         self,
         routing_map: dict[ModelFamily, list[tuple[ModelFamily, str]]] | None = None,
+        *,
+        allow_same_family: bool = False,
     ) -> None:
+        """Construct the router.
+
+        Args:
+            routing_map: caller family -> ordered (alt_family, model_id) verifiers.
+            allow_same_family: MEASUREMENT-ONLY Lock-1 bypass. When True, the router will select a
+                same-family verifier (i.e. a route whose family == caller_family). DEFAULT False —
+                this is the ONLY switch that disables Lock 1 and must be set True in exactly one
+                place: ``_build_same_family_control`` for the ``--family-ab`` calibration control
+                arm. NEVER set it on a router serving production traffic (engine/HTTP/MCP/verify).
+        """
         self._routing_map = routing_map or DEFAULT_ROUTING_MAP
         self._circuits: dict[str, CircuitState] = {}
+        self._allow_same_family = allow_same_family
 
     def _get_circuit(self, key: str) -> CircuitState:
         if key not in self._circuits:
@@ -184,8 +204,9 @@ class FamilyRouter:
         candidates = self._routing_map.get(caller_family, [])
 
         for i, (family, model_id) in enumerate(candidates):
-            # Lock 1: never same-family (defensive check)
-            if family == caller_family:
+            # Lock 1: never same-family (defensive check). The ONLY exception is the
+            # measurement-only ``allow_same_family`` bypass used by the --family-ab control arm.
+            if family == caller_family and not self._allow_same_family:
                 continue
 
             # Walk past families with no configured provider instead of selecting an
@@ -266,7 +287,9 @@ class FamilyRouter:
         past_failed = False
 
         for i, (family, model_id) in enumerate(candidates):
-            if family == caller_family:
+            # Mirror the Lock-1 gate from select_verifier: same-family is skipped unless the
+            # measurement-only bypass is set (the --family-ab control arm).
+            if family == caller_family and not self._allow_same_family:
                 continue
             if model_id == failed_model_id:
                 past_failed = True

@@ -34,10 +34,13 @@ from prism.probes.sycophancy import (
 from prism.providers.base import ModelProvider
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
     from prism.core.engine import VerificationEngine
+    from prism.eval.corpus import Sample
     from prism.eval.report import ReportData
+    from prism.eval.runner import EvalRun
     from prism.receipts.store import ReceiptStore
 
 
@@ -478,8 +481,14 @@ def _write_run_receipt(
 def _build_same_family_control(
     offline: bool, out_dir: Path, caller_family: str
 ) -> VerificationEngine:
-    """A same-family control engine for the Lock-1 A/B: route the caller family back to itself
-    (the default router forbids this; that's Lock 1's point - the control measures its cost)."""
+    """A same-family control engine for the Lock-1 A/B: route the caller family back to itself.
+
+    The default router forbids same-family selection — that is Lock 1's whole point — so this is
+    the ONLY place that sets the measurement-only ``allow_same_family=True`` bypass. It is scoped
+    to this throwaway control engine (a private receipt DB under --out) and is never returned to or
+    shared with the production engine / HTTP / MCP / verify path. Offline, the verifier is a
+    deterministic SELF-PREFERRING mock (``same_family_self_preferring_policy``) that over-accepts,
+    so the offline A/B yields a signed-positive delta proving the wiring (machinery, not data)."""
     from prism.core.engine import VerificationEngine
     from prism.core.routing import FamilyRouter
     from prism.core.setup import build_providers_from_env, register_default_lenses
@@ -489,12 +498,19 @@ def _build_same_family_control(
     register_default_lenses()
     fam = ModelFamily(caller_family)
     db = out_dir / "eval-control-receipts.db"
-    router = FamilyRouter(routing_map={fam: [(fam, f"{caller_family}-control")]})
+    # allow_same_family=True is the measurement-only Lock-1 bypass; scoped to this control engine.
+    router = FamilyRouter(
+        routing_map={fam: [(fam, f"{caller_family}-control")]}, allow_same_family=True
+    )
     if offline:
-        from prism.eval.runner import MockProvider
+        from prism.eval.runner import MockProvider, same_family_self_preferring_policy
 
         providers: dict[str, ModelProvider] = {
-            caller_family: MockProvider(family=fam, model_id=f"{caller_family}-control")
+            caller_family: MockProvider(
+                same_family_self_preferring_policy,
+                family=fam,
+                model_id=f"{caller_family}-control",
+            )
         }
         store = ReceiptStore(db_path=db, signing_secret=b"eval-offline-secret")
     else:
@@ -507,6 +523,70 @@ def _build_same_family_control(
         providers = {caller_family: configured[caller_family]}
         store = ReceiptStore(db_path=db)
     return VerificationEngine(providers=providers, router=router, receipt_store=store)
+
+
+def _run_family_ab(
+    report: ReportData,
+    treatment_run: EvalRun,
+    samples: Sequence[Sample],
+    content_hash: str,
+    offline: bool,
+    out: Path,
+    caller_family: str,
+    runs: int,
+) -> None:
+    """Run the same-family control arm and attach the paired Lock-1 A/B result — or SKIP it loudly.
+
+    Fail-loud contract (F-01 1D): we NEVER emit a meaningless delta (the old bug measured
+    family_different - 0.0 over zero rows, silently). Instead:
+      (i)   pick_ab_pair runs FIRST on the discovered families; if the A/B cannot run (no caller
+            provider -> no control, or no cross-family verifier -> no treatment) we print the named
+            reason and skip. Offline is a synthetic wiring proof, so it bypasses discovery.
+      (ii)  the control run gets the SAME corpus_content_hash and we ANDON-refuse on any mismatch.
+      (iii) when n_paired == 0 (the control produced no genuine verdict — e.g. the Lock-1 bypass
+            failed) we refuse rather than reporting delta = fd - 0.0.
+    """
+    from prism.eval.calibrate import compute_family_ab, discover_families, pick_ab_pair
+    from prism.eval.runner import run_eval
+
+    if not offline:
+        from prism.core.setup import build_providers_from_env
+
+        available = discover_families(build_providers_from_env())
+        pair = pick_ab_pair(ModelFamily(caller_family), available)
+        if not pair.ok:
+            click.echo(f"Skipping --family-ab: {pair.reason}", err=True)
+            return
+
+    control = _build_same_family_control(offline, out, caller_family)
+    control_run = asyncio.run(
+        run_eval(
+            control,
+            samples,
+            caller_family=caller_family,
+            n_runs=runs,
+            verifier_label="same-family-control",
+            corpus_content_hash=content_hash,
+        )
+    )
+
+    # ANDON: the two arms must be scored over byte-identical corpora or the delta is comparing
+    # different things. Refuse on any content-hash mismatch.
+    if control_run.corpus_content_hash != treatment_run.corpus_content_hash:
+        raise click.ClickException(
+            "--family-ab ANDON halt: the control arm's corpus content-hash "
+            f"({control_run.corpus_content_hash!r}) does not match the treatment arm's "
+            f"({treatment_run.corpus_content_hash!r}); refusing to report a cross-corpus delta."
+        )
+
+    ab = compute_family_ab(treatment_run, control_run)
+    if ab.n_paired == 0:
+        raise click.ClickException(
+            "--family-ab ANDON halt: the same-family control arm produced no genuine verdict "
+            "(Lock-1 bypass failed?), so there is nothing to pair; refusing to report delta = "
+            "family_different - 0.0."
+        )
+    report.family_ab = ab
 
 
 @cli.command("eval")
@@ -615,19 +695,7 @@ def eval_cmd(
     )
     report = summarize(run)
     if family_ab_flag:
-        from prism.eval.calibrate import family_ab as compute_family_ab
-
-        control = _build_same_family_control(offline, out, caller_family)
-        control_run = asyncio.run(
-            run_eval(
-                control,
-                samples,
-                caller_family=caller_family,
-                n_runs=runs,
-                verifier_label="same-family-control",
-            )
-        )
-        report.family_ab = compute_family_ab(run, control_run)
+        _run_family_ab(report, run, samples, content_hash, offline, out, caller_family, runs)
     (out / "report.md").write_text(render_markdown(report), encoding="utf-8")
     (out / "report.json").write_text(render_json(report), encoding="utf-8")
     _write_run_receipt(store, report, Path(corpus_dir), out)

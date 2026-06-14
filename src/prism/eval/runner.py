@@ -102,6 +102,25 @@ def default_offline_policy(lens: str, artifact: str) -> tuple[str, float]:
     return outcome, confidence
 
 
+def same_family_self_preferring_policy(lens: str, artifact: str) -> tuple[str, float]:
+    """Deterministic OFFLINE control policy: a same-family judge that OVER-ACCEPTS (self-prefers).
+
+    Models the empirical self-preference failure (Panickssery 2024): a same-family verifier is too
+    forgiving of the producer's output and MISSES defects. Here it ALWAYS returns PASS, so the
+    control engine never flags anything and accepts every artifact — wrong on every positive
+    (defect-bearing) sample, while the family-different treatment (``default_offline_policy``) still
+    catches a content-varying share of them. Over the paired corpus this yields a DETERMINISTIC,
+    SIGNED-POSITIVE delta (treatment > control), proving the --family-ab wiring end-to-end at zero
+    cost. It is MACHINERY, not evidence: it is a fixed mock, not a measurement of any real model's
+    self-preference (the report says so). Used only by ``_build_same_family_control``'s offline arm.
+    """
+    # Confidence is deterministic + content-varying so calibration paths still exercise (and so the
+    # over-accepts are confidently wrong, the realistic self-preference shape).
+    h = int(hashlib.sha256(f"selfpref\x00{lens}\x00{artifact}".encode()).hexdigest(), 16)
+    confidence = 0.5 + (h % 50) / 100.0  # 0.50..0.99, deterministic
+    return "pass", confidence
+
+
 class MockProvider(ModelProvider):
     """Deterministic mock verifier for offline runs/tests. On FAIL it returns lens-distinct
     findings, so the submodularity check never spuriously collapses (distinct finding category)."""
