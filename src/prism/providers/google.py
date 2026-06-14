@@ -12,9 +12,12 @@ from prism.providers.base import (
     CompletionResponse,
     ModelProvider,
     ProviderError,
+    log_provider_failure,
+    log_provider_success,
 )
 
 DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com"
+_NAME = "google"
 
 
 class GoogleProvider(ModelProvider):
@@ -75,19 +78,30 @@ class GoogleProvider(ModelProvider):
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=elapsed, status=e.response.status_code
+            )
             retryable = e.response.status_code in (429, 500, 502, 503)
             raise ProviderError(
                 f"Gemini API error: {e.response.status_code}", retryable=retryable
             ) from e
         except httpx.TimeoutException as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("Gemini API timed out", retryable=True) from e
         except httpx.TransportError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("Gemini API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
         try:
             data = response.json()
         except ValueError as e:
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=latency_ms, status=response.status_code
+            )
             raise ProviderError(
                 f"Gemini returned a non-JSON body (HTTP {response.status_code})",
                 retryable=True,
@@ -109,6 +123,7 @@ class GoogleProvider(ModelProvider):
 
         usage = data.get("usageMetadata", {}) if isinstance(data, dict) else {}
 
+        log_provider_success(_NAME, model_id, latency_ms=latency_ms)
         return CompletionResponse(
             content=content,
             model_id=model_id,

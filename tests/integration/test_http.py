@@ -406,7 +406,7 @@ class TestDeadLetterLogging:
         import logging
 
         # The async path runs engine.verify(); a VerifyError there must be dead-lettered with a
-        # structured ERROR log AND counted in /healthz — never swallowed.
+        # structured WARNING log AND counted in /healthz — never swallowed.
         err = VerifyError(
             reason=RefusalReason.VERIFIER_UNAVAILABLE, detail="all routes open", retryable=True
         )
@@ -416,7 +416,7 @@ class TestDeadLetterLogging:
             webhook_secret=b"wh",
             webhook_resolver=lambda _h, _p: ["93.184.216.34"],
         )
-        with caplog.at_level(logging.ERROR, logger="prism.http"):
+        with caplog.at_level(logging.WARNING, logger="prism.http"):
             with TestClient(app) as client:  # context-manager drains the async task on shutdown
                 resp = client.post(
                     "/verify",
@@ -426,11 +426,166 @@ class TestDeadLetterLogging:
                 assert resp.status_code == 202
             # After lifespan shutdown the in-flight delivery has run and dead-lettered.
             health = TestClient(make_app(store)).get("/healthz").json()  # fresh app: own counter
-        # The original app logged an ERROR for the dead-letter (assert via caplog, not memory).
+        # The original app logged a WARNING for the dead-letter (assert via caplog, not memory).
         assert any(
-            rec.levelno == logging.ERROR and "dead-lettered" in rec.getMessage()
+            rec.levelno == logging.WARNING and "dead-lettered" in rec.getMessage()
             for rec in caplog.records
         )
         assert "VERIFIER_UNAVAILABLE" in caplog.text
         # Sanity: a clean /healthz still reports a numeric dead_letters counter.
         assert isinstance(health["dead_letters"], int)
+
+
+class TestAccessLog:
+    """SVC-B-001: one structured access-log line per request + X-Request-ID correlation."""
+
+    def test_request_emits_one_access_log_line_and_returns_request_id(self, store, caplog):
+        import logging
+
+        client = TestClient(make_app(store))
+        with caplog.at_level(logging.INFO, logger="prism.http.access"):
+            resp = client.post("/verify", json=VERIFY_BODY)
+        assert resp.status_code == 200
+        # A correlation id is always returned.
+        assert resp.headers.get("X-Request-ID")
+        access = [r for r in caplog.records if r.name == "prism.http.access"]
+        assert len(access) == 1
+        rec = access[0]
+        # Structured fields ride on the LogRecord (extra=...), not just the message text.
+        assert rec.method == "POST"
+        assert rec.path == "/verify"
+        assert rec.status == 200
+        assert isinstance(rec.latency_ms, float)
+        # For /verify the verdict is surfaced when available.
+        assert rec.verdict == "accept"
+        # The access line carries the same request id that was returned to the client.
+        assert rec.request_id == resp.headers["X-Request-ID"]
+
+    def test_inbound_request_id_is_echoed_and_logged(self, store, caplog):
+        import logging
+
+        client = TestClient(make_app(store))
+        with caplog.at_level(logging.INFO, logger="prism.http.access"):
+            resp = client.post(
+                "/verify", json=VERIFY_BODY, headers={"X-Request-ID": "rid-fixed-123"}
+            )
+        assert resp.headers["X-Request-ID"] == "rid-fixed-123"
+        access = [r for r in caplog.records if r.name == "prism.http.access"]
+        assert len(access) == 1
+        assert access[0].request_id == "rid-fixed-123"
+
+    def test_request_id_is_bound_for_engine_via_contextvar(self, store, caplog):
+        # The middleware must set the request id via the shared observability contextvar so the
+        # engine/provider logs (which read get_request_id()) correlate with the access line.
+        import logging
+
+        from prism.core.observability import get_request_id
+
+        seen: dict[str, str] = {}
+
+        class CapturingEngine:
+            _providers = {"local": object()}
+
+            async def verify(self, _req):
+                seen["rid"] = get_request_id()
+                return await FakeEngine(store).verify(_req)
+
+        app = create_app(
+            engine=CapturingEngine(),
+            store=store,
+            authenticator=Authenticator(set(), allow_no_auth=True),
+        )
+        client = TestClient(app)
+        with caplog.at_level(logging.INFO, logger="prism.http.access"):
+            resp = client.post(
+                "/verify", json=VERIFY_BODY, headers={"X-Request-ID": "rid-ctx"}
+            )
+        assert resp.headers["X-Request-ID"] == "rid-ctx"
+        assert seen["rid"] == "rid-ctx"  # engine saw the same id via the contextvar
+
+    def test_access_log_never_contains_the_api_key(self, store, caplog):
+        import logging
+
+        key, key_hash = generate_api_key()
+        client = TestClient(make_app(store, authenticator=Authenticator({key_hash})))
+        with caplog.at_level(logging.INFO, logger="prism.http.access"):
+            client.post(
+                "/verify", json=VERIFY_BODY, headers={"Authorization": f"Bearer {key}"}
+            )
+        assert key not in caplog.text  # never log credentials
+
+
+class TestHealthzBreakerState:
+    """SVC-B-003: /healthz reports configured families AND open circuit-breaker state."""
+
+    def test_healthz_reports_degraded_when_a_breaker_is_open(self, store):
+        from prism.core.engine import VerificationEngine
+        from prism.core.routing import FamilyRouter
+        from prism.core.types import ModelFamily
+
+        # A real engine + router so /healthz can read the breaker state. Force a route's circuit
+        # open by reporting enough failures to trip the threshold.
+        router = FamilyRouter()
+        for _ in range(3):
+            router.report_failure(ModelFamily.GOOGLE, "gemini-2.5-pro")
+        engine = VerificationEngine(
+            providers={"local": object()},  # type: ignore[dict-item]
+            router=router,
+            receipt_store=store,
+        )
+        app = create_app(
+            engine=engine, store=store, authenticator=Authenticator(set(), allow_no_auth=True)
+        )
+        body = TestClient(app).get("/healthz").json()
+        assert body["status"] == "ok"  # liveness stays 200/ok
+        assert body["degraded"] is True
+        opens = {v["provider"] for v in body["verifiers"] if v["open"]}
+        assert "google:gemini-2.5-pro" in opens
+
+    def test_healthz_not_degraded_when_all_breakers_closed(self, store):
+        body = TestClient(make_app(store)).get("/healthz").json()
+        assert body["degraded"] is False
+        assert all(not v["open"] for v in body["verifiers"])
+
+
+class TestDeadLetterInspection:
+    """SVC-B-004: dead-letters are WARN-logged with ops context + inspectable on /healthz."""
+
+    def test_dead_letter_logs_warning_with_target_host_and_is_inspectable(self, store, caplog):
+        import logging
+
+        # A delivery that fails permanently (sender returns 404 -> fast-fail, no backoff sleeps)
+        # must WARN-log with the target host + attempt count + last status, and surface a bounded
+        # summary on /healthz an operator can inspect (the ring is wiped on restart, hence logged).
+        async def failing_sender(_url, _headers, _body):
+            return 404  # 4xx is a permanent client error in deliver() -> dead-letter, no retries
+
+        app = make_app(
+            store,
+            verdict="escalate",
+            webhook_secret=b"wh",
+            webhook_sender=failing_sender,
+            webhook_resolver=lambda _h, _p: ["93.184.216.34"],
+        )
+        with caplog.at_level(logging.WARNING, logger="prism.http"):
+            with TestClient(app) as client:  # context-manager drains the delivery task on shutdown
+                resp = client.post(
+                    "/verify",
+                    json={**VERIFY_BODY, "webhook": "https://hooks.example/x"},
+                    headers={"Prefer": "respond-async"},
+                )
+                assert resp.status_code == 202
+            # The dead-letter populates the SAME app's ring during lifespan drain (block exit), so
+            # query /healthz on that app afterward (healthz reads no store handle, only the ring).
+            health = TestClient(app).get("/healthz").json()
+        # WARN log carries the webhook target host (NOT the full URL/secret) + attempt context.
+        warn = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert any("hooks.example" in r.getMessage() for r in warn)
+        assert any('"status": 404' in r.getMessage() for r in warn)
+        # /healthz exposes a bounded recent dead-letter summary an operator can inspect.
+        assert health["dead_letters"] >= 1
+        recent = health["recent_dead_letters"]
+        assert isinstance(recent, list) and recent
+        assert recent[-1]["host"] == "hooks.example"
+        # No secret / signature material leaks into the summary.
+        assert all("signature" not in entry and "secret" not in entry for entry in recent)

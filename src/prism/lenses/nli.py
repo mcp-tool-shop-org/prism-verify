@@ -26,6 +26,11 @@ from typing import Any, Literal
 
 _TRUE = {"1", "true", "yes", "on"}
 DEFAULT_MODEL = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli"
+# P(entailment) threshold to call a claim "supported". Asymmetric on purpose: only the "supported"
+# call is thresholded, since over-escalation (refuted/insufficient) is the safe failure for a veto.
+# 0.55 is a deliberately modest bar — the floor is a corroboration check, not the primary lens.
+# Override per-process with PRISM_NLI_TAU; override per-call with the ``tau=`` argument.
+DEFAULT_TAU = 0.55
 NLIVerdict = Literal["supported", "refuted", "insufficient"]
 
 
@@ -35,10 +40,12 @@ def nli_floor_enabled() -> bool:
 
 
 def _tau() -> float:
+    """The effective P(entailment) "supported" threshold: PRISM_NLI_TAU if set and parseable as a
+    float, else DEFAULT_TAU. A garbage env value falls back to the default rather than raising."""
     try:
-        return float(os.getenv("PRISM_NLI_TAU", "0.55"))
+        return float(os.getenv("PRISM_NLI_TAU", str(DEFAULT_TAU)))
     except ValueError:
-        return 0.55
+        return DEFAULT_TAU
 
 
 @functools.lru_cache(maxsize=2)

@@ -18,6 +18,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import re
+import time
+from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from xml.etree import ElementTree as ET
 
@@ -28,6 +31,12 @@ from prism.core.types import Citation, ExistenceOutcome
 ARXIV_BASE = "https://export.arxiv.org/api/query"
 CROSSREF_BASE = "https://api.crossref.org/works"
 DEFAULT_MAILTO = "verify@prism-verify.dev"
+# Cache bound + TTL (EVS-B-007). The per-instance cache is unbounded by default in a naive impl,
+# which grows memory without limit over a long-lived process AND freezes stale-RESOLVED records
+# forever. Cap the live entries (LRU-ish: oldest evicted first) and expire entries after a TTL so
+# a citation re-decided after the window picks up an upstream correction (e.g. a withdrawn paper).
+DEFAULT_CACHE_MAX = 4096
+DEFAULT_CACHE_TTL_SECONDS = 3600.0  # 1 hour
 # Cap the upstream body we will parse. A compromised / redirected upstream could otherwise stream
 # an unbounded body and OOM the verifier (ET.fromstring / resp.json parse the FULL body). 5 MiB is
 # far above any real arXiv Atom feed or Crossref work record; over it -> UNRESOLVABLE, not
@@ -69,6 +78,7 @@ class _Record:
     title: str | None = None
     abstract: str | None = None
     sha256: str | None = None
+    cached_at: float = 0.0  # monotonic-ish stamp from the oracle's clock; set on cache insert
 
 
 def _norm_id(identifier: str) -> str:
@@ -126,12 +136,21 @@ class CitationOracle:
         client: httpx.AsyncClient | None = None,
         retry_delays: tuple[float, ...] = (1.0, 3.0),
         max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
+        cache_max: int = DEFAULT_CACHE_MAX,
+        cache_ttl: float = DEFAULT_CACHE_TTL_SECONDS,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._arxiv_base = arxiv_base
         self._crossref_base = crossref_base.rstrip("/")
         self._mailto = mailto
         self._retry_delays = retry_delays
         self._max_body_bytes = max_body_bytes
+        # Cache bound + TTL (EVS-B-007). cache_max < 1 disables the bound; cache_ttl <= 0 disables
+        # expiry. clock is injectable for deterministic TTL tests; defaults to a monotonic clock so
+        # a wall-clock step (NTP, DST) cannot make an entry look spuriously fresh or stale.
+        self._cache_max = cache_max
+        self._cache_ttl = cache_ttl
+        self._clock = clock
         # follow_redirects=False (SSRF-adjacent hardening): an upstream 3xx could otherwise steer
         # prism's GET to an arbitrary host. Both base URLs are already https (arXiv's historical
         # http->https 301 is moot now we hit https://export.arxiv.org directly), so a redirect from
@@ -141,7 +160,14 @@ class CitationOracle:
             follow_redirects=False,
             headers={"User-Agent": _USER_AGENT},
         )
-        self._cache: dict[str, _Record] = {}
+        # OrderedDict gives O(1) LRU-ish eviction: insertion order is the eviction order, and a
+        # served-fresh hit is moved to the end (most-recently-used) so it survives eviction longest.
+        self._cache: OrderedDict[str, _Record] = OrderedDict()
+
+    @property
+    def cache_size(self) -> int:
+        """Number of live entries currently held in the cache (for bound assertions / metrics)."""
+        return len(self._cache)
 
     async def _get(self, url: str, params: dict[str, str]) -> httpx.Response:
         """GET with light retry on transient rate-limit / 5xx (arXiv asks ~3s between calls)."""
@@ -180,7 +206,7 @@ class CitationOracle:
                 detail="no identifier (arXiv id or DOI); title-only is a fuzzy lower-trust tier",
             )
         norm = _norm_id(ident)
-        record = self._cache.get(norm)
+        record = self._cache_get(norm)
         if record is None:
             if _ARXIV_NEW.match(norm) or _ARXIV_OLD.match(norm):
                 record = await self._resolve_arxiv(norm)
@@ -190,9 +216,31 @@ class CitationOracle:
                 record = _Record(
                     "unresolvable", "", f"identifier {norm!r} is neither an arXiv id nor a DOI"
                 )
-            self._cache[norm] = record
+            self._cache_put(norm, record)
         # The title-match decision is recomputed per citation (NOT cached).
         return self._finalize(record, citation.title)
+
+    def _cache_get(self, key: str) -> _Record | None:
+        """Return a live (non-expired) cached record, or None. A TTL-expired entry is evicted and
+        treated as a miss so the next resolve re-fetches it (no frozen stale-RESOLVED verdict)."""
+        record = self._cache.get(key)
+        if record is None:
+            return None
+        if self._cache_ttl > 0 and (self._clock() - record.cached_at) > self._cache_ttl:
+            del self._cache[key]  # expired -> drop, force a re-fetch
+            return None
+        self._cache.move_to_end(key)  # mark most-recently-used (survives eviction longest)
+        return record
+
+    def _cache_put(self, key: str, record: _Record) -> None:
+        """Insert a record with its insertion stamp, evicting the oldest entries to keep the cache
+        at or below the configured bound (cache_max < 1 disables the bound)."""
+        record.cached_at = self._clock()
+        self._cache[key] = record
+        self._cache.move_to_end(key)
+        if self._cache_max >= 1:
+            while len(self._cache) > self._cache_max:
+                self._cache.popitem(last=False)  # evict the oldest (least-recently-used)
 
     def _finalize(self, record: _Record, claimed_title: str) -> ExistenceResult:
         if record.status == "fabricated":

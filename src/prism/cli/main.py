@@ -396,7 +396,9 @@ def serve(host: str, port: int) -> None:
     from prism.receipts.store import SigningSecretError
 
     try:
-        app = create_app()
+        # Running service should log: attach the prism.http stderr handler
+        # (access log + dead-letter WARNs). Library imports stay quiet by default.
+        app = create_app(configure_logging=True)
     except SigningSecretError as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
@@ -598,8 +600,18 @@ def eval_cmd(
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
+    from prism.eval.corpus import corpus_content_hash
+
+    content_hash = corpus_content_hash(samples)
     run = asyncio.run(
-        run_eval(engine, samples, caller_family=caller_family, n_runs=runs, verifier_label=label)
+        run_eval(
+            engine,
+            samples,
+            caller_family=caller_family,
+            n_runs=runs,
+            verifier_label=label,
+            corpus_content_hash=content_hash,
+        )
     )
     report = summarize(run)
     if family_ab_flag:

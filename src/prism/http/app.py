@@ -15,10 +15,12 @@ import json
 import logging
 import os
 import time
+import uuid
 from collections import OrderedDict
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -26,6 +28,7 @@ from pydantic import BaseModel, Field
 
 from prism import __version__
 from prism.core.engine import VerificationEngine
+from prism.core.observability import reset_request_id, set_request_id
 from prism.core.setup import build_providers_from_env, register_default_lenses
 from prism.core.types import (
     Artifact,
@@ -61,7 +64,58 @@ IDEMPOTENCY_TTL_S = 600.0
 # every append also emits a structured log so nothing is silently buried.
 DEAD_LETTER_MAX = 1000
 
+# Header carrying the per-request correlation id (inbound, echoed back, and in the access log).
+REQUEST_ID_HEADER = "X-Request-ID"
+
+# How many recent dead-letters /healthz surfaces inline (the full ring is DEAD_LETTER_MAX). Keep the
+# inline summary small so a /healthz poll stays cheap; operators get the rest from the WARN logs.
+HEALTHZ_DEAD_LETTER_SAMPLE = 10
+
 logger = logging.getLogger("prism.http")
+access_logger = logging.getLogger("prism.http.access")
+
+
+def _configure_http_logging(level: int | str = logging.INFO) -> None:
+    """Application-side logging setup for the prism HTTP service.
+
+    Called from the running service (``prism serve`` -> ``create_app(configure_logging=True)``), NOT
+    on bare library import: importing ``prism.http`` must never attach a handler to the root logger
+    (that would hijack a host application's logging config). This wires a single stderr handler with
+    a structured format onto the ``prism.http`` logger hierarchy (covering the ``prism.http.access``
+    child) only, leaving the root logger untouched, and is idempotent (re-calling adds no handler).
+    """
+    target = logging.getLogger("prism.http")
+    target.setLevel(level)
+    target.propagate = False  # own the prism.http subtree; do not double-emit via root
+    if any(getattr(h, "_prism_http", False) for h in target.handlers):
+        return  # idempotent: never stack duplicate handlers across repeated create_app() calls
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s %(name)s %(request_id)s %(message)s")
+    )
+    handler._prism_http = True  # type: ignore[attr-defined]  # marker for idempotency
+    handler.addFilter(_RequestIdFilter())
+    target.addHandler(handler)
+
+
+class _RequestIdFilter(logging.Filter):
+    """Ensure every record routed through the prism.http handler has a ``request_id`` attribute.
+
+    Records emitted by deep library code (or third parties that propagate here) may lack the field
+    the formatter references; default it from the contextvar so the configured format never raises.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "request_id"):
+            from prism.core.observability import get_request_id
+
+            record.request_id = get_request_id()
+        return True
+
+
+# Public name for the application-side logging setup (the ``create_app`` keyword shadows the module
+# function, so the implementation lives under ``_configure_http_logging`` and this is the export).
+configure_logging = _configure_http_logging
 
 
 class IdempotencyCache:
@@ -234,12 +288,24 @@ def create_app(
     webhook_sender: Sender | None = None,
     webhook_resolver: Resolver | None = None,
     max_artifact_bytes: int | None = None,
+    configure_logging: bool | None = None,
 ) -> FastAPI:
     """Build the prism FastAPI app. Dependencies are injectable for testing.
 
     Without injection: the receipt store + providers resolve from the environment (fail-closed —
     a missing signing key raises at construction, exactly like the CLI/MCP).
+
+    ``configure_logging`` gates application-side log handler setup (SVC-B-001). The default (None)
+    reads ``PRISM_HTTP_LOG`` from the environment so a bare ``import prism.http`` / library use
+    never attaches a root handler, while ``prism serve`` (which sets the env, or passes ``True``)
+    makes the access + dead-letter logs actually appear. ``False`` forces it off even if env is set.
     """
+    want_logging = (
+        os.environ.get("PRISM_HTTP_LOG") == "1" if configure_logging is None else configure_logging
+    )
+    if want_logging:
+        _configure_http_logging()
+
     if store is None:
         store = ReceiptStore()
     if engine is None:
@@ -270,13 +336,17 @@ def create_app(
     dead_letter: list[dict[str, Any]] = []
 
     def record_dead_letter(entry: dict[str, Any]) -> None:
-        """Log a structured ERROR and append to the bounded dead-letter ring (SURF-A-003).
+        """WARN-log a structured dead-letter; append it to the bounded ring (SURF-A-003/SVC-B-004).
 
-        Every append emits an ERROR so failures reach the operator log pipeline rather than being
-        silently buried in memory; the in-memory ring is capped at the most recent DEAD_LETTER_MAX.
+        Every append emits a WARNING with enough ops context (webhook target HOST — never the full
+        URL/query, which can carry tokens — attempt count, last status, refusal reason) so an
+        operator has a trace even though the ring is in-memory and wiped on restart. The ``entry``
+        carries NO secret/signature material by construction. The ring is capped at the most recent
+        ``DEAD_LETTER_MAX`` and a bounded sample is exposed on /healthz for live inspection.
         """
-        logger.error("async delivery dead-lettered: %s", json.dumps(entry, default=str))
-        dead_letter.append(entry)
+        access_safe = {k: v for k, v in entry.items() if k not in ("secret", "signature")}
+        logger.warning("async delivery dead-lettered: %s", json.dumps(access_safe, default=str))
+        dead_letter.append(access_safe)
         if len(dead_letter) > DEAD_LETTER_MAX:
             del dead_letter[:-DEAD_LETTER_MAX]
 
@@ -298,6 +368,45 @@ def create_app(
     )
     install_problem_handler(app)
 
+    @app.middleware("http")
+    async def access_log_middleware(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        """Per-request correlation id + one structured access-log line (SVC-B-001).
+
+        Reads an inbound ``X-Request-ID`` (or mints a uuid4 hex), binds it on the shared
+        observability contextvar for the request's duration so the engine/provider logs correlate
+        (reset in finally so the contextvar never leaks across requests), echoes it back in the
+        response header, and emits exactly ONE access line at request end with method/path/status/
+        latency_ms (and the /verify verdict when available). NEVER logs the Authorization header or
+        artifact content — only the safe request shape.
+        """
+        rid = request.headers.get(REQUEST_ID_HEADER) or uuid.uuid4().hex
+        token = set_request_id(rid)
+        start = time.perf_counter()
+        status = 500
+        response: Response | None = None
+        try:
+            response = await call_next(request)
+            status = response.status_code
+            return response
+        finally:
+            latency_ms = round((time.perf_counter() - start) * 1000, 3)
+            if response is not None:
+                response.headers[REQUEST_ID_HEADER] = rid
+            access_logger.info(
+                "request complete",
+                extra={
+                    "request_id": rid,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status": status,
+                    "latency_ms": latency_ms,
+                    "verdict": _verdict_of(request, response),
+                },
+            )
+            reset_request_id(token)
+
     def _authn(request: Request) -> dict[str, str]:
         """Authenticate AND meter every protected endpoint (the shared dependency).
 
@@ -312,9 +421,12 @@ def create_app(
 
     async def _deliver_async(body: VerifyHttpRequest, webhook_url: str) -> None:
         assert webhook_secret is not None  # checked before scheduling
+        host = _safe_host(webhook_url)  # host only — never the full URL (query may carry tokens)
         result = await engine.verify(_to_core_request(body))
         if isinstance(result, VerifyError):
-            record_dead_letter({"reason": result.reason.value, "detail": result.detail})
+            record_dead_letter(
+                {"host": host, "reason": result.reason.value, "detail": result.detail}
+            )
             return
         row = store.get_receipt(result.receipt.id) or {}
         outcome = await deliver(
@@ -329,19 +441,32 @@ def create_app(
         if not outcome.delivered:
             record_dead_letter(
                 {
+                    "host": host,
                     "receipt_id": result.receipt.id,
-                    "detail": outcome.detail,
+                    "attempts": outcome.attempts,
                     "status": outcome.status,
+                    "detail": outcome.detail,
                 }
             )
 
     @app.get("/healthz")
     async def healthz() -> dict[str, Any]:
+        # No auth (liveness endpoint) and no secret leakage. Status stays "ok"/200 for liveness, but
+        # we surface the configured families + per-route circuit-breaker state so a load balancer or
+        # operator can see a degraded/outage condition (any cross-family breaker OPEN while /verify
+        # may be 503ing) instead of a misleading bare "ok" (SVC-B-003). ``degraded`` flips on ANY
+        # open breaker (partial degradation is actionable); a FULL outage is visible as every entry
+        # in ``verifiers`` being ``open`` (and ``configured`` shows which families have a provider).
+        verifiers = _breaker_states(engine)
+        degraded = any(v["open"] for v in verifiers)
         return {
             "status": "ok",
             "version": __version__,
             "families": sorted(engine._providers.keys()),  # configured verifier families
-            "dead_letters": len(dead_letter),  # async deliveries that failed (also logged at ERROR)
+            "verifiers": verifiers,  # per cross-family route: configured + breaker open/closed
+            "degraded": degraded,  # True iff ANY known route's breaker is open
+            "dead_letters": len(dead_letter),  # async deliveries that failed (also WARN-logged)
+            "recent_dead_letters": dead_letter[-HEALTHZ_DEAD_LETTER_SAMPLE:],  # bounded; no secrets
         }
 
     @app.post("/verify")
@@ -421,6 +546,9 @@ def create_app(
             if idem_key is not None:
                 idempotency.pop(idem_key)  # do not cache a refusal as a committed result
             return verify_error_response_with_headers(result, rate_headers)
+        # Stash the verdict for the access-log middleware (it shares this Request object). The
+        # response body is not a reliable channel under BaseHTTPMiddleware; request.state is.
+        request.state.verdict = result.verdict.value
         payload = _jsonable(result.model_dump())
         if idem_key is not None:
             idempotency.set(idem_key, fingerprint, payload, 200)
@@ -478,3 +606,72 @@ def _jsonable(data: dict[str, Any]) -> dict[str, Any]:
 
 def _json(content: dict[str, Any], headers: dict[str, str], *, status: int = 200) -> JSONResponse:
     return JSONResponse(status_code=status, content=content, headers=headers)
+
+
+def _safe_host(url: str) -> str:
+    """Host (no scheme/path/query/credentials) of a webhook URL — safe to log/return.
+
+    The full URL can carry tokens in its path or query; only the host is operationally useful for a
+    dead-letter trace, so that is all we keep.
+    """
+    with suppress(ValueError):
+        return urlparse(url).hostname or "unknown"
+    return "unknown"
+
+
+def _verdict_of(request: Request, _response: Response | None) -> str | None:
+    """The /verify verdict for the access line, read from ``request.state`` (set by the handler).
+
+    The handler stashes the verdict on ``request.state.verdict`` before returning; the middleware
+    shares the same ``Request`` object so it reads it here. We do NOT parse the response body —
+    Starlette's BaseHTTPMiddleware re-wraps the handler's JSONResponse into a streaming response, so
+    ``response.body`` is not reliably populated. ``request.state`` is the robust channel. Returns
+    None for any route that did not set it (a refusal, an error, or a non-/verify route).
+    """
+    verdict = getattr(request.state, "verdict", None)
+    return verdict if isinstance(verdict, str) else None
+
+
+def _breaker_states(engine: VerificationEngine) -> list[dict[str, Any]]:
+    """Per cross-family route: its configured (family:model) id and circuit-breaker open/closed.
+
+    READ-ONLY view of the router state for /healthz (SVC-B-003). There is no public accessor on
+    ``FamilyRouter`` for *all* circuits, so this reads what is available without mutating routing:
+    the configured ``_routing_map`` (the set of candidate routes) and the already-instantiated
+    ``_circuits``. A route with no instantiated circuit has never failed → reported closed. We never
+    call ``_get_circuit`` (that would lazily CREATE state); we only read existing circuits, so a
+    /healthz poll never mutates routing structure. If the router does not expose these attributes
+    (an unexpected substitute), we degrade gracefully to reporting the configured families only.
+
+    NB for the core/routing owner: a small public accessor (e.g. ``FamilyRouter.breaker_snapshot()``
+    returning ``{circuit_key: is_open}``) would let /healthz stop reaching into ``_routing_map`` /
+    ``_circuits``. Reported as a nice-to-have; current code degrades gracefully without it.
+    """
+    router = getattr(engine, "_router", None)
+    routing_map = getattr(router, "_routing_map", None)
+    circuits = getattr(router, "_circuits", None)
+    if routing_map is None or circuits is None:
+        return []
+    available = set(engine._providers.keys())
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for candidates in routing_map.values():
+        for family, model_id in candidates:
+            circuit_key = f"{family.value}:{model_id}"
+            if circuit_key in seen:
+                continue
+            seen.add(circuit_key)
+            circuit = circuits.get(circuit_key)
+            # is_open is a property; reading it may auto-reset a cooled-down breaker (legitimate
+            # state read), but never creates a circuit — uninstantiated == closed by definition.
+            is_open = bool(circuit.is_open) if circuit is not None else False
+            out.append(
+                {
+                    "provider": circuit_key,
+                    "family": family.value,
+                    "model_id": model_id,
+                    "configured": family.value in available,
+                    "open": is_open,
+                }
+            )
+    return out

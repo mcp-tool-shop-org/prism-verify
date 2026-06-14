@@ -18,7 +18,9 @@ from prism.core.types import (
     LensOutcome,
     LensResult,
     ModelFamily,
+    RefusalReason,
     Verdict,
+    VerifyError,
     VerifyRequest,
     VerifyResponse,
 )
@@ -210,3 +212,154 @@ class TestCircuitBreakerGenuineResultFloor:
         circuit = router._get_circuit("local:mistral-small:24b")
         assert circuit.is_open is True
         assert router.successes == []  # success was never reported across all faulting requests
+
+
+# --- CORE-B-001: sycophancy single-lens path <-> circuit-breaker -------------------------------
+
+
+class _AlwaysErrorSycophancyProvider(ModelProvider):
+    """A LOCAL_SYCOPHANCY specialist whose every call raises — a flapping specialist."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    @property
+    def family(self) -> ModelFamily:
+        return ModelFamily.LOCAL_SYCOPHANCY
+
+    @property
+    def available_models(self) -> list[str]:
+        return ["sycophancy-14b-soup"]
+
+    async def complete(self, request: CompletionRequest) -> CompletionResponse:
+        self.calls += 1
+        raise ProviderError("simulated sycophancy specialist fault", retryable=True)
+
+    async def health_check(self) -> bool:
+        return True
+
+
+class _CleanSycophancyProvider(ModelProvider):
+    """A LOCAL_SYCOPHANCY specialist that returns a genuine non-errored 'pass' every call."""
+
+    @property
+    def family(self) -> ModelFamily:
+        return ModelFamily.LOCAL_SYCOPHANCY
+
+    @property
+    def available_models(self) -> list[str]:
+        return ["sycophancy-14b-soup"]
+
+    async def complete(self, request: CompletionRequest) -> CompletionResponse:
+        return CompletionResponse(
+            content='{"outcome": "pass", "confidence": 0.95, "findings": []}',
+            model_id="sycophancy-14b-soup",
+            latency_ms=1,
+        )
+
+    async def health_check(self) -> bool:
+        return True
+
+
+def _response_request() -> VerifyRequest:
+    # A RESPONSE artifact routes to the sycophancy path; with only the specialist configured the
+    # engine takes the single-lens path (< MIN_LENSES disjoint families).
+    return VerifyRequest(
+        artifact=Artifact(type=ArtifactType.RESPONSE, content="Yes, you're totally right!"),
+        intent="The Earth is flat, right?",
+        caller=CallerContext(model_family=ModelFamily.OPENAI, model_id="producer"),
+    )
+
+
+class TestSycophancySingleBreaker:
+    """CORE-B-001: the single sycophancy path wires the breaker — a flapping specialist trips."""
+
+    def _engine(self, provider: ModelProvider) -> tuple[VerificationEngine, _SpyRouter]:
+        router = _SpyRouter(routing_map={})
+        engine = VerificationEngine(
+            providers={"local-sycophancy": provider},
+            router=router,
+            receipt_store=ReceiptStore(signing_secret=b"core-b-001"),
+        )
+        return engine, router
+
+    async def test_error_reports_failure_and_trips_breaker(self):
+        provider = _AlwaysErrorSycophancyProvider()
+        engine, router = self._engine(provider)
+        key = "local-sycophancy:sycophancy-14b-soup"
+        for _ in range(CIRCUIT_BREAKER_THRESHOLD):
+            result = await engine.verify(_response_request())
+            assert isinstance(result, VerifyError)
+            assert result.reason == RefusalReason.VERIFIER_UNAVAILABLE
+        # Each erroring request reported a failure; none reported success -> breaker OPEN.
+        assert router.failures.count(("local-sycophancy", "sycophancy-14b-soup")) == (
+            CIRCUIT_BREAKER_THRESHOLD
+        )
+        assert ("local-sycophancy", "sycophancy-14b-soup") not in router.successes
+        assert router._get_circuit(key).is_open is True
+
+    async def test_genuine_result_reports_success(self):
+        provider = _CleanSycophancyProvider()
+        engine, router = self._engine(provider)
+        result = await engine.verify(_response_request())
+        assert isinstance(result, VerifyResponse)
+        assert result.verdict == Verdict.ACCEPT
+        # A clean genuine adjudication reports success (genuine-result floor), not failure.
+        assert ("local-sycophancy", "sycophancy-14b-soup") in router.successes
+        assert ("local-sycophancy", "sycophancy-14b-soup") not in router.failures
+
+
+# --- CORE-B-003: receipt-builder dedup is behavior-identical ------------------------------------
+
+
+class TestReceiptBuilderDedup:
+    """The extracted _build_and_store_receipt produces a VALIDLY SIGNED receipt on each path.
+
+    The byte-identity of the signed field-set is proven by the existing receipt/signature tests
+    (test_verify_pipeline.py + test_sycophancy_panel_engine.py) still passing after the extraction;
+    this adds a direct check that the single helper signs a verifiable receipt for the code path.
+    """
+
+    async def test_code_path_receipt_verifies_via_shared_builder(self):
+        _register_v1_lenses()
+        router = _SpyRouter(
+            routing_map={ModelFamily.ANTHROPIC: [(ModelFamily.LOCAL, "mistral-small:24b")]}
+        )
+        engine = VerificationEngine(
+            providers={"local": _CleanCodeProvider()},
+            router=router,
+            receipt_store=ReceiptStore(signing_secret=b"core-b-003"),
+        )
+        result = await engine.verify(_code_request())
+        assert isinstance(result, VerifyResponse)
+        # The receipt built by the shared helper verifies against the store (signed field-set
+        # intact) and its lens_prompt_hashes match the comprehension contract (no dropped hash).
+        assert engine._receipt_store.verify_signature(result.receipt.id) is True
+        expected_hashes = {
+            lr.lens: lr.prompt_hash
+            for lr in result.lens_results
+            if lr.prompt_hash is not None
+        }
+        assert result.receipt.lens_prompt_hashes == expected_hashes
+
+
+class _CleanCodeProvider(ModelProvider):
+    """A LOCAL verifier that PASSES every lens (for receipt-builder invariance on the code path)."""
+
+    @property
+    def family(self) -> ModelFamily:
+        return ModelFamily.LOCAL
+
+    @property
+    def available_models(self) -> list[str]:
+        return ["mistral-small:24b"]
+
+    async def complete(self, request: CompletionRequest) -> CompletionResponse:
+        return CompletionResponse(
+            content='{"outcome": "pass", "confidence": 0.95, "findings": []}',
+            model_id="mistral-small:24b",
+            latency_ms=1,
+        )
+
+    async def health_check(self) -> bool:
+        return True

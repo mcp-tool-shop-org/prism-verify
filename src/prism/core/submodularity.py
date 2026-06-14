@@ -11,11 +11,41 @@ is a documented extrapolation.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 from prism.core.types import Finding, LensResult
 
-DEFAULT_RHO_THRESHOLD = 0.25
+
+def _resolve_rho_max_default() -> float:
+    """The canonical runtime LENS_COLLAPSE threshold (ρ).
+
+    0.25 is the shipped default — Rajan 2025 (arXiv:2511.16708) observed ρ ∈ [0.05, 0.25] across
+    four agents on 99 code samples; a pair exceeding it is treated as collapsed to redundant signal.
+    ``PRISM_RHO_MAX`` overrides it (a deployment that calibrated its own cutoff on labeled data);
+    a malformed/non-finite override is ignored so a bad env var never silently weakens the gate.
+    """
+    raw = os.environ.get("PRISM_RHO_MAX")
+    if raw is None:
+        return 0.25
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return 0.25
+    # Only accept a sane probability-domain threshold; otherwise keep the shipped default.
+    if value != value or value < 0.0 or value > 1.0:  # NaN or out of [0, 1]
+        return 0.25
+    return value
+
+
+# Canonical named constant for the runtime LENS_COLLAPSE threshold (ρ). EVS-B-005: every site that
+# needs the default ρ cutoff (engine.py, this module, the eval sweep) imports THIS, so the value is
+# defined once. ``PRISM_RHO_MAX`` overrides the default 0.25; see ``_resolve_rho_max_default``.
+RHO_MAX_DEFAULT = _resolve_rho_max_default()
+
+# Backward-compatible alias (pre-EVS-B-005 name). Kept so existing imports / tests keep resolving;
+# both names point at the one canonical value.
+DEFAULT_RHO_THRESHOLD = RHO_MAX_DEFAULT
 
 
 @dataclass(frozen=True)

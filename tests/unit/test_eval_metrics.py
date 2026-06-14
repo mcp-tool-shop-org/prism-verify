@@ -123,6 +123,42 @@ class TestCoverageGain:
         assert cg.gain == 0
         assert math.isclose(cg.union_recall, 1.0)
 
+    def test_tie_break_is_deterministic_across_input_orderings(self) -> None:
+        # EVS-B-004: best-single + greedy marginal order must NOT depend on dict insertion order.
+        # Three lenses with EQUAL coverage (2 each) and a fully redundant fourth. Whatever input
+        # ordering is fed, the published best_single_lens and the greedy marginal chain must be
+        # identical — otherwise prism's "best/redundant lens" output is nondeterministic.
+        caught = {
+            "groundedness": {"a", "b"},
+            "invariant": {"c", "d"},
+            "contract_completeness": {"e", "f"},
+            "cross_boundary": {"a"},  # fully redundant (subset of groundedness)
+        }
+        orderings = [
+            list(caught.items()),
+            list(reversed(list(caught.items()))),
+            sorted(caught.items(), key=lambda kv: kv[0]),
+            sorted(caught.items(), key=lambda kv: kv[0], reverse=True),
+        ]
+        results = [coverage_gain(dict(order), total_positives=6) for order in orderings]
+        first = results[0]
+        for cg in results[1:]:
+            assert cg.best_single_lens == first.best_single_lens
+            assert cg.marginal_gains == first.marginal_gains
+            assert cg.best_single_size == first.best_single_size
+            assert cg.gain == first.gain
+        # On equal coverage, the deterministic tie-break is the alphabetically-first lens name.
+        assert first.best_single_lens == "contract_completeness"
+        # Greedy order: the three 2-coverage lenses come first in name order, then the redundant +0.
+        names = [lens for lens, _ in first.marginal_gains]
+        assert names == [
+            "contract_completeness",
+            "groundedness",
+            "invariant",
+            "cross_boundary",
+        ]
+        assert first.marginal_gains[-1] == ("cross_boundary", 0)
+
 
 class TestAstSimilarity:
     def test_structurally_identical_despite_renames(self) -> None:

@@ -69,6 +69,75 @@ def _run(samples: list[Sample], records: list[RunRecord], n_runs: int) -> EvalRu
     )
 
 
+class TestReproducibilityProvenance:
+    """EVS-B-001/002: the report must NAME which model(s) produced the numbers, at what temperature,
+    with which seed, over which corpus content-hash — so a published artifact is reproducible by
+    construction rather than asserted."""
+
+    def test_report_carries_resolved_models_temperature_seed_and_corpus_hash(self) -> None:
+        from prism.eval.report import render_json, render_markdown
+
+        s = _sample("s1", positive=True)
+        records = [_ok_record("s1", 0, verdict="refuse", confidence=0.8)]
+        run = EvalRun(
+            records=records,
+            samples={s.id: s},
+            n_runs=1,
+            verifier_label="ollama",
+            caller_family="anthropic",
+            resolved_model_ids=["qwen3:14b", "mistral:7b"],
+            effective_temperature=0.0,
+            seed=1234,
+            corpus_content_hash="deadbeef" * 8,
+        )
+        report = summarize(run)
+        assert report.resolved_model_ids == ["mistral:7b", "qwen3:14b"]  # deduped + sorted
+        assert math.isclose(report.effective_temperature, 0.0)
+        assert report.seed == 1234
+        assert report.corpus_content_hash == "deadbeef" * 8
+
+        md = render_markdown(report)
+        assert "qwen3:14b" in md and "mistral:7b" in md
+        assert "temp" in md.lower()
+        assert ("deadbeef" * 8)[:12] in md  # at least the short corpus-hash prefix is shown
+        assert all(ord(c) < 128 for c in md)  # ASCII-safe
+        import json as _json
+
+        _json.loads(render_json(report))
+
+    def test_report_handles_unrecorded_provenance_gracefully(self) -> None:
+        """An EvalRun built without provenance (older callers / tests) renders without crashing."""
+        from prism.eval.report import render_markdown
+
+        s = _sample("s1", positive=True)
+        run = _run([s], [_ok_record("s1", 0, verdict="refuse", confidence=0.8)], n_runs=1)
+        report = summarize(run)
+        assert report.resolved_model_ids == []
+        assert report.effective_temperature is None
+        assert report.seed is None
+        # Markdown still renders an honest "not recorded" rather than crashing.
+        md = render_markdown(report)
+        assert all(ord(c) < 128 for c in md)
+
+
+class TestPrevalenceCaveat:
+    """EVS-B-003: precision is reported raw at the corpus's balanced ~50% prevalence. The report
+    must SAY so (an explicit caveat), not let a reader mistake it for deployment precision."""
+
+    def test_precision_prevalence_caveat_present_when_a_lens_has_precision(self) -> None:
+        # A measured positive + clean pair gives the lens a precision number to caveat.
+        bug = _sample("b", positive=True)
+        clean = _sample("c", positive=False)
+        records = [
+            _ok_record("b", 0, verdict="refuse", confidence=0.8),
+            _ok_record("c", 0, verdict="accept", confidence=0.8),
+        ]
+        report = summarize(_run([bug, clean], records, n_runs=1))
+        assert any(
+            "precision" in n.lower() and "prevalence" in n.lower() for n in report.notes
+        ), f"missing prevalence caveat on precision: {report.notes}"
+
+
 class TestUnavailableExcludedFromMetrics:
     def test_partial_unavailable_uses_genuine_records_only(self) -> None:
         """A positive sample: 2 genuine correct flags @0.9 + 1 unavailable placeholder.

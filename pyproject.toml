@@ -19,35 +19,38 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 
+# Upper bounds cap the NEXT major only (DOC-B-005): a future major of any runtime dep could
+# silently change behavior the verifier's soundness relies on, so cap majors conservatively
+# (never pin patch/minor). httpx is pre-1.0, so its "major" is the 0.x minor -> cap at <1.
 dependencies = [
-    "pydantic>=2.0",
-    "httpx>=0.27",
-    "click>=8.0",
-    "ulid-py>=1.1",
+    "pydantic>=2.0,<3",
+    "httpx>=0.27,<1",
+    "click>=8.0,<9",
+    "ulid-py>=1.1,<2",
     # Ed25519 receipt signatures (v0.4): a different tool verifies a prism receipt with prism's
     # PUBLIC key, no shared secret. Core (not an extra) so `prism verify-receipt` always works.
-    "cryptography>=42.0",
+    "cryptography>=42.0,<46",
 ]
 
 [project.optional-dependencies]
-anthropic = ["anthropic>=0.40"]
-openai = ["openai>=1.50"]
-google = ["google-genai>=1.0"]
-mcp = ["mcp>=1.0"]
-http = ["fastapi>=0.115", "uvicorn>=0.30"]
+anthropic = ["anthropic>=0.40,<1"]
+openai = ["openai>=1.50,<2"]
+google = ["google-genai>=1.0,<2"]
+mcp = ["mcp>=1.0,<2"]
+http = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
 # Orthogonal NLI floor (opt-in): an encoder NLI cross-encoder vetoes a "supported" the LLM
 # groundedness lens gave but a mechanistically-different model does not corroborate. Heavy; opt-in.
-nli = ["torch>=2.0", "transformers>=4.40", "sentencepiece>=0.2"]
+nli = ["torch>=2.0,<3", "transformers>=4.40,<5", "sentencepiece>=0.2,<1"]
 all = [
-    "anthropic>=0.40",
-    "openai>=1.50",
-    "google-genai>=1.0",
-    "mcp>=1.0",
-    "fastapi>=0.115",
-    "uvicorn>=0.30",
-    "torch>=2.0",
-    "transformers>=4.40",
-    "sentencepiece>=0.2",
+    "anthropic>=0.40,<1",
+    "openai>=1.50,<2",
+    "google-genai>=1.0,<2",
+    "mcp>=1.0,<2",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "torch>=2.0,<3",
+    "transformers>=4.40,<5",
+    "sentencepiece>=0.2,<1",
 ]
 dev = [
     "pytest>=8.0",

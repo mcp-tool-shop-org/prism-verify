@@ -1,8 +1,13 @@
 """Tests for submodularity calculator (Lock 4)."""
 
+import importlib
+
 import pytest
 
+import prism.core.submodularity as submod
 from prism.core.submodularity import (
+    DEFAULT_RHO_THRESHOLD,
+    RHO_MAX_DEFAULT,
     compute_pairwise_rho,
     jaccard_similarity,
 )
@@ -134,3 +139,57 @@ class TestComputePairwiseRho:
         sub = compute_pairwise_rho(results)
         assert sub.passed is True
         assert all(v == 0.0 for v in sub.pairwise_rho.values())
+
+
+class TestRhoMaxDefaultConstant:
+    """EVS-B-005: the runtime LENS_COLLAPSE threshold is ONE canonical, exported constant."""
+
+    def test_canonical_default_is_025(self):
+        # The shipped default — Rajan's observed correlation ceiling.
+        assert RHO_MAX_DEFAULT == 0.25
+
+    def test_legacy_alias_points_at_canonical_value(self):
+        # The pre-EVS-B-005 name still resolves and equals the canonical constant (one source).
+        assert DEFAULT_RHO_THRESHOLD == RHO_MAX_DEFAULT
+
+    def test_compute_default_uses_the_constant(self):
+        # compute_pairwise_rho's default_threshold defaults to the canonical constant, so a pair at
+        # exactly RHO_MAX_DEFAULT passes (bound is `>`), matching the documented runtime gate.
+        a = self._lr("L1", [("f.py", 1, "a"), ("f.py", 2, "b")])
+        b = self._lr("L2", [("f.py", 1, "a"), ("f.py", 3, "c"), ("f.py", 4, "d")])  # rho=0.25
+        c = self._lr("L3", [("f.py", 99, "z")])
+        sub = compute_pairwise_rho([a, b, c])
+        assert sub.pairwise_rho["L1,L2"] == RHO_MAX_DEFAULT
+        assert sub.passed is True
+
+    def _lr(self, name, findings):
+        return LensResult(
+            lens=name,
+            model_family="google",
+            model_id="g",
+            outcome=LensOutcome.FAIL,
+            findings=[
+                Finding(file=f, line=ln, category=cat, evidence="t") for f, ln, cat in findings
+            ],
+            confidence=0.8,
+        )
+
+    def test_env_override_changes_default(self, monkeypatch):
+        # PRISM_RHO_MAX overrides the default at import time; a sane in-[0,1] value is honored.
+        monkeypatch.setenv("PRISM_RHO_MAX", "0.40")
+        reloaded = importlib.reload(submod)
+        try:
+            assert reloaded.RHO_MAX_DEFAULT == 0.40
+            assert reloaded.DEFAULT_RHO_THRESHOLD == 0.40
+        finally:
+            monkeypatch.delenv("PRISM_RHO_MAX", raising=False)
+            importlib.reload(submod)  # restore the shipped default for other tests
+
+    def test_malformed_env_override_falls_back_to_025(self, monkeypatch):
+        # A non-numeric / out-of-range override must NOT silently weaken (or break) the gate.
+        for bad in ("not-a-number", "-1", "2.0", "nan"):
+            monkeypatch.setenv("PRISM_RHO_MAX", bad)
+            reloaded = importlib.reload(submod)
+            assert reloaded.RHO_MAX_DEFAULT == 0.25, f"bad override {bad!r} should fall back"
+        monkeypatch.delenv("PRISM_RHO_MAX", raising=False)
+        importlib.reload(submod)  # restore

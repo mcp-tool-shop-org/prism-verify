@@ -17,6 +17,7 @@ ESCALATE); the oracle is mocked offline and live for a real run.
 # ruff: noqa: E501 — data module: embedded code/JSON corpus samples are clearer unwrapped.
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -26,6 +27,11 @@ from prism.core.types import ArtifactType
 
 CORPUS_CLASSES = ("code", "tool_call", "citations")
 SPLITS = ("public", "fresh")
+
+# Schema id for the content-hash canonicalization. Bump if the canonical form below changes, so an
+# old hash is never silently compared against a new canonicalization (the hash would shift for a
+# format reason, not a content reason, and drift detection would lie).
+CONTENT_HASH_SCHEMA = "prism-eval-corpus-content/v1"
 
 
 @dataclass(frozen=True)
@@ -348,6 +354,26 @@ def generate_samples(split: str) -> list[Sample]:
     return _code_samples(split) + _tool_samples(split) + _citation_samples(split)
 
 
+def corpus_content_hash(samples: list[Sample]) -> str:
+    """Deterministic SHA-256 over the canonicalized sample set (EVS-B-001).
+
+    The hash is a FINGERPRINT OF CONTENT, not of file layout or insertion order: each sample is
+    canonicalized to its full field set with sorted keys, the per-sample strings are sorted, and the
+    schema id is prefixed. So a count-preserving edit (different content/label, same number of
+    samples) flips the hash — drift is visible — while merely reordering the same samples, or
+    regenerating the identical corpus, leaves it unchanged. The report carries this hash so a reader
+    can assert "these numbers were measured on exactly this corpus."
+    """
+    canonical = sorted(json.dumps(s.to_dict(), sort_keys=True) for s in samples)
+    digest = hashlib.sha256()
+    digest.update(CONTENT_HASH_SCHEMA.encode("utf-8"))
+    digest.update(b"\x00")
+    for line in canonical:
+        digest.update(line.encode("utf-8"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def build_corpus(out_dir: Path) -> dict[str, object]:
     """Materialize the corpus to ``<out_dir>/<class>/<split>.jsonl`` + MANIFEST + prevalence.json.
 
@@ -356,8 +382,10 @@ def build_corpus(out_dir: Path) -> dict[str, object]:
     out_dir = Path(out_dir)
     counts: dict[str, dict[str, int]] = {}
     positives_per_lens: Counter[str] = Counter()
+    all_samples: list[Sample] = []
     for split in SPLITS:
         samples = generate_samples(split)
+        all_samples.extend(samples)
         by_class: dict[str, list[Sample]] = {c: [] for c in CORPUS_CLASSES}
         for s in samples:
             cls = "citations" if s.artifact_type == "citations" else s.artifact_type
@@ -372,21 +400,43 @@ def build_corpus(out_dir: Path) -> dict[str, object]:
                 "".join(json.dumps(s.to_dict()) + "\n" for s in items), encoding="utf-8"
             )
             counts.setdefault(split, {})[cls] = len(items)
+    n_pos = sum(1 for s in all_samples if s.positive)
     manifest: dict[str, object] = {
         "schema": "prism-eval-corpus/v1",
         "splits": list(SPLITS),
         "classes": list(CORPUS_CLASSES),
+        # EVS-B-001: content fingerprint of the canonicalized sample set (ids+content+labels). A
+        # count-preserving edit flips this; the report carries it so numbers trace to THIS corpus.
+        "content_hash": corpus_content_hash(all_samples),
+        "content_hash_schema": CONTENT_HASH_SCHEMA,
         "counts_by_split_class": counts,
         "positives_per_lens": dict(positives_per_lens),
+        # EVS-B-003: the corpus is balanced by construction (~50% positives), NOT a deployment-realistic
+        # prevalence. Precision is reported raw at this prevalence; surfaced here so a reader doesn't
+        # mistake it for a deployment estimate. (No prevalence re-weighting is applied — see note.)
+        "prevalence_positive_fraction": (n_pos / len(all_samples)) if all_samples else 0.0,
         "note": (
             "v1 authored/lens-targeted corpus. Counts are below the >=100/lens stability bar; the "
             "report pairs every rate with a Wilson interval. Real-bug ingestion (BugsInPy) is v1.1."
         ),
     }
     (out_dir / "MANIFEST.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    # EVS-B-003: prevalence.json is INFORMATIONAL ONLY — nothing reads it to re-weight precision, and
+    # we do not imply a correction we don't apply. ``buggy_per_kloc`` is a rough deployment defect
+    # DENSITY (not the corpus's ~50% positive fraction); kept as a forward-looking note for a future
+    # prevalence-aware precision (PPV) re-weighting, explicitly not wired in v1.
     (out_dir / "prevalence.json").write_text(
         json.dumps(
-            {"note": "Realistic defect prevalence for precision re-weighting.", "buggy_per_kloc": 1.5},
+            {
+                "note": (
+                    "INFORMATIONAL ONLY (v1): not read by the benchmark. Precision in the report is "
+                    "raw at the corpus's balanced ~50% prevalence, NOT re-weighted to this density. "
+                    "Future v1.x may use buggy_per_kloc for a prevalence-aware PPV; not wired yet."
+                ),
+                "buggy_per_kloc": 1.5,
+                "corpus_positive_fraction": manifest["prevalence_positive_fraction"],
+                "applied": False,
+            },
             indent=2,
         )
         + "\n",

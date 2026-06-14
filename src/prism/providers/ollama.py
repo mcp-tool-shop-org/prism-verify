@@ -12,9 +12,12 @@ from prism.providers.base import (
     CompletionResponse,
     ModelProvider,
     ProviderError,
+    log_provider_failure,
+    log_provider_success,
 )
 
 DEFAULT_BASE_URL = "http://localhost:11434"
+_NAME = "ollama"
 
 
 class OllamaProvider(ModelProvider):
@@ -70,34 +73,54 @@ class OllamaProvider(ModelProvider):
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=elapsed, status=e.response.status_code
+            )
             raise ProviderError(
                 f"Ollama API error: {e.response.status_code}",
                 retryable=e.response.status_code >= 500,
             ) from e
         except httpx.TimeoutException as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("Ollama API timed out", retryable=True) from e
         except httpx.TransportError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("Ollama API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
         try:
             data = response.json()
         except ValueError as e:
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=latency_ms, status=response.status_code
+            )
             raise ProviderError(
                 f"Ollama returned a non-JSON body (HTTP {response.status_code})",
                 retryable=True,
             ) from e
 
         if isinstance(data, dict) and data.get("error"):
-            raise ProviderError(f"Ollama API error: {data['error']}", retryable=False)
+            err = ProviderError(f"Ollama API error: {data['error']}", retryable=False)
+            log_provider_failure(
+                _NAME, model_id, err, latency_ms=latency_ms, status=response.status_code
+            )
+            raise err
         message = data.get("message") if isinstance(data, dict) else None
         content = message.get("content") if isinstance(message, dict) else None
         if not isinstance(content, str):
-            raise ProviderError(
+            err = ProviderError(
                 "Ollama returned a malformed response (missing message.content)",
                 retryable=False,
             )
+            log_provider_failure(
+                _NAME, model_id, err, latency_ms=latency_ms, status=response.status_code
+            )
+            raise err
 
+        log_provider_success(_NAME, model_id, latency_ms=latency_ms)
         return CompletionResponse(
             content=content,
             model_id=model_id,
