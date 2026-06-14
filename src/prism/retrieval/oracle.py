@@ -28,6 +28,11 @@ from prism.core.types import Citation, ExistenceOutcome
 ARXIV_BASE = "https://export.arxiv.org/api/query"
 CROSSREF_BASE = "https://api.crossref.org/works"
 DEFAULT_MAILTO = "verify@prism-verify.dev"
+# Cap the upstream body we will parse. A compromised / redirected upstream could otherwise stream
+# an unbounded body and OOM the verifier (ET.fromstring / resp.json parse the FULL body). 5 MiB is
+# far above any real arXiv Atom feed or Crossref work record; over it -> UNRESOLVABLE, not
+# FABRICATED.
+DEFAULT_MAX_BODY_BYTES = 5 * 1024 * 1024
 # arXiv 301-redirects http -> https and rate-limits anonymous bursts; use https directly and
 # identify ourselves (arXiv asks API clients to send a descriptive User-Agent).
 _USER_AGENT = "prism-verify (citation verifier; +https://github.com/mcp-tool-shop-org/prism-verify)"
@@ -91,6 +96,24 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def _arxiv_id_core(value: str) -> str:
+    """Normalize an arXiv id for comparison: drop URL prefix, an ``arXiv:`` scheme, and a ``vN``
+    version suffix, lower-cased. ``http://arxiv.org/abs/2402.01817v1`` and ``2402.01817`` both
+    normalize to ``2402.01817`` so a returned <id> can be matched against the requested id."""
+    s = value.strip().lower()
+    # Strip a URL prefix like http(s)://arxiv.org/abs/ — keep only the id tail after the last '/'
+    # UNLESS this is an old-style id (e.g. cond-mat/0207270), whose '/' is part of the id itself.
+    if "://" in s:
+        s = s.split("://", 1)[1]
+        if s.startswith("arxiv.org/abs/"):
+            s = s[len("arxiv.org/abs/") :]
+    if s.startswith("arxiv:"):
+        s = s[len("arxiv:") :]
+    # Drop a trailing version suffix vN (arXiv ids may or may not carry one).
+    s = re.sub(r"v\d+$", "", s)
+    return s.strip()
+
+
 class CitationOracle:
     """Resolves citations against arXiv (ID-first) and Crossref (DOI-second)."""
 
@@ -102,14 +125,20 @@ class CitationOracle:
         mailto: str = DEFAULT_MAILTO,
         client: httpx.AsyncClient | None = None,
         retry_delays: tuple[float, ...] = (1.0, 3.0),
+        max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
     ) -> None:
         self._arxiv_base = arxiv_base
         self._crossref_base = crossref_base.rstrip("/")
         self._mailto = mailto
         self._retry_delays = retry_delays
+        self._max_body_bytes = max_body_bytes
+        # follow_redirects=False (SSRF-adjacent hardening): an upstream 3xx could otherwise steer
+        # prism's GET to an arbitrary host. Both base URLs are already https (arXiv's historical
+        # http->https 301 is moot now we hit https://export.arxiv.org directly), so a redirect from
+        # these endpoints is anomalous and we treat any 3xx as UNRESOLVABLE rather than chase it.
         self._client = client or httpx.AsyncClient(
             timeout=15.0,
-            follow_redirects=True,
+            follow_redirects=False,
             headers={"User-Agent": _USER_AGENT},
         )
         self._cache: dict[str, _Record] = {}
@@ -123,6 +152,24 @@ class CitationOracle:
             await asyncio.sleep(delay)
             resp = await self._client.get(url, params=params)
         return resp
+
+    def _oversize_detail(self, resp: httpx.Response) -> str | None:
+        """Return a detail string if the response body exceeds the body-size cap, else None.
+
+        Checks the advertised Content-Length first (cheap, lets us refuse before materializing the
+        body), then the actual byte length of the materialized body (a lying / chunked upstream can
+        omit Content-Length). httpx has already buffered ``resp.content`` for a non-streamed GET, so
+        reading its length does not issue extra network I/O."""
+        advertised = resp.headers.get("content-length")
+        if advertised is not None:
+            try:
+                if int(advertised) > self._max_body_bytes:
+                    return f"upstream body too large ({advertised} bytes > {self._max_body_bytes})"
+            except ValueError:
+                pass  # unparseable header -> fall through to the actual-length check
+        if len(resp.content) > self._max_body_bytes:
+            return f"upstream body too large ({len(resp.content)} bytes > {self._max_body_bytes})"
+        return None
 
     async def resolve(self, citation: Citation) -> ExistenceResult:
         ident = (citation.identifier or "").strip()
@@ -174,12 +221,22 @@ class CitationOracle:
         intended = f"{self._arxiv_base}?id_list={arxiv_id}"
         try:
             resp = await self._get(self._arxiv_base, {"id_list": arxiv_id})
-            resp.raise_for_status()
         except httpx.HTTPError as e:
             return _Record(
                 "unresolvable", intended, f"arXiv oracle unreachable: {type(e).__name__}"
             )
         query = str(resp.request.url)
+        # follow_redirects=False: a 3xx is not chased (SSRF-adjacent). The base URL is https, so a
+        # redirect from it is anomalous -> escalate, never read it as a fabrication.
+        if resp.is_redirect:
+            return _Record("unresolvable", query, f"arXiv returned a redirect ({resp.status_code})")
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPError as e:
+            return _Record("unresolvable", query, f"arXiv oracle unreachable: {type(e).__name__}")
+        oversize = self._oversize_detail(resp)
+        if oversize is not None:
+            return _Record("unresolvable", query, oversize)
         try:
             root = ET.fromstring(resp.text)
         except ET.ParseError:
@@ -192,8 +249,21 @@ class CitationOracle:
         ]
         if not real:
             return _Record("fabricated", query, f"arXiv has no record for id {arxiv_id}")
-        title = (real[0].findtext(f"{_ATOM}title") or "").strip()
-        abstract = (real[0].findtext(f"{_ATOM}summary") or "").strip()
+        # Defense-in-depth (do NOT trust id_list semantics alone): verify a real entry's <id>
+        # normalizes to the requested id. If arXiv ever returned a nearest/normalized match, a
+        # fabricated id could otherwise flip FABRICATED -> RESOLVED. No match -> FABRICATED.
+        want = _arxiv_id_core(arxiv_id)
+        match = next(
+            (e for e in real if _arxiv_id_core(e.findtext(f"{_ATOM}id") or "") == want),
+            None,
+        )
+        if match is None:
+            return _Record(
+                "fabricated", query,
+                f"arXiv returned an entry whose id does not match requested {arxiv_id}",
+            )
+        title = (match.findtext(f"{_ATOM}title") or "").strip()
+        abstract = (match.findtext(f"{_ATOM}summary") or "").strip()
         source = f"{title}\n\n{abstract}".strip()
         return _Record(
             "found", query, f"arXiv id {arxiv_id} resolved",
@@ -218,8 +288,17 @@ class CitationOracle:
                 f"Crossref oracle unreachable: {type(e).__name__}",
             )
         query = str(resp.request.url)  # the URL actually issued — what the pin should record
+        # follow_redirects=False: a 3xx could otherwise steer the GET to an arbitrary host
+        # (SSRF-adjacent). The base URL is https, so a redirect from it is anomalous -> escalate.
+        if resp.is_redirect:
+            return _Record(
+                "unresolvable", query, f"Crossref returned a redirect ({resp.status_code})"
+            )
         if resp.status_code == 404:
             return _Record("fabricated", query, f"Crossref has no record for DOI {doi}")
+        oversize = self._oversize_detail(resp)
+        if oversize is not None:
+            return _Record("unresolvable", query, oversize)
         try:
             resp.raise_for_status()
             message = resp.json().get("message", {})

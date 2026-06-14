@@ -52,8 +52,8 @@ _BIDI: frozenset[str] = frozenset(
 )
 
 # Zero-width and variation selectors DO occur benignly (emoji, scripts), so they only contribute to
-# the advisory suspicion signal past a small budget. TAG and BIDI characters have no benign use in
-# judged content, so a single one is suspicious on its own.
+# the advisory suspicion signal past a small budget. TAG, BIDI, and C0/C1 control characters have no
+# benign use in judged content (\t \n \r excepted), so a single one is suspicious on its own.
 _ZW_VS_SUSPICION_BUDGET = 4
 
 
@@ -65,6 +65,15 @@ def _is_tag_char(cp: int) -> bool:
 def _is_variation_selector(cp: int) -> bool:
     """Variation selectors (U+FE00-U+FE0F, U+E0100-U+E01EF) — emoji-variation smuggling carriers."""
     return 0xFE00 <= cp <= 0xFE0F or 0xE0100 <= cp <= 0xE01EF
+
+
+def _is_control(cp: int) -> bool:
+    """C0 (U+0000-U+001F) and C1 (U+0080-U+009F) control chars — invisible / non-printing carriers
+    used to break up or hide an instruction (e.g. NUL, vertical tab, NEL). Whitespace that carries
+    real layout meaning in judged content — TAB (\\t), LF (\\n), CR (\\r) — is preserved."""
+    if cp in (0x09, 0x0A, 0x0D):  # \t \n \r — benign layout whitespace, keep
+        return False
+    return cp <= 0x1F or 0x80 <= cp <= 0x9F
 
 
 @dataclass(frozen=True)
@@ -90,7 +99,8 @@ class NormalizationReport:
 def desmuggle(text: str) -> NormalizationReport:
     """Strip known invisible / control smuggling characters and NFKC-fold; report what was removed.
 
-    Removal classes: ``zero_width``, ``bidi``, ``tag``, ``variation_selector``. NFKC folding
+    Removal classes: ``zero_width``, ``bidi``, ``tag``, ``variation_selector``, ``control`` (C0/C1
+    control characters, except the benign whitespace ``\\t`` ``\\n`` ``\\r``). NFKC folding
     canonicalizes compatibility forms (e.g. full-width ``Ｉ`` -> ``I``) so an attacker cannot
     hide an instruction behind a visually-identical compatibility code point. Targeted code
     points are stripped first, then the remainder is NFKC-folded.
@@ -100,6 +110,7 @@ def desmuggle(text: str) -> NormalizationReport:
         "bidi": 0,
         "tag": 0,
         "variation_selector": 0,
+        "control": 0,
     }
     kept: list[str] = []
     for ch in text:
@@ -112,6 +123,8 @@ def desmuggle(text: str) -> NormalizationReport:
             removed["tag"] += 1
         elif _is_variation_selector(cp):
             removed["variation_selector"] += 1
+        elif _is_control(cp):
+            removed["control"] += 1
         else:
             kept.append(ch)
 
@@ -119,6 +132,7 @@ def desmuggle(text: str) -> NormalizationReport:
     suspicious = (
         removed["tag"] > 0
         or removed["bidi"] > 0
+        or removed["control"] > 0
         or (removed["zero_width"] + removed["variation_selector"]) > _ZW_VS_SUSPICION_BUDGET
     )
     return NormalizationReport(normalized=normalized, removed=removed, suspicious=suspicious)

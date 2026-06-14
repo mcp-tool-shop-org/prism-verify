@@ -21,16 +21,16 @@ def _sample(sid: str, positive: bool) -> Sample:
     )
 
 
-def _rec(sid: str, verdict: str, rho: float) -> RunRecord:
+def _rec(sid: str, verdict: str, rho: float, *, unavailable: bool = False) -> RunRecord:
     return RunRecord(
         sample_id=sid,
         run_index=0,
         verdict=verdict,
-        confidence=0.8,
-        errored=False,
-        unavailable=False,
+        confidence=0.0 if unavailable else 0.8,
+        errored=unavailable,
+        unavailable=unavailable,
         per_lens={},
-        pairwise_rho={"a,b": rho},
+        pairwise_rho={} if unavailable else {"a,b": rho},
     )
 
 
@@ -63,6 +63,80 @@ class TestRhoSweep:
         sweep = rho_threshold_sweep(run)
         assert "degenerate" in sweep.note
         assert sweep.baseline_accuracy == 1.0
+
+
+class TestUnavailableExcluded:
+    """EVL-A-001 sibling: calibrate must mirror report.summarize and exclude unavailable records
+    (structural VerifyError, verdict=reason, confidence=0.0) from every accuracy/verdict math."""
+
+    def _run_with_unavailable(self) -> EvalRun:
+        # s1: two genuine CORRECT runs (positive sample, refuse) + one unavailable run.
+        #     Genuine-only modal verdict = "refuse" -> correct. The unavailable run, if counted,
+        #     pollutes the per-run grouping (it carries verdict=reason, confidence=0.0).
+        # s2: a genuine correct positive sample (refuse).
+        samples = {
+            "s1": _sample("s1", positive=True),
+            "s2": _sample("s2", positive=True),
+        }
+        records = [
+            _rec("s1", "refuse", 0.1),  # the one genuine measurement: correct (positive->refuse)
+            _rec("s1", "invalid_artifact", 0.0, unavailable=True),
+            _rec("s1", "invalid_artifact", 0.0, unavailable=True),  # 2 unavailable would tip modal
+            _rec("s2", "refuse", 0.2),
+        ]
+        return EvalRun(
+            records=records,
+            samples=samples,
+            n_runs=1,
+            verifier_label="t",
+            caller_family="anthropic",
+        )
+
+    def test_all_unavailable_sample_is_skipped_not_scored_wrong(self) -> None:
+        # A sample whose every record is unavailable must be DROPPED, not scored as wrong.
+        samples = {"good": _sample("good", positive=True), "dead": _sample("dead", positive=True)}
+        records = [
+            _rec("good", "refuse", 0.1),  # genuine + correct
+            _rec("dead", "invalid_artifact", 0.0, unavailable=True),  # no measurement at all
+        ]
+        run = EvalRun(
+            records=records,
+            samples=samples,
+            n_runs=1,
+            verifier_label="t",
+            caller_family="anthropic",
+        )
+        sweep = rho_threshold_sweep(run)
+        # genuine-only: 1 sample, correct -> 1.0. Counting "dead" as wrong would give 0.5.
+        assert sweep.baseline_accuracy == 1.0
+
+    def test_baseline_accuracy_matches_genuine_only(self) -> None:
+        run = self._run_with_unavailable()
+        sweep = rho_threshold_sweep(run)
+        # Both samples are correct on their genuine records -> 1.0. If the unavailable run on s1
+        # were counted (verdict=invalid_artifact, neither refuse nor accept), s1's modal verdict
+        # could tip and accuracy would drop below 1.0.
+        assert sweep.baseline_accuracy == 1.0
+
+    def test_family_ab_accuracy_matches_genuine_only(self) -> None:
+        # family_ab reuses _accuracy(_sample_rows) — confirm the sibling migration covers it too.
+        run = self._run_with_unavailable()
+        # control run: same samples but s1's genuine modal verdict is wrong (accept on a positive).
+        same = EvalRun(
+            records=[
+                _rec("s1", "accept", 0.1),
+                _rec("s1", "invalid_artifact", 0.0, unavailable=True),
+                _rec("s2", "refuse", 0.2),
+            ],
+            samples={"s1": _sample("s1", positive=True), "s2": _sample("s2", positive=True)},
+            n_runs=1,
+            verifier_label="t",
+            caller_family="anthropic",
+        )
+        ab = family_ab(run, same)
+        assert ab.family_different_accuracy == 1.0  # both genuine-correct
+        assert ab.same_family_accuracy == 0.5  # s1 genuine-wrong, s2 correct (unavailable ignored)
+        assert ab.delta == 0.5
 
 
 class TestFamilyAB:

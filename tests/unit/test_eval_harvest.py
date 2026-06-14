@@ -8,6 +8,7 @@ VerifyError no-op, best-effort secret scrubbing, and the JSONL append shape.
 from __future__ import annotations
 
 import json
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -312,6 +313,168 @@ class TestCaptureToFile:
         resp = _response(citation_results=[_cr(ExistenceOutcome.RESOLVED, FindingMatch.UNCHECKED)])
         assert capture(_cite_request(["a claim"]), resp) == 0
         assert not out.exists()
+
+
+class TestScrubBroadened:
+    """EVL-A-002: the scrub must redact common secret shapes the original 6 regexes missed."""
+
+    def _claim_record(self, claim: str) -> dict:
+        req = _cite_request([claim])
+        resp = _response(
+            citation_results=[_cr(ExistenceOutcome.RESOLVED, FindingMatch.SUPPORTED)]
+        )
+        (rec,) = build_records(req, resp)
+        return rec
+
+    def test_jwt_redacted(self) -> None:
+        jwt = (
+            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0"
+            ".dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        )
+        rec = self._claim_record(f"token is {jwt} use it")
+        assert jwt not in rec["claim"]
+        assert "[REDACTED]" in rec["claim"]
+
+    def test_slack_token_redacted(self) -> None:
+        # Synthetic, obviously-fake Slack-shaped token: matches the scrub regex
+        # (xox[baprs]-[A-Za-z0-9-]{10,}) but is not a real credential. Built from parts so
+        # secret scanners / push protection don't flag the test fixture itself.
+        tok = "xox" + "b-EXAMPLE000-NOTAREAL00000-synthetictestfixtureonly"
+        rec = self._claim_record(f"slack {tok} here")
+        assert tok not in rec["claim"]
+        assert "[REDACTED]" in rec["claim"]
+
+    def test_connection_string_creds_redacted(self) -> None:
+        conn = "postgres://dbuser:s3cr3tP4ss@db.example.com:5432/mydb"
+        rec = self._claim_record(f"connect via {conn} now")
+        # the inline user:pass@host credential portion must not survive verbatim
+        assert "dbuser:s3cr3tP4ss@db.example.com" not in rec["claim"]
+        assert "[REDACTED]" in rec["claim"]
+
+    def test_generic_private_key_block_redacted(self) -> None:
+        key = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqh\n-----END PRIVATE KEY-----"
+        rec = self._claim_record(f"key:\n{key}\nend")
+        assert "MIIEvQIBADANBgkqh" not in rec["claim"]
+        assert "BEGIN PRIVATE KEY" not in rec["claim"]
+
+    def test_long_base64_secret_redacted(self) -> None:
+        secret = "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v2W3x4Y5z6A7b8C9d0E1f2"
+        rec = self._claim_record(f"the api secret {secret} must stay private")
+        assert secret not in rec["claim"]
+
+    def test_normal_prose_preserved(self) -> None:
+        prose = (
+            "The transformer architecture scales well with more parameters and longer context "
+            "windows, as shown across several recent papers on language modeling."
+        )
+        rec = self._claim_record(prose)
+        assert rec["claim"] == prose  # ordinary words/sentences are NOT redacted
+
+
+class TestCaptureSafety:
+    """EVL-A-002: atomic/locked append + a size-cap rotation guard."""
+
+    def test_size_cap_stops_appending(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from prism.eval import harvest as harvest_mod
+
+        out = tmp_path / "harvest.jsonl"
+        monkeypatch.setenv("PRISM_HARVEST_PATH", str(out))
+        # A tiny budget so the second record trips the cap.
+        monkeypatch.setenv("PRISM_HARVEST_MAX_BYTES", "200")
+        # reset any module-level one-time-note state between tests
+        if hasattr(harvest_mod, "_reset_state_for_tests"):
+            harvest_mod._reset_state_for_tests()
+
+        req = _cite_request(["a claim about something that takes up a reasonable amount of space"])
+        resp = _response(citation_results=[_cr(ExistenceOutcome.RESOLVED, FindingMatch.SUPPORTED)])
+
+        first = harvest_mod.capture(req, resp)
+        assert first == 1  # first write fits under the budget
+        size_after_first = out.stat().st_size
+        assert size_after_first > 200  # now over budget
+
+        second = harvest_mod.capture(req, resp)
+        assert second == 0  # cap reached -> no further append
+        assert out.stat().st_size == size_after_first  # file did not grow
+
+    def test_concurrent_appends_are_atomic(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        import threading
+
+        from prism.eval import harvest as harvest_mod
+
+        out = tmp_path / "harvest.jsonl"
+        monkeypatch.setenv("PRISM_HARVEST_PATH", str(out))
+        monkeypatch.delenv("PRISM_HARVEST_MAX_BYTES", raising=False)
+        if hasattr(harvest_mod, "_reset_state_for_tests"):
+            harvest_mod._reset_state_for_tests()
+
+        req = _cite_request(["a claim"])
+        resp = _response(citation_results=[_cr(ExistenceOutcome.RESOLVED, FindingMatch.SUPPORTED)])
+
+        n = 40
+
+        def _do_capture() -> None:
+            harvest_mod.capture(req, resp)
+
+        threads = [threading.Thread(target=_do_capture) for _ in range(n)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        lines = out.read_text(encoding="utf-8").splitlines()
+        assert len(lines) == n  # no lost/interleaved writes
+        for line in lines:
+            json.loads(line)  # every line is a complete, parseable JSON object
+
+
+class TestScrubReDoS:
+    """EVL-A-00x: the scrub must not exhibit catastrophic/quadratic backtracking on adversarial
+    input. ``capture`` runs synchronously in the verify path over the full untrusted artifact, so a
+    pathological string must not become a CPU-exhaustion DoS."""
+
+    def _scrub(self, text: str) -> str:
+        from prism.eval.harvest import _default_scrub
+
+        return _default_scrub(text)
+
+    def test_connection_string_still_redacted(self) -> None:
+        # The non-backtracking rewrite must still catch a real scheme://user:pass@host string.
+        out = self._scrub("connect via postgres://user:pass@host/db now")
+        assert "user:pass@host" not in out
+        assert "[REDACTED]" in out
+
+    def test_connection_string_redacted_with_port(self) -> None:
+        out = self._scrub("dsn postgres://dbuser:s3cr3tP4ss@db.example.com:5432 end")
+        assert "dbuser:s3cr3tP4ss" not in out
+        assert "[REDACTED]" in out
+
+    def test_pathological_connstring_input_is_fast(self) -> None:
+        # A long credential-less alphanumeric run is the quadratic trigger for the conn-string
+        # pattern. Must complete well under a second (it was ~11s unbounded on 100k chars).
+        payload = "x://" + "a" * 100_000
+        t = time.perf_counter()
+        self._scrub(payload)
+        elapsed = time.perf_counter() - t
+        assert elapsed < 1.0, f"scrub took {elapsed:.2f}s on 100k-char input (ReDoS)"
+
+    def test_pathological_email_input_is_fast(self) -> None:
+        # The email pattern is also quadratic on a long local-part run; the input cap must cover it.
+        payload = "a" * 100_000 + "@example.com"
+        t = time.perf_counter()
+        self._scrub(payload)
+        elapsed = time.perf_counter() - t
+        assert elapsed < 1.0, f"scrub took {elapsed:.2f}s on 100k-char email input (ReDoS)"
+
+    def test_long_input_is_truncated_before_scrub(self) -> None:
+        # The harvest sink caps each scrubbed field to a sane size before applying regexes.
+        out = self._scrub("z" * 100_000)
+        assert len(out) < 100_000
+        assert out.endswith("…[truncated]")
 
 
 class TestScrub:

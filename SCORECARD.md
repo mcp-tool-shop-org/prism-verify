@@ -1,30 +1,30 @@
 # Scorecard — prism-verify
 
 **Repo:** prism-verify
-**Date:** 2026-06-02 (v0.4.0)
-**Type tags:** `[all]` `[pypi]` `[cli]` `[mcp]`
+**Date:** 2026-06-13 (v1.3.0)
+**Type tags:** `[all]` `[pypi]` `[npm]` `[cli]` `[mcp]`
 
-## Assessment (v0.4.0)
+## Assessment (v1.3.0)
 
 | Category | Score | Notes |
 |----------|-------|-------|
 | A. Security | 9/10 | SECURITY.md + README threat model; no secrets; fail-closed HTTP auth (keys hashed at rest, constant-time); SSRF-guarded webhooks; Ed25519 third-party-verifiable receipts with an honest tamper-evidence ceiling. -1: genuine tamper-resistance (HSM + transparency log) is named-but-deferred. |
 | B. Error Handling | 9/10 | `VerifyError{reason,detail,retryable}` + RFC 9457 problem+json; CLI exit codes; MCP/engine degrade gracefully (no crash on out-of-enum/fenced output, idempotent schema migration). |
-| C. Operator Docs | 8/10 | README current for v0.4; CHANGELOG (Keep a Changelog); LICENSE; accurate `--help`; MCP tools documented. -2: the astro-starlight docs handbook + landing are the Phase-10 deliverable. |
-| D. Shipping Hygiene | 9/10 | `scripts/verify.py`; tag==version gate in `release.yml`; clean `uv build` + `twine check`; `uv.lock` committed; PyPI Trusted Publishing (OIDC, PEP 740 attestations). -1: no Dependabot (org-rule SKIP). |
-| E. Identity (soft) | 4/10 | Logo in README. Translations / landing / astro-starlight handbook / GitHub topics are the Phase-10 brand treatment (run before the release tag). |
-| **Overall** | **39/50** | Hard gates A–D pass; E (soft) completes in Phase 10. |
+| C. Operator Docs | 9/10 | README current for v1.3; CHANGELOG (Keep a Changelog); LICENSE; accurate `--help`; MCP tools documented; astro-starlight docs handbook + landing shipped (Phase-10). -1: deep API reference still lives in docstrings. |
+| D. Shipping Hygiene | 9/10 | `scripts/verify.py`; tag==version gate in `release.yml` (PyPI + npm); the npm launcher now derives its binary `version`/`tag` from `package.json` at runtime and `release.yml` guards against a hard-coded pin (`node --check` + grep), so the wrapper can't ship a stale binary; clean `uv build` + `twine check`; `uv.lock` committed; PyPI + npm Trusted Publishing (OIDC, PEP 740 attestations / provenance). -1: no Dependabot (org-rule SKIP). |
+| E. Identity (soft) | 9/10 | Logo in README; translations (8 languages), landing page, astro-starlight handbook, and GitHub topics shipped (Phase-10 brand treatment). -1: ongoing polish. |
+| **Overall** | **45/50** | Hard gates A–D pass; soft gate E shipped. |
 
-## Key Gaps (all Phase-10 brand treatment, soft gate)
+## Key Gaps
 
-1. README translations (8 languages, local TranslateGemma) — run **before** the release tag.
-2. Landing page (@mcptoolshop/site-theme) + astro-starlight handbook wired to it.
-3. GitHub repo metadata: description, homepage, topics (`gh repo edit`).
+1. Tamper-resistance ceiling (HSM / transparency log) — named hardening, deferred (design/05).
+2. Deep API reference currently lives in docstrings rather than the handbook.
 
 ## Remediation Priority
 
 | Priority | Item | Status |
 |----------|------|--------|
-| 1 | Hard gates A–D | ✅ PASS (this session) |
-| 2 | Brand treatment (E) | Phase 10 — translations → landing → handbook → topics, before the tag |
-| 3 | Tamper-resistance ceiling (HSM / transparency log) | Named hardening, deferred (design/05) |
+| 1 | Hard gates A–D | ✅ PASS |
+| 2 | Brand treatment (E) — translations → landing → handbook → topics | ✅ Shipped (Phase 10) |
+| 3 | npm launcher binary-pin drift (was shipping a stale v0.4.2 binary) | ✅ Fixed — launcher self-syncs from package.json; CI guards the pin |
+| 4 | Tamper-resistance ceiling (HSM / transparency log) | Named hardening, deferred (design/05) |

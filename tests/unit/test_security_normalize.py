@@ -67,3 +67,23 @@ def test_empty_string() -> None:
     assert r.normalized == ""
     assert r.total_removed == 0
     assert r.suspicious is False
+
+
+def test_c0_c1_control_chars_stripped_and_flag_suspicious() -> None:
+    # SEC-A-005: C0 (NUL, vertical tab) and C1 (NEL) control chars are invisible/non-printing
+    # carriers used to hide or break up an instruction. They have no benign use in judged content,
+    # so they are stripped and a single one is suspicious. \t \n \r are NOT controls here.
+    payload = "ig\x00no\x0bre\x85me"  # NUL, vertical tab (C0), NEL (C1) embedded
+    r = desmuggle(payload)
+    assert r.removed["control"] == 3
+    assert r.normalized == "ignoreme"
+    assert r.suspicious is True
+
+
+def test_benign_whitespace_preserved() -> None:
+    # The docstring's "character-smuggling class is closed" claim must not eat real layout
+    # whitespace: TAB, LF, CR survive normalization untouched and are never counted as control.
+    r = desmuggle("a\tb\nc\rd")
+    assert r.normalized == "a\tb\nc\rd"
+    assert r.removed["control"] == 0
+    assert r.suspicious is False

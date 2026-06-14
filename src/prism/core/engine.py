@@ -333,8 +333,13 @@ class VerificationEngine:
             lens_prompt_hashes=lens_prompt_hashes,
         )
 
-        # Report success to router
-        self._router.report_success(route.family, route.model_id)
+        # Report success to the router ONLY when this provider had a clean request — i.e. every
+        # lens (all served by this single route/provider) produced a genuine, non-errored result.
+        # A request where SOME lenses errored already called report_failure per fault in _run_lens;
+        # an unconditional report_success here would clear those failures, so a verifier that fails
+        # a MINORITY of lenses every request would never trip its breaker / fail over (CORE-A-001).
+        if not any(lr.errored for lr in lens_results):
+            self._router.report_success(route.family, route.model_id)
 
         response = VerifyResponse(
             verdict=verdict,
@@ -485,7 +490,15 @@ class VerificationEngine:
             artifact_type=request.artifact.type.value,
             retrieval_pins=pins,
         )
-        self._router.report_success(route.family, route.model_id)
+        # Genuine-result floor (CORE-A-001): report success ONLY when the groundedness verifier was
+        # actually exercised this request AND every adjudication was non-errored. ``lens_results``
+        # here holds only the groundedness lenses that called the provider (deterministic
+        # existence/numeric outcomes never touch it). If it is empty the provider was not exercised
+        # (no signal -> leave the breaker untouched); if ANY groundedness lens errored,
+        # report_failure already fired in _adjudicate_citation, so an unconditional success here
+        # would clear a real outage and the breaker would never trip / fail over.
+        if lens_results and not any(lr.errored for lr in lens_results):
+            self._router.report_success(route.family, route.model_id)
         return VerifyResponse(
             verdict=verdict,
             confidence=confidence,
