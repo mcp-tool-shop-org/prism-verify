@@ -139,3 +139,17 @@ class TestNliVerdictMappingWithFakeScorer:
         # threshold logic (not just the argmax) is wired through the real mapping.
         _inject_scorer(monkeypatch, [0.90, 0.05, 0.05], self._LABELS)
         assert nli_groundedness("X holds", "We show X holds.", tau=0.95) == "insufficient"
+
+    def test_env_tau_override_is_honored(self, monkeypatch):
+        # PRISM_NLI_TAU raises the bar to 0.95: a P(entailment)=0.9 entailment-top now falls short
+        # -> insufficient, proving the env override is wired through (not just the tau= argument).
+        monkeypatch.setenv("PRISM_NLI_TAU", "0.95")
+        _inject_scorer(monkeypatch, [0.90, 0.05, 0.05], self._LABELS)
+        assert nli_groundedness("X holds", "We show X holds.") == "insufficient"
+
+    def test_invalid_env_tau_falls_back_to_default(self, monkeypatch):
+        # A garbage PRISM_NLI_TAU must not crash the floor; it falls back to the default (0.55), so
+        # a P(entailment)=0.90 entailment-top still resolves -> supported.
+        monkeypatch.setenv("PRISM_NLI_TAU", "not-a-float")
+        _inject_scorer(monkeypatch, [0.90, 0.05, 0.05], self._LABELS)
+        assert nli_groundedness("X holds", "We show X holds.") == "supported"

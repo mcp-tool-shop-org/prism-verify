@@ -49,6 +49,12 @@ class ReportData:
     caller_family: str
     n_runs: int
     n_samples: int
+    # EVS-B-001/002 reproducibility provenance — names which model(s) produced the numbers, at what
+    # temperature/seed, over which corpus content-hash. Defaulted so older callers still construct.
+    resolved_model_ids: list[str]
+    effective_temperature: float | None
+    seed: int | None
+    corpus_content_hash: str | None
     counts_by_class: dict[str, int]
     per_lens: list[LensReport]
     krippendorff_alpha: float | None
@@ -236,6 +242,15 @@ def summarize(run: EvalRun) -> ReportData:
         notes.append(
             f"v1 small-N corpus (min {min_pos} positives/lens < 100); recall CIs wide (see Wilson)."
         )
+    # EVS-B-003: precision is computed raw at the corpus's balanced (~50% positive) prevalence, NOT
+    # a deployment-realistic prevalence — say so wherever a precision number is reported so a reader
+    # never mistakes it for deployment PPV. (No prevalence re-weighting is applied; prevalence.json
+    # is informational only — see corpus.build_corpus.)
+    if any(lr.precision > 0.0 for lr in per_lens):
+        notes.append(
+            "precision is at the corpus's balanced ~50% prevalence, not deployment prevalence; it "
+            "is NOT re-weighted (a defect-rare deployment sees lower precision for the same lens)."
+        )
 
     sweep = rho_threshold_sweep(run)
 
@@ -244,6 +259,10 @@ def summarize(run: EvalRun) -> ReportData:
         caller_family=run.caller_family,
         n_runs=run.n_runs,
         n_samples=len(run.samples),
+        resolved_model_ids=sorted(set(run.resolved_model_ids)),
+        effective_temperature=run.effective_temperature,
+        seed=run.seed,
+        corpus_content_hash=run.corpus_content_hash,
         counts_by_class=dict(counts_by_class),
         per_lens=per_lens,
         krippendorff_alpha=alpha,
@@ -281,6 +300,21 @@ def render_markdown(report: ReportData) -> str:
         f"Verifier: **{report.verifier_label}** | caller family: {report.caller_family} | "
         f"runs/sample: {report.n_runs} | samples: {report.n_samples} "
         f"({', '.join(f'{k}={v}' for k, v in report.counts_by_class.items())})"
+    )
+    lines.append("")
+    # EVS-B-001/002: name the provenance so the numbers are reproducible-by-construction.
+    models = ", ".join(report.resolved_model_ids) if report.resolved_model_ids else "(not recorded)"
+    temp = (
+        "(not recorded)"
+        if report.effective_temperature is None
+        else _fmt(report.effective_temperature)
+    )
+    seed = "(not seeded)" if report.seed is None else str(report.seed)
+    chash = report.corpus_content_hash
+    chash_disp = f"{chash[:12]}..." if chash else "(not recorded)"
+    lines.append(
+        f"Reproducibility: resolved verifier model(s): **{models}** | temp: **{temp}** | "
+        f"seed: {seed} | corpus content-hash: `{chash_disp}`"
     )
     lines.append("")
     for note in report.notes:

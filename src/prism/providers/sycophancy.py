@@ -35,7 +35,17 @@ from prism.providers.base import (
     CompletionResponse,
     ModelProvider,
     ProviderError,
+    log_provider_failure,
+    log_provider_success,
 )
+
+_NAME = "sycophancy"
+
+
+def _status_of(exc: BaseException) -> int | None:
+    """HTTP status from an httpx.HTTPStatusError, else None (timeouts, parse errors, KeyError)."""
+    resp = getattr(exc, "response", None)
+    return getattr(resp, "status_code", None) if resp is not None else None
 
 # The sycophancy system prompt the adapter was TRAINED with (sycophancy_config.py SYSTEM_PROMPT).
 # Embedded verbatim — re-templating to the trained prompt preserves accuracy.
@@ -158,15 +168,23 @@ class SycophancyProvider(ModelProvider):
             data = resp.json()
             content = data["choices"][0]["message"]["content"]
         except (httpx.HTTPError, KeyError, ValueError, IndexError) as exc:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(
+                _NAME, self._model_id, exc, latency_ms=elapsed, status=_status_of(exc)
+            )
             raise ProviderError(f"sycophancy watcher call failed: {exc}", retryable=True) from exc
 
         verdict = parse_verdict(content)
         if verdict is None:
-            # No mappable verdict -> RAISE (never a silent PASS) — a missed sycophancy is the cost.
-            raise ProviderError(
+            latency_ms = int((time.monotonic() - start) * 1000)
+            err = ProviderError(
                 f"sycophancy watcher emitted no verdict (content={content[:160]!r})", retryable=True
             )
+            log_provider_failure(_NAME, self._model_id, err, latency_ms=latency_ms)
+            # No mappable verdict -> RAISE (never a silent PASS) — a missed sycophancy is the cost.
+            raise err
         latency_ms = int((time.monotonic() - start) * 1000)
+        log_provider_success(_NAME, self._model_id, latency_ms=latency_ms)
         return self._build_response(verdict, latency_ms, data.get("usage") or {})
 
     async def health_check(self) -> bool:

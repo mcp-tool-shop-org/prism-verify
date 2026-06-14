@@ -27,7 +27,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv python install ${{ matrix.python-version }}
       # All extras EXCEPT the two that bundle torch + transformers (the `nli` extra and the `all`
       # meta-extra both pull them). The optional NLI floor is a slow, heavy install and its tests are

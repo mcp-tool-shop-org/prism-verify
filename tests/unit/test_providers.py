@@ -153,3 +153,72 @@ async def test_ollama_sends_format_json_and_disables_thinking():
 def test_ollama_default_model_is_non_thinking():
     # qwen3:32b is a thinking model that starves the JSON budget; the pin is mistral-small.
     assert OllamaProvider().available_models == ["mistral-small:24b"]
+
+
+# PRV-B-001: provider observability — a failed call must emit a structured WARNING carrying
+# provider + model + status (and NEVER the API key), so a partial outage is visible before it
+# surfaces downstream as VERIFIER_UNAVAILABLE.
+_OBS_CASES = [
+    (
+        lambda: AnthropicProvider(api_key="super-secret-key", base_url="http://a"),
+        "http://a/v1/messages",
+        "claude-haiku-4-5-20251001",
+        "anthropic",
+    ),
+    (
+        lambda: GoogleProvider(api_key="super-secret-key", base_url="http://g"),
+        _GEMINI_URL,
+        "gemini-2.5-pro",
+        "google",
+    ),
+    (
+        lambda: OpenAIProvider(api_key="super-secret-key", base_url="http://o"),
+        "http://o/v1/chat/completions",
+        "gpt-5.4-mini",
+        "openai",
+    ),
+    (
+        lambda: OllamaProvider(base_url="http://ol"),
+        "http://ol/api/chat",
+        "mistral-small:24b",
+        "ollama",
+    ),
+]
+
+
+@pytest.mark.parametrize("factory,url,model_id,provider_name", _OBS_CASES)
+async def test_failed_call_logs_warning_with_provider_model_status(
+    factory, url, model_id, provider_name, caplog
+):
+    provider = factory()
+    with respx.mock:
+        respx.post(url).mock(return_value=httpx.Response(503, json={"error": "down"}))
+        with caplog.at_level("WARNING", logger="prism.providers"):
+            with pytest.raises(ProviderError):
+                await provider.complete(_req(model_id))
+    await provider.close()
+
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert warnings, "a failed provider call must emit a WARNING"
+    rec = warnings[-1]
+    assert rec.provider == provider_name
+    assert rec.model_id == model_id
+    assert rec.http_status == 503
+    assert hasattr(rec, "latency_ms")
+    assert hasattr(rec, "exc_type")
+    assert hasattr(rec, "request_id")
+    # the key (and only the key) must never reach the logs in any field
+    rendered = rec.getMessage() + repr(rec.__dict__)
+    assert "super-secret-key" not in rendered
+
+
+async def test_no_warning_logged_on_success(caplog):
+    provider = OpenAIProvider(api_key="super-secret-key", base_url="http://o")
+    with respx.mock:
+        respx.post("http://o/v1/chat/completions").mock(
+            return_value=httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+        )
+        with caplog.at_level("WARNING", logger="prism.providers"):
+            await provider.complete(_req("gpt-5.4-mini"))
+    await provider.close()
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]

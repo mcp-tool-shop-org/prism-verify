@@ -12,9 +12,12 @@ from prism.providers.base import (
     CompletionResponse,
     ModelProvider,
     ProviderError,
+    log_provider_failure,
+    log_provider_success,
 )
 
 DEFAULT_BASE_URL = "https://api.openai.com"
+_NAME = "openai"
 
 
 def _is_reasoning_model(model_id: str) -> bool:
@@ -89,37 +92,57 @@ class OpenAIProvider(ModelProvider):
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=elapsed, status=e.response.status_code
+            )
             retryable = e.response.status_code in (429, 500, 502, 503)
             raise ProviderError(
                 f"OpenAI API error: {e.response.status_code}", retryable=retryable
             ) from e
         except httpx.TimeoutException as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("OpenAI API timed out", retryable=True) from e
         except httpx.TransportError as e:
+            elapsed = int((time.monotonic() - start) * 1000)
+            log_provider_failure(_NAME, model_id, e, latency_ms=elapsed)
             raise ProviderError("OpenAI API not reachable", retryable=True) from e
 
         latency_ms = int((time.monotonic() - start) * 1000)
         try:
             data = response.json()
         except ValueError as e:
+            log_provider_failure(
+                _NAME, model_id, e, latency_ms=latency_ms, status=response.status_code
+            )
             raise ProviderError(
                 f"OpenAI returned a non-JSON body (HTTP {response.status_code})",
                 retryable=True,
             ) from e
 
         if isinstance(data, dict) and data.get("error"):
-            raise ProviderError(f"OpenAI API error: {data['error']}", retryable=False)
+            err = ProviderError(f"OpenAI API error: {data['error']}", retryable=False)
+            log_provider_failure(
+                _NAME, model_id, err, latency_ms=latency_ms, status=response.status_code
+            )
+            raise err
         choices = data.get("choices") if isinstance(data, dict) else None
         first = choices[0] if isinstance(choices, list) and choices else None
         message = first.get("message") if isinstance(first, dict) else None
         content = message.get("content") if isinstance(message, dict) else None
         if not isinstance(content, str):
-            raise ProviderError(
+            err = ProviderError(
                 "OpenAI returned a malformed response (missing choices[0].message.content)",
                 retryable=False,
             )
+            log_provider_failure(
+                _NAME, model_id, err, latency_ms=latency_ms, status=response.status_code
+            )
+            raise err
         usage = data.get("usage", {}) if isinstance(data, dict) else {}
 
+        log_provider_success(_NAME, model_id, latency_ms=latency_ms)
         return CompletionResponse(
             content=content,
             model_id=model_id,

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 """prism verify script — the full local quality gate in one command.
 
-Runs the same checks as CI (lint -> type-check -> tests) plus a real package build, exiting
-non-zero on the first failure. Cross-platform (no shell-specific syntax).
+Runs the same checks as CI, in the same order with the same flags, so "local green" means "CI
+green": it first SYNCS the same dependency set CI installs (all extras EXCEPT the heavy torch-
+bearing `nli` / `all` extras — see ci.yml), then runs lint -> type-check -> tests, plus a real
+package build CI does not do. Exits non-zero on the first failure. Cross-platform (no shell-
+specific syntax).
 
     uv run python scripts/verify.py
 """
@@ -14,7 +17,13 @@ import sys
 
 # Use `uv run python -m <tool>` (not the bare `uv run <tool>`): the bare form hits a
 # uv-on-Windows trampoline bug ("failed to canonicalize script path").
+#
+# The `sync` step MUST match ci.yml's install line exactly. CI installs every extra except the two
+# that bundle torch + transformers (`nli` and the `all` meta-extra); the NLI floor's tests run
+# torch-free, so syncing it here would diverge local from CI. Keep this flag set in lockstep with
+# `.github/workflows/ci.yml`.
 STEPS: list[tuple[str, list[str]]] = [
+    ("sync", ["uv", "sync", "--all-extras", "--no-extra", "nli", "--no-extra", "all"]),
     ("ruff", ["uv", "run", "python", "-m", "ruff", "check", "src/", "tests/"]),
     ("mypy", ["uv", "run", "python", "-m", "mypy", "src/"]),
     ("pytest", ["uv", "run", "python", "-m", "pytest", "--tb=short"]),

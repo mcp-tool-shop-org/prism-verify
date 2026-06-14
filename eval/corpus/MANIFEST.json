@@ -9,6 +9,8 @@
     "tool_call",
     "citations"
   ],
+  "content_hash": "8f21ac72231db3263456467436611bcec4808d60198cf9a52420c757181b2ab8",
+  "content_hash_schema": "prism-eval-corpus-content/v1",
   "counts_by_split_class": {
     "public": {
       "code": 20,
@@ -28,5 +30,6 @@
     "cross_boundary": 9,
     "citation": 10
   },
+  "prevalence_positive_fraction": 0.5409836065573771,
   "note": "v1 authored/lens-targeted corpus. Counts are below the >=100/lens stability bar; the report pairs every rate with a Wilson interval. Real-bug ingestion (BugsInPy) is v1.1."
 }

@@ -133,3 +133,36 @@ async def test_report_scores_and_renders(engine: VerificationEngine) -> None:
 async def test_runner_rejects_zero_runs(engine: VerificationEngine) -> None:
     with pytest.raises(ValueError):
         await run_eval(engine, _samples(), n_runs=0)
+
+
+async def test_runner_records_resolved_models_and_temperature(engine: VerificationEngine) -> None:
+    """EVS-B-001/002: the run must capture the RESOLVED verifier model id(s) actually used (from
+    each lens result's model_id) and the effective temperature, so the report can name them.
+
+    The engine routes the (excluded-caller) LOCAL family to its configured verifier model and
+    records THAT model id on each LensResult — which is the honest "which model produced the
+    numbers" answer (the default router maps LOCAL -> 'mistral-small:24b')."""
+    run = await run_eval(
+        engine,
+        _samples(),
+        n_runs=1,
+        verifier_label="test-mock",
+        corpus_content_hash="cafef00d" * 8,
+    )
+    # Exactly one resolved verifier model id is recorded (deduped, non-empty).
+    assert run.resolved_model_ids and all(run.resolved_model_ids)
+    assert "mistral-small:24b" in run.resolved_model_ids
+    # The engine sends the CompletionRequest default temperature; the run records it honestly.
+    assert run.effective_temperature == 0.0
+    assert run.corpus_content_hash == "cafef00d" * 8
+    # Honest seed recording: the provider path threads no seed, so it stays None (not faked).
+    assert run.seed is None
+
+
+async def test_runner_passes_provenance_into_report(engine: VerificationEngine) -> None:
+    run = await run_eval(engine, _samples(), n_runs=1, verifier_label="test-mock")
+    report = summarize(run)
+    assert "mistral-small:24b" in report.resolved_model_ids
+    assert report.effective_temperature == 0.0
+    md = render_markdown(report)
+    assert "mistral-small:24b" in md and "temp" in md.lower()

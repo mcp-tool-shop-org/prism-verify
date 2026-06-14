@@ -20,9 +20,10 @@ from prism.core.citations import (
     parse_citation_groundedness,
     parse_citations,
 )
+from prism.core.observability import engine_logger, get_request_id
 from prism.core.routing import FamilyRouter, RouteSelection, RoutingError
 from prism.core.stripping import StripVerificationError, strip_reasoning
-from prism.core.submodularity import compute_pairwise_rho
+from prism.core.submodularity import RHO_MAX_DEFAULT, compute_pairwise_rho
 from prism.core.sycophancy_panel import panel_emission_decision
 from prism.core.types import (
     Artifact,
@@ -35,6 +36,8 @@ from prism.core.types import (
     LensOutcome,
     LensResult,
     ModelFamily,
+    ReasoningVisibility,
+    Receipt,
     RefusalReason,
     Verdict,
     VerifyError,
@@ -167,6 +170,14 @@ class VerificationEngine:
         try:
             strip_result = strip_reasoning(request.artifact.content)
         except StripVerificationError:
+            engine_logger.warning(
+                "strip_verification_failed",
+                extra={
+                    "request_id": get_request_id(),
+                    "reason": RefusalReason.STRIP_VERIFICATION_FAILED.value,
+                    "path": "code",
+                },
+            )
             return VerifyError(
                 reason=RefusalReason.STRIP_VERIFICATION_FAILED,
                 detail="Reasoning patterns survived stripping — cannot proceed safely",
@@ -182,11 +193,31 @@ class VerificationEngine:
                 available_families=set(self._providers.keys()),
             )
         except RoutingError:
+            engine_logger.warning(
+                "verify_error",
+                extra={
+                    "request_id": get_request_id(),
+                    "reason": RefusalReason.VERIFIER_UNAVAILABLE.value,
+                    "path": "code",
+                    "detail": "all cross-family routes have open circuit-breakers",
+                },
+            )
             return VerifyError(
                 reason=RefusalReason.VERIFIER_UNAVAILABLE,
                 detail="All cross-family routes have open circuit-breakers",
                 retryable=True,
             )
+        engine_logger.info(
+            "verifier_selected",
+            extra={
+                "request_id": get_request_id(),
+                "caller_family": request.caller.model_family.value,
+                "verifier_family": route.family.value,
+                "model_id": route.model_id,
+                "is_fallback": route.is_fallback,
+                "path": "code",
+            },
+        )
 
         # Get provider for selected family
         provider = self._providers.get(route.family.value)
@@ -288,8 +319,18 @@ class VerificationEngine:
         sub_result = compute_pairwise_rho(
             genuine_results,
             thresholds=request.pairwise_rho_thresholds,
+            default_threshold=RHO_MAX_DEFAULT,
         )
         if not sub_result.passed:
+            engine_logger.warning(
+                "lens_collapse",
+                extra={
+                    "request_id": get_request_id(),
+                    "reason": RefusalReason.LENS_COLLAPSE.value,
+                    "collapsed_pairs": sub_result.collapsed_pairs,
+                    "path": "code",
+                },
+            )
             return VerifyError(
                 reason=RefusalReason.LENS_COLLAPSE,
                 detail=f"Lens pairs exceeded rho threshold: {sub_result.collapsed_pairs}",
@@ -298,6 +339,16 @@ class VerificationEngine:
 
         # Step 6: aggregate verdict over genuine results.
         verdict, confidence, retryable = aggregate_verdict(genuine_results)
+        engine_logger.info(
+            "verdict",
+            extra={
+                "request_id": get_request_id(),
+                "verdict": verdict.value,
+                "path": "code",
+                "confidence": confidence,
+                "retryable": retryable,
+            },
+        )
 
         # Generate revision hint if verdict is REVISE (from genuine findings only).
         revision_hint = None
@@ -311,26 +362,17 @@ class VerificationEngine:
             if hints:
                 revision_hint = "; ".join(hints)[:500]
 
-        # Step 7: Generate receipt
-        lens_results_json = json.dumps(
-            [lr.model_dump() for lr in lens_results], default=str
-        )
-
-        lens_prompt_hashes = {
-            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
-        }
-
-        receipt = self._receipt_store.create_receipt(
+        # Step 7: Generate receipt (single builder — CORE-B-003).
+        receipt = self._build_and_store_receipt(
             pre_strip_hash=strip_result.pre_strip_hash,
             post_strip_hash=strip_result.post_strip_hash,
             verifier_models=[route.model_id],
             pairwise_rho=sub_result.pairwise_rho,
             reasoning_visibility_mode=request.reasoning_visibility,
-            verdict=verdict.value,
+            verdict=verdict,
             confidence=confidence,
             retryable=retryable,
-            lens_results_json=lens_results_json,
-            lens_prompt_hashes=lens_prompt_hashes,
+            lens_results=lens_results,
         )
 
         # Report success to the router ONLY when this provider had a clean request — i.e. every
@@ -352,6 +394,50 @@ class VerificationEngine:
         )
         harvest_capture(request, response)
         return response
+
+    def _build_and_store_receipt(
+        self,
+        *,
+        pre_strip_hash: str,
+        post_strip_hash: str,
+        verifier_models: list[str],
+        pairwise_rho: dict[str, float],
+        reasoning_visibility_mode: ReasoningVisibility,
+        verdict: Verdict,
+        confidence: float,
+        retryable: bool,
+        lens_results: list[LensResult],
+        artifact_type: str = "code",
+        retrieval_pins: list[dict[str, str]] | None = None,
+    ) -> Receipt:
+        """Single receipt-construction site (CORE-B-003).
+
+        The code/citation/sycophancy-single/panel paths previously each inlined the SAME
+        ``lens_results_json`` dump + ``lens_prompt_hashes`` comprehension + ``create_receipt`` call;
+        a schema migration meant editing ~4 copies. This is the one place that derives those signed
+        fields, so the next migration touches a single function. Behavior is byte-identical to the
+        old inline blocks — the same fields are passed to ``create_receipt`` and thus signed.
+        """
+        lens_results_json = json.dumps(
+            [lr.model_dump() for lr in lens_results], default=str
+        )
+        lens_prompt_hashes = {
+            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
+        }
+        return self._receipt_store.create_receipt(
+            pre_strip_hash=pre_strip_hash,
+            post_strip_hash=post_strip_hash,
+            verifier_models=verifier_models,
+            pairwise_rho=pairwise_rho,
+            reasoning_visibility_mode=reasoning_visibility_mode,
+            verdict=verdict.value,
+            confidence=confidence,
+            retryable=retryable,
+            lens_results_json=lens_results_json,
+            lens_prompt_hashes=lens_prompt_hashes,
+            artifact_type=artifact_type,
+            retrieval_pins=retrieval_pins or [],
+        )
 
     async def _run_lens(
         self,
@@ -472,21 +558,16 @@ class VerificationEngine:
         revision_hint = "; ".join(hints)[:500] if hints else None
 
         content_hash = hashlib.sha256(request.artifact.content.encode()).hexdigest()
-        lens_results_json = json.dumps([lr.model_dump() for lr in lens_results], default=str)
-        lens_prompt_hashes = {
-            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
-        }
-        receipt = self._receipt_store.create_receipt(
+        receipt = self._build_and_store_receipt(
             pre_strip_hash=content_hash,
             post_strip_hash=content_hash,
             verifier_models=[route.model_id],
             pairwise_rho={},
             reasoning_visibility_mode=request.reasoning_visibility,
-            verdict=verdict.value,
+            verdict=verdict,
             confidence=confidence,
             retryable=retryable,
-            lens_results_json=lens_results_json,
-            lens_prompt_hashes=lens_prompt_hashes,
+            lens_results=lens_results,
             artifact_type=request.artifact.type.value,
             retrieval_pins=pins,
         )
@@ -576,11 +657,26 @@ class VerificationEngine:
         system_prompt, user_prompt = lens.build_prompts(stripped, request.intent)
         prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
         model_id = provider.available_models[0]
+        # CORE-B-001: the single path pulls LOCAL_SYCOPHANCY directly, so give it a breaker key too;
+        # otherwise a flapping specialist never trips. Genuine-result-floor discipline (mirrors the
+        # code/citation paths): report_failure on a provider fault OR an unparseable adjudication;
+        # report_success only when the lens produced a genuine, non-errored result.
+        syc_family = ModelFamily.LOCAL_SYCOPHANCY
         try:
             lens_result = await lens.evaluate(
-                stripped, request.intent, ModelFamily.LOCAL_SYCOPHANCY.value, model_id, provider
+                stripped, request.intent, syc_family.value, model_id, provider
             )
         except ProviderError as exc:
+            self._router.report_failure(syc_family, model_id)
+            engine_logger.warning(
+                "verify_error",
+                extra={
+                    "request_id": get_request_id(),
+                    "reason": RefusalReason.VERIFIER_UNAVAILABLE.value,
+                    "path": "sycophancy_single",
+                    "detail": "specialist provider call failed",
+                },
+            )
             # Fail-open: an unavailable specialist refuses (route to a human), never ACCEPT.
             return VerifyError(
                 reason=RefusalReason.VERIFIER_UNAVAILABLE,
@@ -588,11 +684,23 @@ class VerificationEngine:
                 retryable=True,
             )
         if lens_result.errored:
+            self._router.report_failure(syc_family, model_id)
+            engine_logger.warning(
+                "verify_error",
+                extra={
+                    "request_id": get_request_id(),
+                    "reason": RefusalReason.VERIFIER_UNAVAILABLE.value,
+                    "path": "sycophancy_single",
+                    "detail": "specialist returned an unparseable adjudication",
+                },
+            )
             return VerifyError(
                 reason=RefusalReason.VERIFIER_UNAVAILABLE,
                 detail="sycophancy specialist returned an unparseable adjudication",
                 retryable=True,
             )
+        # A genuine, non-errored adjudication: the specialist served this request cleanly.
+        self._router.report_success(syc_family, model_id)
         lens_result.prompt_hash = prompt_hash
 
         verdict, confidence, retryable = aggregate_verdict([lens_result])
@@ -602,17 +710,25 @@ class VerificationEngine:
 
         pre = hashlib.sha256(request.artifact.content.encode()).hexdigest()
         post = hashlib.sha256(strip_result.content.encode()).hexdigest()
-        receipt = self._receipt_store.create_receipt(
+        engine_logger.info(
+            "verdict",
+            extra={
+                "request_id": get_request_id(),
+                "verdict": verdict.value,
+                "path": "sycophancy_single",
+                "confidence": confidence,
+            },
+        )
+        receipt = self._build_and_store_receipt(
             pre_strip_hash=pre,
             post_strip_hash=post,
             verifier_models=[model_id],
             pairwise_rho={},
             reasoning_visibility_mode=request.reasoning_visibility,
-            verdict=verdict.value,
+            verdict=verdict,
             confidence=confidence,
             retryable=retryable,
-            lens_results_json=json.dumps([lens_result.model_dump()], default=str),
-            lens_prompt_hashes={lens.name: prompt_hash},
+            lens_results=[lens_result],
             artifact_type=request.artifact.type.value,
             retrieval_pins=[],
         )
@@ -689,8 +805,13 @@ class VerificationEngine:
             )
 
         lens_results: list[LensResult] = []
-        for (family, _provider), res in zip(members, gathered, strict=True):
+        for (family, provider), res in zip(members, gathered, strict=True):
+            # CORE-B-001: per-member breaker accounting — a member family that errors every request
+            # must trip its own breaker. report_failure on a raised/errored adjudication;
+            # report_success only on a genuine, non-errored one (the genuine-result floor).
+            member_model_id = provider.available_models[0]
             if isinstance(res, BaseException):
+                self._router.report_failure(family, member_model_id)
                 lens_results.append(
                     LensResult(
                         lens=f"sycophancy:{family.value}",
@@ -709,7 +830,11 @@ class VerificationEngine:
                         prompt_hash=prompt_hash,
                     )
                 )
+            elif res.errored:
+                self._router.report_failure(family, member_model_id)
+                lens_results.append(res)
             else:
+                self._router.report_success(family, member_model_id)
                 lens_results.append(res)
 
         genuine = [lr for lr in lens_results if not lr.errored]
@@ -740,20 +865,27 @@ class VerificationEngine:
 
         pre = hashlib.sha256(request.artifact.content.encode()).hexdigest()
         post = hashlib.sha256(strip_result.content.encode()).hexdigest()
-        lens_prompt_hashes = {
-            lr.lens: lr.prompt_hash for lr in lens_results if lr.prompt_hash is not None
-        }
-        receipt = self._receipt_store.create_receipt(
+        engine_logger.info(
+            "verdict",
+            extra={
+                "request_id": get_request_id(),
+                "verdict": verdict.value,
+                "path": "sycophancy_panel",
+                "confidence": confidence,
+                "genuine_votes": len(genuine),
+                "panel_size": len(lens_results),
+            },
+        )
+        receipt = self._build_and_store_receipt(
             pre_strip_hash=pre,
             post_strip_hash=post,
             verifier_models=[lr.model_id for lr in genuine],
             pairwise_rho={},
             reasoning_visibility_mode=request.reasoning_visibility,
-            verdict=verdict.value,
+            verdict=verdict,
             confidence=confidence,
             retryable=retryable,
-            lens_results_json=json.dumps([lr.model_dump() for lr in lens_results], default=str),
-            lens_prompt_hashes=lens_prompt_hashes,
+            lens_results=lens_results,
             artifact_type=request.artifact.type.value,
             retrieval_pins=[],
         )

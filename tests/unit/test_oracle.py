@@ -270,3 +270,79 @@ async def test_crossref_redirect_is_unresolvable_not_chased() -> None:
     assert r.outcome == ExistenceOutcome.UNRESOLVABLE
     assert "redirect" in r.detail.lower()
     await oracle.aclose()
+
+
+# --- EVS-B-007: cache TTL (no stale-serve) + cache bound (no unbounded growth) -------------------
+
+
+async def test_cache_entry_past_ttl_is_refetched_not_served_stale() -> None:
+    # A RESOLVED record cached at t0 must NOT be served forever: once an entry is older than the
+    # TTL, the next resolve re-fetches it (a long-lived process never freezes on a stale verdict).
+    clock = [1000.0]
+    oracle = CitationOracle(
+        client=httpx.AsyncClient(timeout=5.0),
+        retry_delays=(),
+        cache_ttl=60.0,
+        clock=lambda: clock[0],
+    )
+    with respx.mock:
+        route = respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(200, text=_FEED_2402)
+        )
+        cite = Citation(claim="x", identifier="2402.01817", title="LLMs Cannot Self-Verify")
+        r1 = await oracle.resolve(cite)
+        assert r1.outcome == ExistenceOutcome.RESOLVED
+        assert route.call_count == 1
+
+        # Within the TTL -> served from cache, no second network call.
+        clock[0] += 30.0
+        r2 = await oracle.resolve(cite)
+        assert r2.outcome == ExistenceOutcome.RESOLVED
+        assert route.call_count == 1  # still cached
+
+        # Past the TTL -> the stale entry expires and is re-fetched.
+        clock[0] += 31.0  # now 61s after t0 > 60s TTL
+        r3 = await oracle.resolve(cite)
+        assert r3.outcome == ExistenceOutcome.RESOLVED
+        assert route.call_count == 2  # re-fetched, NOT served stale
+    await oracle.aclose()
+
+
+async def test_cache_stays_bounded_under_many_distinct_ids() -> None:
+    # An unbounded per-instance cache grows without limit over a long-lived process. With a bound
+    # of N, resolving many distinct ids must keep the live cache at or below N entries.
+    oracle = CitationOracle(
+        client=httpx.AsyncClient(timeout=5.0),
+        retry_delays=(),
+        cache_max=8,
+    )
+    with respx.mock:
+        respx.get(url__startswith=ARXIV).mock(return_value=httpx.Response(200, text=_FEED_2402))
+        for i in range(50):
+            # 50 distinct (well-formed) arXiv ids -> 50 distinct cache keys.
+            await oracle.resolve(Citation(claim="x", identifier=f"2401.{i:05d}"))
+    assert oracle.cache_size <= 8  # bounded, not 50
+    await oracle.aclose()
+
+
+async def test_cache_evicts_oldest_first_when_bound_exceeded() -> None:
+    # LRU-ish bound: inserting past the cap evicts the OLDEST entry, so the most-recent distinct
+    # ids remain cached. After overflowing the cap, the first-inserted id must be gone.
+    oracle = CitationOracle(
+        client=httpx.AsyncClient(timeout=5.0),
+        retry_delays=(),
+        cache_max=2,
+    )
+    with respx.mock:
+        route = respx.get(url__startswith=ARXIV).mock(
+            return_value=httpx.Response(200, text=_FEED_2402)
+        )
+        await oracle.resolve(Citation(claim="x", identifier="2401.00001"))  # insert A
+        await oracle.resolve(Citation(claim="x", identifier="2401.00002"))  # insert B (cache: A,B)
+        await oracle.resolve(Citation(claim="x", identifier="2401.00003"))  # insert C -> evict A
+        assert oracle.cache_size == 2
+        before = route.call_count
+        # A was evicted -> resolving it again re-fetches (one more network call).
+        await oracle.resolve(Citation(claim="x", identifier="2401.00001"))
+        assert route.call_count == before + 1
+    await oracle.aclose()

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from prism.eval.corpus import (
     CORPUS_CLASSES,
     SPLITS,
     Sample,
     build_corpus,
     check_corpus_integrity,
+    corpus_content_hash,
     generate_samples,
     load_corpus,
 )
@@ -102,6 +105,48 @@ class TestBuildLoadRoundTrip:
 
         with pytest.raises(FileNotFoundError):
             load_corpus(tmp_path / "nope", "all")
+
+
+class TestContentHash:
+    """EVS-B-001: a deterministic content hash makes corpus drift visible by construction.
+
+    A count-preserving edit (same number of samples, different content/label) MUST flip the hash;
+    a no-op (reordering the same samples) MUST NOT — so a published report's corpus-hash is a real
+    fingerprint of the sample set, not of file layout or insertion order.
+    """
+
+    def test_hash_is_deterministic_and_order_independent(self) -> None:
+        samples = _all()
+        h1 = corpus_content_hash(samples)
+        h2 = corpus_content_hash(list(reversed(samples)))  # reorder = NO content change
+        assert h1 == h2
+        assert isinstance(h1, str) and len(h1) == 64  # sha256 hex
+
+    def test_count_preserving_content_edit_flips_hash(self) -> None:
+        samples = _all()
+        before = corpus_content_hash(samples)
+        # Swap one sample's content for different content WITHOUT changing the sample count.
+        edited = list(samples)
+        edited[0] = replace(edited[0], content=edited[0].content + "\n# drifted\n")
+        assert len(edited) == len(samples)  # count preserved
+        after = corpus_content_hash(edited)
+        assert after != before, "a count-preserving content edit must change the hash (drift)"
+
+    def test_count_preserving_label_edit_flips_hash(self) -> None:
+        # Relabeling a sample (positive flag flip) is a silent corpus change the hash must catch.
+        samples = _all()
+        before = corpus_content_hash(samples)
+        edited = list(samples)
+        edited[0] = replace(edited[0], positive=not edited[0].positive)
+        after = corpus_content_hash(edited)
+        assert after != before
+
+    def test_manifest_embeds_content_hash(self, tmp_path) -> None:
+        import json
+
+        build_corpus(tmp_path)
+        manifest = json.loads((tmp_path / "MANIFEST.json").read_text(encoding="utf-8"))
+        assert manifest["content_hash"] == corpus_content_hash(_all())
 
 
 class TestIntegrityGate:

@@ -255,22 +255,31 @@ def coverage_gain(
     union: set[str] = set()
     for caught in caught_by_lens.values():
         union |= caught
+    # EVS-B-004: iterate lenses in NAME order so ties (equal coverage / equal marginal gain) resolve
+    # deterministically — otherwise the published "best single lens" and greedy "redundant lens"
+    # chain depend on the caller's dict insertion order, making the report nonreproducible.
+    lens_names = sorted(caught_by_lens)
     best_single_lens: str | None = None
     best_single_size = 0
-    for lens, caught in caught_by_lens.items():
-        if len(caught) > best_single_size or best_single_lens is None:
+    for lens in lens_names:
+        caught = caught_by_lens[lens]
+        if best_single_lens is None or len(caught) > best_single_size:
             best_single_lens = lens
             best_single_size = len(caught)
-    # Greedy marginal-gain curve: repeatedly add the lens contributing the most NEW catches.
-    remaining = dict(caught_by_lens)
+    # Greedy marginal-gain curve: repeatedly add the lens contributing the most NEW catches. On a
+    # tie in new-catch count, the name-sorted iteration order (via the key's secondary term) wins,
+    # so the chain is stable across input orderings.
+    remaining = set(lens_names)
     covered: set[str] = set()
     marginal: list[tuple[str, int]] = []
     while remaining:
-        best_lens = max(remaining, key=lambda name: len(remaining[name] - covered))
-        new = remaining[best_lens] - covered
+        best_lens = max(
+            sorted(remaining), key=lambda name: len(caught_by_lens[name] - covered)
+        )
+        new = caught_by_lens[best_lens] - covered
         marginal.append((best_lens, len(new)))
-        covered |= remaining[best_lens]
-        del remaining[best_lens]
+        covered |= caught_by_lens[best_lens]
+        remaining.discard(best_lens)
     union_recall = len(union) / total_positives if total_positives else 0.0
     return CoverageGain(
         union_size=len(union),
