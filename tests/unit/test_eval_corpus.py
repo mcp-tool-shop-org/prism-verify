@@ -6,12 +6,14 @@ from dataclasses import replace
 
 from prism.eval.corpus import (
     CORPUS_CLASSES,
+    DEFAULT_QUIXBUGS_DIR,
     SPLITS,
     Sample,
     build_corpus,
     check_corpus_integrity,
     corpus_content_hash,
     generate_samples,
+    is_contaminated,
     load_corpus,
 )
 
@@ -80,7 +82,8 @@ class TestNoLeakage:
 
 class TestBuildLoadRoundTrip:
     def test_build_then_load_matches_generate(self, tmp_path) -> None:
-        manifest = build_corpus(tmp_path)
+        # quixbugs_dir=None builds the AUTHORED-only corpus, which must round-trip generate_samples.
+        manifest = build_corpus(tmp_path, quixbugs_dir=None)
         assert manifest["schema"] == "prism-eval-corpus/v1"
         assert (tmp_path / "MANIFEST.json").exists()
         assert (tmp_path / "prevalence.json").exists()
@@ -92,7 +95,7 @@ class TestBuildLoadRoundTrip:
         assert loaded == generated
 
     def test_load_split_filters(self, tmp_path) -> None:
-        build_corpus(tmp_path)
+        build_corpus(tmp_path, quixbugs_dir=None)
         pub = load_corpus(tmp_path, "public")
         assert pub and all(s.split == "public" for s in pub)
 
@@ -144,7 +147,8 @@ class TestContentHash:
     def test_manifest_embeds_content_hash(self, tmp_path) -> None:
         import json
 
-        build_corpus(tmp_path)
+        # Authored-only build: the manifest hash must equal the hash of the authored sample set.
+        build_corpus(tmp_path, quixbugs_dir=None)
         manifest = json.loads((tmp_path / "MANIFEST.json").read_text(encoding="utf-8"))
         assert manifest["content_hash"] == corpus_content_hash(_all())
 
@@ -171,3 +175,69 @@ class TestIntegrityGate:
             split="public",
         )
         assert check_corpus_integrity([bad])  # non-empty problem list
+
+
+class TestQuixBugsWiring:
+    """F-01 v1.1: QuixBugs real-bug pairs land in the public split, contamination-flagged, and the
+    ANDON gate still passes on the enlarged corpus."""
+
+    def _skip_if_missing(self) -> None:
+        if not DEFAULT_QUIXBUGS_DIR.exists():  # pragma: no cover - vendored data must be present
+            import pytest
+
+            pytest.skip(f"vendored QuixBugs missing at {DEFAULT_QUIXBUGS_DIR}")
+
+    def test_build_includes_quixbugs_in_public_only(self, tmp_path) -> None:
+        self._skip_if_missing()
+        build_corpus(tmp_path)  # default => ingests vendored QuixBugs
+        pub = load_corpus(tmp_path, "public")
+        fresh = load_corpus(tmp_path, "fresh")
+        quix_pub = [s for s in pub if is_contaminated(s.id)]
+        assert quix_pub, "QuixBugs samples missing from public split"
+        assert all(s.split == "public" for s in quix_pub)
+        # The 'fresh' split must NOT be touched (it is the honest, uncontaminated signal).
+        assert not any(is_contaminated(s.id) for s in fresh)
+
+    def test_manifest_records_contamination_metadata(self, tmp_path) -> None:
+        self._skip_if_missing()
+        import json
+
+        manifest = build_corpus(tmp_path)
+        manifest_disk = json.loads((tmp_path / "MANIFEST.json").read_text(encoding="utf-8"))
+        assert manifest == manifest_disk  # returned == written
+        sources = manifest["sources"]
+        assert sources["authored"]["contaminated"] is False
+        quix = sources["quixbugs"]
+        assert quix["contaminated"] is True
+        assert quix["splits"] == ["public"]
+        assert quix["license"] == "MIT"
+        assert quix["n_samples"] > 0 and quix["n_program_pairs"] == quix["n_samples"] // 2
+        assert manifest["contaminated_splits"] == ["public"]
+
+    def test_quixbugs_build_hash_differs_from_authored_only(self, tmp_path) -> None:
+        self._skip_if_missing()
+        with_quix = build_corpus(tmp_path / "a")["content_hash"]
+        without = build_corpus(tmp_path / "b", quixbugs_dir=None)["content_hash"]
+        assert with_quix != without, "adding QuixBugs must change the corpus content hash"
+
+    def test_andon_gate_passes_on_enlarged_corpus(self, tmp_path) -> None:
+        self._skip_if_missing()
+        build_corpus(tmp_path)
+        loaded = load_corpus(tmp_path, "all")
+        assert check_corpus_integrity(loaded) == []
+
+    def test_positives_per_lens_rises_but_below_stability_bar(self, tmp_path) -> None:
+        self._skip_if_missing()
+        with_quix = build_corpus(tmp_path / "a")["positives_per_lens"]
+        without = build_corpus(tmp_path / "b", quixbugs_dir=None)["positives_per_lens"]
+        # QuixBugs only adds CODE positives (invariant + contract_completeness); they must rise.
+        assert with_quix["invariant"] > without["invariant"]
+        assert with_quix["contract_completeness"] > without["contract_completeness"]
+        # Honest: still below the >=100/lens stability bar even after the real-bug upgrade.
+        assert max(with_quix.values()) < 100
+
+    def test_authored_only_build_has_no_contamination(self, tmp_path) -> None:
+        manifest = build_corpus(tmp_path, quixbugs_dir=None)
+        assert manifest["contaminated_splits"] == []
+        assert manifest["sources"]["quixbugs"]["splits"] == []
+        assert not any(is_contaminated(s.id) for s in load_corpus(tmp_path, "all"))

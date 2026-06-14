@@ -15,6 +15,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 
 from prism.eval.calibrate import FamilyAB, rho_threshold_sweep
+from prism.eval.corpus import is_contaminated
 from prism.eval.metrics import (
     brier_score,
     cohen_kappa,
@@ -27,6 +28,13 @@ from prism.eval.metrics import (
 from prism.eval.runner import EvalRun, RunRecord
 
 _LLM_LENSES = ("contract_completeness", "cross_boundary", "invariant", "groundedness")
+# The per-lens QUALITY table reports precision/recall/MCC per lens's target class. It includes
+# 'citation' (the largest positive set — 10 samples) which the engine DOES emit as a LensResult
+# (engine.py: lens="citation"), so it has a real per-sample fail signal to score. 'citation' is
+# DELIBERATELY excluded from _LLM_LENSES below: the diversity matrix / Krippendorff / coverage_gain
+# need an all-4-lens decision that the single-path citation adjudication does not produce, so those
+# stay on _LLM_LENSES. (Resolves the per-lens fork: citation is in the quality table ONLY.)
+_QUALITY_LENSES = (*_LLM_LENSES, "citation")
 _OFF_ACCEPT = {"refuse", "revise", "escalate"}
 
 
@@ -72,6 +80,10 @@ class ReportData:
     rho_baseline_accuracy: float
     rho_best_cutoff: float | None
     rho_note: str
+    # F-01 v1.1: how many SCORED samples come from a known-public, likely-memorized source
+    # (QuixBugs). >0 means the public-split numbers are a CEILING; render_markdown prints a caveat.
+    # Defaulted so older callers still construct.
+    contaminated_sample_count: int = 0
     notes: list[str] = field(default_factory=list)
     family_ab: FamilyAB | None = None  # set by the CLI when --family-ab runs the control
 
@@ -129,9 +141,12 @@ def summarize(run: EvalRun) -> ReportData:
         modal = _modal_verdict(genuine)
         samp_verdict[sid] = modal
         samp_conf[sid] = statistics.fmean(r.confidence for r in genuine)
+        # Populate over _QUALITY_LENSES (includes 'citation') so the per-lens table can score the
+        # citation class. The diversity matrix below filters on _LLM_LENSES only, so a stray
+        # 'citation' key here never enters it (a citation sample lacks the 4 code/tool decisions).
         samp_fail[sid] = {
             lens: bool(_majority_fail(genuine, lens))
-            for lens in _LLM_LENSES
+            for lens in _QUALITY_LENSES
             if _majority_fail(genuine, lens) is not None
         }
         consistencies.append(sum(1 for r in genuine if r.verdict == modal) / len(genuine))
@@ -140,7 +155,7 @@ def summarize(run: EvalRun) -> ReportData:
     # Only samples with a genuine measurement count — an all-unavailable sample has no y_pred and
     # would otherwise be scored as a forced false-negative (EVL-A-001).
     per_lens: list[LensReport] = []
-    for lens in _LLM_LENSES:
+    for lens in _QUALITY_LENSES:  # includes 'citation' — the quality table only (not diversity)
         rel = [s for s in run.samples.values() if s.target_lens == lens and s.id in measured_ids]
         if not rel:
             continue
@@ -251,6 +266,17 @@ def summarize(run: EvalRun) -> ReportData:
             "precision is at the corpus's balanced ~50% prevalence, not deployment prevalence; it "
             "is NOT re-weighted (a defect-rare deployment sees lower precision for the same lens)."
         )
+    # F-01 v1.1 contamination caveat: count SCORED samples from a known-public, likely-memorized
+    # source (QuixBugs, public split). If any are present, the public-split number on them is a
+    # CEILING — verifiers may have memorized them — and the fresh split is the honest signal.
+    contaminated_n = sum(1 for sid in measured_ids if is_contaminated(sid))
+    if contaminated_n:
+        notes.append(
+            f"{contaminated_n} scored sample(s) are from a KNOWN-PUBLIC source (QuixBugs, public "
+            "split); verifiers may have memorized them, so the public-split accuracy on "
+            "contaminated data is a CEILING, not an honest generalization estimate. The fresh "
+            "split is the honest signal (post-cutoff)."
+        )
 
     sweep = rho_threshold_sweep(run)
 
@@ -280,6 +306,7 @@ def summarize(run: EvalRun) -> ReportData:
         rho_baseline_accuracy=sweep.baseline_accuracy,
         rho_best_cutoff=sweep.best_cutoff,
         rho_note=sweep.note,
+        contaminated_sample_count=contaminated_n,
         notes=notes,
     )
 
@@ -382,11 +409,27 @@ def render_markdown(report: ReportData) -> str:
 
     ab = report.family_ab
     if ab is not None:
+        fd_models = ", ".join(ab.family_different_model_ids) or "(not recorded)"
+        sf_models = ", ".join(ab.same_family_model_ids) or "(not recorded)"
+        ci_lo, ci_hi = ab.delta_ci
         lines.append("## Family-different vs same-family (Lock 1 A/B)")
         lines.append("")
-        lines.append(f"- Family-different accuracy: **{_fmt(ab.family_different_accuracy)}**")
-        lines.append(f"- Same-family control accuracy: **{_fmt(ab.same_family_accuracy)}**")
-        lines.append(f"- Delta (family-different - same-family): **{_fmt(ab.delta)}**")
+        lines.append(
+            f"- Paired samples (measured by both arms): **{ab.n_paired}** "
+            "(McNemar-paired over the intersection)"
+        )
+        lines.append(
+            f"- Family-different accuracy: **{_fmt(ab.family_different_accuracy)}** "
+            f"({ab.family_different_correct}/{ab.n_paired} correct) — verifier(s): **{fd_models}**"
+        )
+        lines.append(
+            f"- Same-family control accuracy: **{_fmt(ab.same_family_accuracy)}** "
+            f"({ab.same_family_correct}/{ab.n_paired} correct) — verifier(s): **{sf_models}**"
+        )
+        lines.append(
+            f"- Delta (family-different - same-family): **{_fmt(ab.delta)}** "
+            f"(95% CI [{_fmt(ci_lo)}, {_fmt(ci_hi)}], paired McNemar Wald)"
+        )
         lines.append(f"- {ab.note}")
         lines.append("")
     return "\n".join(lines)

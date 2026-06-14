@@ -59,6 +59,55 @@ def _unavailable_record(sid: str, run_index: int) -> RunRecord:
     )
 
 
+def _citation_sample(sid: str, *, positive: bool) -> Sample:
+    """A citations-artifact sample targeting the 'citation' lens (the per-lens-table-only lens)."""
+    return Sample(
+        id=sid,
+        artifact_type="citations",
+        content='[{"identifier": "2402.01817", "claim": "x"}]',
+        intent="verify each citation exists and the stated finding matches the source",
+        positive=positive,
+        target_lens="citation",
+        bug_class="fabricated" if positive else "real",
+        expected_verdict="refuse" if positive else "accept",
+        split="public",
+    )
+
+
+def _citation_record(sid: str, run_index: int, *, verdict: str, confidence: float) -> RunRecord:
+    """A genuine citation adjudication: the engine emits a 'citation' lens result (engine.py)."""
+    return RunRecord(
+        sample_id=sid,
+        run_index=run_index,
+        verdict=verdict,
+        confidence=confidence,
+        errored=False,
+        unavailable=False,
+        per_lens={"citation": "fail" if verdict != "accept" else "pass"},
+        pairwise_rho={},
+    )
+
+
+def _full4_record(sid: str, run_index: int, *, verdict: str, confidence: float) -> RunRecord:
+    """A code/tool adjudication with a decision on all four _LLM_LENSES (feeds diversity)."""
+    fail = "fail" if verdict != "accept" else "pass"
+    return RunRecord(
+        sample_id=sid,
+        run_index=run_index,
+        verdict=verdict,
+        confidence=confidence,
+        errored=False,
+        unavailable=False,
+        per_lens={
+            "contract_completeness": fail,
+            "cross_boundary": fail,
+            "invariant": fail,
+            "groundedness": fail,
+        },
+        pairwise_rho={},
+    )
+
+
 def _run(samples: list[Sample], records: list[RunRecord], n_runs: int) -> EvalRun:
     return EvalRun(
         records=records,
@@ -228,3 +277,89 @@ class TestUnavailableExcludedFromMetrics:
         # Mean confidence over BOTH genuine records: (0.9 + 0.7) / 2 = 0.8.
         expected_ece = expected_calibration_error([0.8], [True])
         assert math.isclose(report.ece, expected_ece)
+
+
+class TestCitationPromotedToPerLensTable:
+    """F-01 v1.1 / wedge fork: 'citation' is the LARGEST positive set but was invisible because the
+    per-lens table looped over _LLM_LENSES (which omits it). Promote it to the per-lens QUALITY
+    table ONLY — the diversity matrix / Krippendorff / coverage_gain still use the 4 _LLM_LENSES."""
+
+    def test_per_lens_table_includes_a_citation_row(self) -> None:
+        from prism.eval.report import render_markdown
+
+        bug = _citation_sample("cit-bug", positive=True)
+        clean = _citation_sample("cit-clean", positive=False)
+        records = [
+            _citation_record("cit-bug", 0, verdict="refuse", confidence=0.8),
+            _citation_record("cit-clean", 0, verdict="accept", confidence=0.8),
+        ]
+        report = summarize(_run([bug, clean], records, n_runs=1))
+        lenses = {lr.lens for lr in report.per_lens}
+        assert "citation" in lenses, f"citation missing from per-lens table: {lenses}"
+        # The citation lens scored a real positive (the buggy citation was flagged).
+        cit = next(lr for lr in report.per_lens if lr.lens == "citation")
+        assert cit.positives == 1
+        # And it renders into the markdown table.
+        md = render_markdown(report)
+        assert "| citation |" in md
+
+    def test_diversity_matrix_uses_only_the_four_llm_lenses(self) -> None:
+        """A full-4-lens code sample + a citation sample: the diversity matrix must be built from
+        the 4 _LLM_LENSES only — the citation sample (no 4-lens decision) must NOT enter it, and the
+        pairwise-kappa keys must never mention 'citation'."""
+        code = _sample("code-bug", positive=True, target_lens="invariant")
+        cit = _citation_sample("cit-bug", positive=True)
+        records = [
+            _full4_record("code-bug", 0, verdict="refuse", confidence=0.8),
+            _citation_record("cit-bug", 0, verdict="refuse", confidence=0.8),
+        ]
+        report = summarize(_run([code, cit], records, n_runs=1))
+        # citation is in the quality table...
+        assert "citation" in {lr.lens for lr in report.per_lens}
+        # ...but NEVER in the diversity matrix (kappa pairs are only among the 4 LLM lenses).
+        for pair in report.pairwise_kappa:
+            assert "citation" not in pair, f"diversity matrix leaked citation: {pair}"
+        # The Krippendorff units came from the single full-4-lens sample, so alpha is computable
+        # without the citation sample polluting it.
+        llm = {"contract_completeness", "cross_boundary", "invariant", "groundedness"}
+        for pair in report.pairwise_kappa:
+            a, b = pair.split(",")
+            assert a in llm and b in llm
+
+
+class TestContaminationCaveat:
+    """F-01 v1.1 2D: when the corpus contains contaminated (QuixBugs/public) samples, the report
+    must print a caveat that the public-split number is a CEILING (verifiers may have memorized) and
+    the fresh split is the honest signal. Mirrors the existing prevalence-caveat note style."""
+
+    def test_caveat_present_when_a_contaminated_sample_is_scored(self) -> None:
+        from prism.eval.report import render_markdown
+
+        # A 'quixbugs-' id marks a contaminated (known-public) sample.
+        s = Sample(
+            id="quixbugs-gcd-buggy",
+            artifact_type="code",
+            content="def gcd(a, b):\n    return gcd(a % b, b)\n",
+            intent="Return the greatest common divisor of a and b.",
+            positive=True,
+            target_lens="invariant",
+            bug_class="wrong_recursive_args",
+            expected_verdict="revise",
+            split="public",
+        )
+        records = [_ok_record("quixbugs-gcd-buggy", 0, verdict="revise", confidence=0.8)]
+        report = summarize(_run([s], records, n_runs=1))
+        assert report.contaminated_sample_count == 1
+        assert any(
+            "ceiling" in n.lower() and ("contaminat" in n.lower() or "memoriz" in n.lower())
+            for n in report.notes
+        ), f"missing contamination caveat: {report.notes}"
+        md = render_markdown(report)
+        assert "CEILING" in md
+
+    def test_no_caveat_when_no_contaminated_samples(self) -> None:
+        s = _sample("clean-authored", positive=True)
+        records = [_ok_record("clean-authored", 0, verdict="refuse", confidence=0.8)]
+        report = summarize(_run([s], records, n_runs=1))
+        assert report.contaminated_sample_count == 0
+        assert not any("ceiling" in n.lower() for n in report.notes)

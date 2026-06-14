@@ -1,6 +1,6 @@
 {
   "note": "INFORMATIONAL ONLY (v1): not read by the benchmark. Precision in the report is raw at the corpus's balanced ~50% prevalence, NOT re-weighted to this density. Future v1.x may use buggy_per_kloc for a prevalence-aware PPV; not wired yet.",
   "buggy_per_kloc": 1.5,
-  "corpus_positive_fraction": 0.5409836065573771,
+  "corpus_positive_fraction": 0.5225225225225225,
   "applied": false
 }

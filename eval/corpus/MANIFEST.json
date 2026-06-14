@@ -9,11 +9,11 @@
     "tool_call",
     "citations"
   ],
-  "content_hash": "8f21ac72231db3263456467436611bcec4808d60198cf9a52420c757181b2ab8",
+  "content_hash": "0f73cc1d55d93911e748cbe27469093d45d478db2a6943d58606bbb34b4b833f",
   "content_hash_schema": "prism-eval-corpus-content/v1",
   "counts_by_split_class": {
     "public": {
-      "code": 20,
+      "code": 70,
       "tool_call": 12,
       "citations": 9
     },
@@ -24,12 +24,41 @@
     }
   },
   "positives_per_lens": {
-    "contract_completeness": 4,
-    "invariant": 6,
+    "contract_completeness": 11,
+    "invariant": 24,
     "groundedness": 4,
     "cross_boundary": 9,
     "citation": 10
   },
-  "prevalence_positive_fraction": 0.5409836065573771,
-  "note": "v1 authored/lens-targeted corpus. Counts are below the >=100/lens stability bar; the report pairs every rate with a Wilson interval. Real-bug ingestion (BugsInPy) is v1.1."
+  "sources": {
+    "authored": {
+      "contaminated": false,
+      "splits": [
+        "public",
+        "fresh"
+      ],
+      "note": "hand-authored lens-targeted defects (v1)."
+    },
+    "quixbugs": {
+      "contaminated": true,
+      "splits": [
+        "public"
+      ],
+      "license": "MIT",
+      "upstream": "https://github.com/jkoppel/QuixBugs",
+      "commit": "4257f44b0ff1181dedaedee6a447e133219fcebf",
+      "n_samples": 50,
+      "n_program_pairs": 25,
+      "positives_per_lens": {
+        "invariant": 18,
+        "contract_completeness": 7
+      },
+      "note": "QuixBugs real-bug pairs (offline, vendored). CONTAMINATED: verifiers have likely seen these in pretraining, so the public-split number on them is a CEILING, not an honest generalization estimate. See eval/vendor/quixbugs/."
+    }
+  },
+  "contaminated_splits": [
+    "public"
+  ],
+  "prevalence_positive_fraction": 0.5225225225225225,
+  "note": "v1 corpus: authored lens-targeted defects + QuixBugs real-bug pairs (public split, CONTAMINATED \u2014 see 'sources'). Positives/lens still below the >=100/lens stability bar; the report pairs every rate with a Wilson interval. Post-cutoff fresh-split ingestion (SWE-bench-Live) is the v1.2 upgrade."
 }

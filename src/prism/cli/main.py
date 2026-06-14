@@ -34,10 +34,13 @@ from prism.probes.sycophancy import (
 from prism.providers.base import ModelProvider
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
     from prism.core.engine import VerificationEngine
+    from prism.eval.corpus import Sample
     from prism.eval.report import ReportData
+    from prism.eval.runner import EvalRun
     from prism.receipts.store import ReceiptStore
 
 
@@ -478,8 +481,14 @@ def _write_run_receipt(
 def _build_same_family_control(
     offline: bool, out_dir: Path, caller_family: str
 ) -> VerificationEngine:
-    """A same-family control engine for the Lock-1 A/B: route the caller family back to itself
-    (the default router forbids this; that's Lock 1's point - the control measures its cost)."""
+    """A same-family control engine for the Lock-1 A/B: route the caller family back to itself.
+
+    The default router forbids same-family selection — that is Lock 1's whole point — so this is
+    the ONLY place that sets the measurement-only ``allow_same_family=True`` bypass. It is scoped
+    to this throwaway control engine (a private receipt DB under --out) and is never returned to or
+    shared with the production engine / HTTP / MCP / verify path. Offline, the verifier is a
+    deterministic SELF-PREFERRING mock (``same_family_self_preferring_policy``) that over-accepts,
+    so the offline A/B yields a signed-positive delta proving the wiring (machinery, not data)."""
     from prism.core.engine import VerificationEngine
     from prism.core.routing import FamilyRouter
     from prism.core.setup import build_providers_from_env, register_default_lenses
@@ -489,12 +498,19 @@ def _build_same_family_control(
     register_default_lenses()
     fam = ModelFamily(caller_family)
     db = out_dir / "eval-control-receipts.db"
-    router = FamilyRouter(routing_map={fam: [(fam, f"{caller_family}-control")]})
+    # allow_same_family=True is the measurement-only Lock-1 bypass; scoped to this control engine.
+    router = FamilyRouter(
+        routing_map={fam: [(fam, f"{caller_family}-control")]}, allow_same_family=True
+    )
     if offline:
-        from prism.eval.runner import MockProvider
+        from prism.eval.runner import MockProvider, same_family_self_preferring_policy
 
         providers: dict[str, ModelProvider] = {
-            caller_family: MockProvider(family=fam, model_id=f"{caller_family}-control")
+            caller_family: MockProvider(
+                same_family_self_preferring_policy,
+                family=fam,
+                model_id=f"{caller_family}-control",
+            )
         }
         store = ReceiptStore(db_path=db, signing_secret=b"eval-offline-secret")
     else:
@@ -507,6 +523,227 @@ def _build_same_family_control(
         providers = {caller_family: configured[caller_family]}
         store = ReceiptStore(db_path=db)
     return VerificationEngine(providers=providers, router=router, receipt_store=store)
+
+
+def _run_family_ab(
+    report: ReportData,
+    treatment_run: EvalRun,
+    samples: Sequence[Sample],
+    content_hash: str,
+    offline: bool,
+    out: Path,
+    caller_family: str,
+    runs: int,
+) -> None:
+    """Run the same-family control arm and attach the paired Lock-1 A/B result — or SKIP it loudly.
+
+    Fail-loud contract (F-01 1D): we NEVER emit a meaningless delta (the old bug measured
+    family_different - 0.0 over zero rows, silently). Instead:
+      (i)   pick_ab_pair runs FIRST on the discovered families; if the A/B cannot run (no caller
+            provider -> no control, or no cross-family verifier -> no treatment) we print the named
+            reason and skip. Offline is a synthetic wiring proof, so it bypasses discovery.
+      (ii)  the control run gets the SAME corpus_content_hash and we ANDON-refuse on any mismatch.
+      (iii) when n_paired == 0 (the control produced no genuine verdict — e.g. the Lock-1 bypass
+            failed) we refuse rather than reporting delta = fd - 0.0.
+    """
+    from prism.eval.calibrate import compute_family_ab, discover_families, pick_ab_pair
+    from prism.eval.runner import run_eval
+
+    if not offline:
+        from prism.core.setup import build_providers_from_env
+
+        available = discover_families(build_providers_from_env())
+        pair = pick_ab_pair(ModelFamily(caller_family), available)
+        if not pair.ok:
+            click.echo(f"Skipping --family-ab: {pair.reason}", err=True)
+            return
+
+    control = _build_same_family_control(offline, out, caller_family)
+    control_run = asyncio.run(
+        run_eval(
+            control,
+            samples,
+            caller_family=caller_family,
+            n_runs=runs,
+            verifier_label="same-family-control",
+            corpus_content_hash=content_hash,
+        )
+    )
+
+    # ANDON: the two arms must be scored over byte-identical corpora or the delta is comparing
+    # different things. Refuse on any content-hash mismatch.
+    if control_run.corpus_content_hash != treatment_run.corpus_content_hash:
+        raise click.ClickException(
+            "--family-ab ANDON halt: the control arm's corpus content-hash "
+            f"({control_run.corpus_content_hash!r}) does not match the treatment arm's "
+            f"({treatment_run.corpus_content_hash!r}); refusing to report a cross-corpus delta."
+        )
+
+    ab = compute_family_ab(treatment_run, control_run)
+    if ab.n_paired == 0:
+        raise click.ClickException(
+            "--family-ab ANDON halt: the same-family control arm produced no genuine verdict "
+            "(Lock-1 bypass failed?), so there is nothing to pair; refusing to report delta = "
+            "family_different - 0.0."
+        )
+    report.family_ab = ab
+
+
+def _render_cjb_markdown(summary: object, label: str, runs: int, content_hash: str) -> str:
+    """Render the CodeJudgeBench summary as a markdown table, cohesive with the corpus report style.
+
+    ``summary`` is a ``CJBSummary``; typed ``object`` so this module does not eagerly import the
+    benchmark harness (lazy-imported only inside ``_run_codejudgebench_cli``).
+    """
+    from prism.eval.benchmarks.harness import AccuracyPoint, CJBSummary
+
+    assert isinstance(summary, CJBSummary)
+
+    def _pt_row(p: AccuracyPoint) -> str:
+        ci = f"[{p.accuracy_ci[0]:.3f}, {p.accuracy_ci[1]:.3f}]"
+        return (
+            f"| {p.label} | {p.correct}/{p.total} | {p.accuracy:.3f} {ci} | "
+            f"{p.ties} | {p.tie_rate:.3f} |"
+        )
+
+    pc_lo, pc_hi = summary.position_consistency_ci
+    lines: list[str] = []
+    lines.append("# CodeJudgeBench - results (prism single-artifact -> pairwise preference)")
+    lines.append("")
+    lines.append(
+        f"Verifier: **{label}** | runs/side: {runs} | scored items: {summary.n_items} | "
+        f"unavailable (excluded): {summary.n_unavailable}"
+    )
+    lines.append(f"Content-hash of scored slice: `{content_hash[:12]}...`")
+    lines.append("")
+    for note in summary.notes:
+        lines.append(f"> WARNING: {note}")
+    if summary.notes:
+        lines.append("")
+    lines.append(
+        "- Reduction: prism verifies CHOSEN and REJECTED code separately; `pairwise_prefer` ranks "
+        "the two verdicts (accept>escalate>revise>refuse, tie-break by confidence). CORRECT iff "
+        "prism prefers the CHOSEN side; a TIE is counted WRONG (real discrimination failure)."
+    )
+    lines.append(
+        f"- **Position consistency (both orders agree): {summary.position_consistency:.3f}** "
+        f"[{pc_lo:.3f}, {pc_hi:.3f}] (lower = an order-biased verifier)"
+    )
+    lines.append("")
+    lines.append("## Accuracy (tie counted WRONG in the headline number)")
+    lines.append("")
+    lines.append("| Bucket | correct | accuracy (95% CI) | ties | tie-rate |")
+    lines.append("|---|---|---|---|---|")
+    lines.append(_pt_row(summary.overall))
+    for p in summary.per_task:
+        lines.append(_pt_row(p))
+    lines.append("")
+    if summary.per_producer:
+        lines.append("## Per-producer (the model that wrote the responses)")
+        lines.append("")
+        lines.append("| Producer | correct | accuracy (95% CI) | ties | tie-rate |")
+        lines.append("|---|---|---|---|---|")
+        for p in summary.per_producer:
+            lines.append(_pt_row(p))
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _write_cjb_receipt(
+    store: ReceiptStore, summary: object, label: str, content_hash: str, out_dir: Path
+) -> None:
+    """Sign + export a run-level receipt pinning the CodeJudgeBench headline (PIN_PER_STEP)."""
+    from prism.eval.benchmarks.harness import CJBSummary
+
+    assert isinstance(summary, CJBSummary)
+    receipt_summary = {
+        "benchmark": "codejudgebench",
+        "verifier": label,
+        "n_items": summary.n_items,
+        "n_unavailable": summary.n_unavailable,
+        "overall_accuracy": summary.overall.accuracy,
+        "tie_rate": summary.overall.tie_rate,
+        "position_consistency": summary.position_consistency,
+        "content_hash": content_hash,
+    }
+    receipt = store.create_receipt(
+        pre_strip_hash=content_hash,
+        post_strip_hash=content_hash,
+        verifier_models=[label],
+        pairwise_rho={},
+        reasoning_visibility_mode=ReasoningVisibility.STRIPPED,
+        verdict="accept",
+        confidence=summary.overall.accuracy,
+        retryable=False,
+        lens_results_json=json.dumps(receipt_summary),
+        artifact_type="codejudgebench_run",
+    )
+    row = store.get_receipt(receipt.id)
+    if row is not None:
+        row["signature_valid"] = store.verify_signature(receipt.id)
+        (out_dir / "run-receipt.json").write_text(
+            json.dumps(row, indent=2, default=str), encoding="utf-8"
+        )
+
+
+def _run_codejudgebench_cli(
+    *,
+    offline: bool,
+    caller_family: str,
+    runs: int,
+    out_dir: str,
+    bench_task: str | None,
+    bench_limit: int,
+) -> None:
+    """Load CodeJudgeBench, run prism over the pairs, render the table + sign a run receipt.
+
+    Reuses ``_build_eval_engine`` (offline = deterministic mock; real = env providers) and the
+    signed-run-receipt pattern. ``--offline`` loads the committed fixture (no network, no datasets).
+    """
+    from pathlib import Path
+
+    from prism.eval.benchmarks.codejudgebench import cjb_content_hash, load_codejudgebench
+    from prism.eval.benchmarks.harness import run_codejudgebench, summarize_codejudgebench
+    from prism.receipts.store import SigningSecretError
+
+    if offline and caller_family == "local":
+        click.echo(
+            "Error: --offline uses a LOCAL mock verifier, so the caller family cannot also be "
+            "'local' (Lock 1 would exclude the only provider). Use --caller-family anthropic.",
+            err=True,
+        )
+        sys.exit(1)
+
+    try:
+        items = load_codejudgebench(task=bench_task, limit=bench_limit, offline=offline)
+    except (FileNotFoundError, ImportError, ValueError) as exc:
+        click.echo(f"Error loading CodeJudgeBench: {exc}", err=True)
+        sys.exit(1)
+    if not items:
+        click.echo("Error: CodeJudgeBench loaded 0 items (check --bench-task).", err=True)
+        sys.exit(1)
+
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    content_hash = cjb_content_hash(items)
+
+    try:
+        engine, label, store = _build_eval_engine(offline, out)
+    except SigningSecretError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    try:
+        results = asyncio.run(
+            run_codejudgebench(engine, items, caller_family=caller_family, n_runs=runs)
+        )
+        summary = summarize_codejudgebench(results)
+        markdown = _render_cjb_markdown(summary, label, runs, content_hash)
+        (out / "codejudgebench.md").write_text(markdown, encoding="utf-8")
+        _write_cjb_receipt(store, summary, label, content_hash, out)
+    finally:
+        store.close()
+    click.echo(markdown)
 
 
 @cli.command("eval")
@@ -537,6 +774,24 @@ def _build_same_family_control(
 @click.option(
     "--build-corpus", "do_build", is_flag=True, help="(Re)generate the corpus to --corpus and exit"
 )
+@click.option(
+    "--benchmark",
+    type=click.Choice(["codejudgebench"]),
+    default=None,
+    help="Run an EXTERNAL pairwise benchmark instead of the corpus (codejudgebench).",
+)
+@click.option(
+    "--bench-task",
+    default=None,
+    help="CodeJudgeBench task filter (codegen|codegen_pass5|coderepair|testgen); omit = all.",
+)
+@click.option(
+    "--bench-limit",
+    default=50,
+    type=int,
+    help="Cap items loaded (default 50). both-orders x N>=3 x 2 sides = up to 12 verify "
+    "calls/pair, so the cap is load-bearing for spend; a published number needs a full-split run.",
+)
 def eval_cmd(
     corpus_dir: str,
     split: str,
@@ -547,6 +802,9 @@ def eval_cmd(
     offline: bool,
     family_ab_flag: bool,
     do_build: bool,
+    benchmark: str | None,
+    bench_task: str | None,
+    bench_limit: int,
 ) -> None:
     """Measure prism's lenses on the labeled calibration corpus (Slice 1).
 
@@ -561,6 +819,17 @@ def eval_cmd(
     if do_build:
         manifest = build_corpus(Path(corpus_dir))
         click.echo(json.dumps(manifest, indent=2))
+        return
+
+    if benchmark == "codejudgebench":
+        _run_codejudgebench_cli(
+            offline=offline,
+            caller_family=caller_family,
+            runs=runs,
+            out_dir=out_dir,
+            bench_task=bench_task,
+            bench_limit=bench_limit,
+        )
         return
 
     if offline and caller_family == "local":
@@ -615,19 +884,7 @@ def eval_cmd(
     )
     report = summarize(run)
     if family_ab_flag:
-        from prism.eval.calibrate import family_ab as compute_family_ab
-
-        control = _build_same_family_control(offline, out, caller_family)
-        control_run = asyncio.run(
-            run_eval(
-                control,
-                samples,
-                caller_family=caller_family,
-                n_runs=runs,
-                verifier_label="same-family-control",
-            )
-        )
-        report.family_ab = compute_family_ab(run, control_run)
+        _run_family_ab(report, run, samples, content_hash, offline, out, caller_family, runs)
     (out / "report.md").write_text(render_markdown(report), encoding="utf-8")
     (out / "report.json").write_text(render_json(report), encoding="utf-8")
     _write_run_receipt(store, report, Path(corpus_dir), out)

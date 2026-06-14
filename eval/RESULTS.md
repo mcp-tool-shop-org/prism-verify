@@ -82,11 +82,41 @@ The evidence (Bacchelli & Bird ICSE 2013; weak maintainability-metric validity; 
 only on large quality gaps) supports a *narrow* future L5 — never scalar "maintainability scores" —
 and only once the corpus clears the bar.
 
+## CodeJudgeBench (pairwise: prism single-artifact → preference)
+
+prism is single-artifact, but [CodeJudgeBench](https://huggingface.co/datasets/mattymchen/codejudgebench)
+(arXiv:2507.10535, Apache-2.0) is pairwise. The harness (`src/prism/eval/benchmarks/`) verifies the
+**chosen** and **rejected** code separately and reduces the two verdicts to a preference via
+`calibrate.pairwise_prefer` (accept > escalate > revise > refuse, tie-break by confidence). A result
+is **correct iff prism prefers the chosen side**; a **tie counts as WRONG** in the headline accuracy
+(a tie on a known good-vs-bad pair is a real discrimination failure) and is reported separately as a
+tie-rate. Both response orders are run (N ≥ 3) to measure **position consistency** (the paper reports
+order substantially affects judge accuracy).
+
+Reproduce (real): `pip install 'prism-verify[bench]'` then
+`prism eval --benchmark codejudgebench --bench-task codegen --bench-limit 50`. Offline machinery
+smoke (mock verifier, committed fixture — NOT a measurement):
+`prism eval --benchmark codejudgebench --offline`.
+
+The machinery + offline-fixture tests ship now; the headline numbers below need a real verifier run
+(local Ollama zero-cost first pass; hosted for the published headline — director-gated).
+
+| Bucket | Accuracy (95% CI) | Tie-rate | Position consistency |
+|---|---|---|---|
+| overall | (pending real run) | (pending real run) | (pending real run) |
+| codegen | (pending real run) | (pending real run) | (pending real run) |
+| coderepair | (pending real run) | (pending real run) | (pending real run) |
+| testgen | (pending real run) | (pending real run) | (pending real run) |
+
+> The default suite + the offline fixture path need **neither** network **nor** the HF `datasets`
+> lib (the `[bench]` extra). The cap matters: both-orders × N ≥ 3 × 2 sides = up to 12 verify
+> calls/pair, so `--bench-limit` is load-bearing for spend; a published number needs a full-split run.
+
 ## Next
 
 - v1.1 corpus: real-bug ingestion (BugsInPy/Defects4J) + a post-cutoff contamination split, larger N
   to tighten the CIs.
 - Investigate the `cross_boundary` over-flagging (finding #3) and trial a kappa-based diversity gate
   (finding #1).
-- The same-family A/B (`--family-ab`) and the CodeJudgeBench comparison need a 2nd configured family
-  / the dataset; run them when a hosted key is available.
+- The same-family A/B (`--family-ab`) needs a 2nd configured family; the CodeJudgeBench headline
+  needs a real verifier run (machinery + fixture tests already ship — see the section above).
