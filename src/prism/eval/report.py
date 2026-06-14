@@ -90,29 +90,52 @@ def _modal_verdict(records: list[RunRecord]) -> str:
 
 
 def summarize(run: EvalRun) -> ReportData:
-    """Compute all measured metrics from the raw run records."""
+    """Compute all measured metrics from the raw run records.
+
+    EVL-A-001: records the engine could not adjudicate (a structural ``VerifyError`` →
+    ``unavailable=True``, stored with ``verdict=reason, confidence=0.0``) carry no real verdict and
+    must NOT feed the per-sample aggregates or the calibration/verdict-accuracy math — otherwise a
+    transient provider outage during ``prism eval`` silently corrupts the published numbers (a
+    0.0-confidence "wrong" answer drags ECE/Brier and can tip the modal verdict). We exclude
+    ``unavailable`` records and disclose the exclusion in ``notes``. ``errored`` records are a
+    *different* case: a lens fault where the engine still returned a real verdict+confidence — these
+    ARE genuine measurements, so we keep them (and only surface a count in notes).
+    """
     by_sample = _group_by_sample(run)
 
-    # Per-sample aggregates (stable over N runs).
+    # Per-sample aggregates (stable over N runs) — computed over GENUINE (available) records only.
     samp_verdict: dict[str, str] = {}
     samp_conf: dict[str, float] = {}
     samp_fail: dict[str, dict[str, bool]] = {}
     consistencies: list[float] = []
+    measured_ids: set[str] = set()  # samples that have >=1 genuine record (a real measurement)
+    n_unavailable = 0
+    n_errored_available = 0
     for sid, recs in by_sample.items():
-        modal = _modal_verdict(recs)
+        genuine = [r for r in recs if not r.unavailable]
+        n_unavailable += len(recs) - len(genuine)
+        n_errored_available += sum(1 for r in genuine if r.errored)
+        if not genuine:
+            # Every run for this sample was verifier-unavailable: there is no measurement at all.
+            # Drop the sample entirely rather than scoring it as a 0.0-confidence wrong answer.
+            continue
+        measured_ids.add(sid)
+        modal = _modal_verdict(genuine)
         samp_verdict[sid] = modal
-        samp_conf[sid] = statistics.fmean(r.confidence for r in recs)
+        samp_conf[sid] = statistics.fmean(r.confidence for r in genuine)
         samp_fail[sid] = {
-            lens: bool(_majority_fail(recs, lens))
+            lens: bool(_majority_fail(genuine, lens))
             for lens in _LLM_LENSES
-            if _majority_fail(recs, lens) is not None
+            if _majority_fail(genuine, lens) is not None
         }
-        consistencies.append(sum(1 for r in recs if r.verdict == modal) / len(recs))
+        consistencies.append(sum(1 for r in genuine if r.verdict == modal) / len(genuine))
 
     # Per-lens quality over each lens's target class (buggy + clean counterparts share target_lens).
+    # Only samples with a genuine measurement count — an all-unavailable sample has no y_pred and
+    # would otherwise be scored as a forced false-negative (EVL-A-001).
     per_lens: list[LensReport] = []
     for lens in _LLM_LENSES:
-        rel = [s for s in run.samples.values() if s.target_lens == lens]
+        rel = [s for s in run.samples.values() if s.target_lens == lens and s.id in measured_ids]
         if not rel:
             continue
         y_true = [s.positive for s in rel]
@@ -155,30 +178,33 @@ def summarize(run: EvalRun) -> ReportData:
             rho_acc[pair].append(val)
     mean_rho = {pair: statistics.fmean(vals) for pair, vals in rho_acc.items()}
 
-    # Submodular coverage gain over code/tool positives.
+    # Submodular coverage gain over code/tool positives (measured samples only — EVL-A-001).
     caught: dict[str, set[str]] = {lens: set() for lens in _LLM_LENSES}
     positive_ids: set[str] = set()
     for sid, s in run.samples.items():
-        if s.positive and s.artifact_type != "citations":
+        if s.id in measured_ids and s.positive and s.artifact_type != "citations":
             positive_ids.add(sid)
             for lens in _LLM_LENSES:
                 if samp_fail.get(sid, {}).get(lens):
                     caught[lens].add(sid)
     cg = coverage_gain(caught, len(positive_ids)) if positive_ids else None
 
-    # Verdict accuracy (flag-vs-accept correctness) overall + per class.
+    # Verdict accuracy (flag-vs-accept correctness) overall + per class — measured samples only.
+    # An all-unavailable sample has no genuine verdict, so there is nothing to score (don't count it
+    # as wrong); a partially-unavailable sample is scored on its genuine modal verdict (EVL-A-001).
     correct: dict[str, bool] = {}
-    for sid, s in run.samples.items():
+    for sid in measured_ids:
+        s = run.samples[sid]
         v = samp_verdict[sid]
         correct[sid] = (v in _OFF_ACCEPT) if s.positive else (v == "accept")
     by_class_correct: dict[str, list[bool]] = defaultdict(list)
-    for sid, s in run.samples.items():
-        by_class_correct[s.artifact_type].append(correct[sid])
+    for sid in measured_ids:
+        by_class_correct[run.samples[sid].artifact_type].append(correct[sid])
     overall = statistics.fmean(correct.values()) if correct else 0.0
     acc_by_class = {cls: statistics.fmean(vals) for cls, vals in by_class_correct.items()}
 
-    # Calibration: confidence vs flag-correctness.
-    ids = list(run.samples)
+    # Calibration: confidence vs flag-correctness, over measured samples' genuine confidences.
+    ids = [i for i in run.samples if i in measured_ids]
     ece = expected_calibration_error([samp_conf[i] for i in ids], [correct[i] for i in ids])
     brier = brier_score([samp_conf[i] for i in ids], [correct[i] for i in ids])
 
@@ -187,6 +213,23 @@ def summarize(run: EvalRun) -> ReportData:
     if "mock" in run.verifier_label or "offline" in run.verifier_label:
         notes.append(
             "OFFLINE/MOCK verifier - exercises the pipeline but is NOT a real measurement."
+        )
+    # EVL-A-001 disclosure: never silently exclude. If any record was verifier-unavailable, say so
+    # (and how many samples lost ALL measurement) so the reader knows the metrics are over a subset.
+    if n_unavailable:
+        n_total_records = len(run.records)
+        dropped = len(run.samples) - len(measured_ids)
+        msg = (
+            f"{n_unavailable} of {n_total_records} runs were verifier-unavailable and excluded "
+            f"from metrics (structural errors, no real verdict)."
+        )
+        if dropped:
+            msg += f" {dropped} sample(s) had NO available run and were dropped entirely."
+        notes.append(msg)
+    if n_errored_available:
+        notes.append(
+            f"{n_errored_available} available run(s) had a lens fault but a real verdict; these "
+            f"ARE kept in the metrics."
         )
     min_pos = min((lr.positives for lr in per_lens), default=0)
     if min_pos < 100:

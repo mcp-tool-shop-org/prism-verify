@@ -153,3 +153,73 @@ def test_single_lens_fallback_unchanged(monkeypatch):
     assert isinstance(resp, VerifyResponse)
     assert [lr.lens for lr in resp.lens_results] == ["sycophancy"]
     assert resp.verdict == Verdict.REVISE
+
+
+# TST-A-002: the RESPONSE/panel path must produce a VALIDLY SIGNED receipt — and signing the
+# WRONG field-set must FAIL verification (the full invariant, both halves). The code-artifact
+# path's tests assert this (test_verify_pipeline.py); these close the same half-invariant on the
+# panel + single-lens RESPONSE paths, where it was previously unasserted.
+
+
+def test_panel_receipt_is_validly_signed(monkeypatch):
+    monkeypatch.setenv("PRISM_DEV", "1")
+    providers = _providers("fail", [(ModelFamily.LOCAL, "fail"), (ModelFamily.ANTHROPIC, "pass")])
+    engine = VerificationEngine(providers=providers)
+    resp = asyncio.run(engine.verify(_request(ModelFamily.OPENAI)))
+    assert isinstance(resp, VerifyResponse)
+    assert resp.verdict == Verdict.REVISE
+    # First half: the panel-path receipt verifies against the engine's own store.
+    assert engine._receipt_store.verify_signature(resp.receipt.id) is True
+
+
+def test_panel_receipt_signature_breaks_on_tamper(monkeypatch):
+    """Second half (mutation-resistance): flipping a SIGNED field must FAIL verification — proof
+    the signature actually covers the panel path's verdict, so a wrong signing scope can't ship
+    green. We flip the persisted verdict from the emitted REVISE to ACCEPT."""
+    monkeypatch.setenv("PRISM_DEV", "1")
+    providers = _providers("fail", [(ModelFamily.LOCAL, "fail"), (ModelFamily.ANTHROPIC, "pass")])
+    engine = VerificationEngine(providers=providers)
+    resp = asyncio.run(engine.verify(_request(ModelFamily.OPENAI)))
+    assert isinstance(resp, VerifyResponse) and resp.verdict == Verdict.REVISE
+    store = engine._receipt_store
+    assert store.verify_signature(resp.receipt.id) is True  # valid before tamper
+    store._conn.execute(
+        "UPDATE receipts SET verdict = ? WHERE id = ?", ("accept", resp.receipt.id)
+    )
+    store._conn.commit()
+    assert store.verify_signature(resp.receipt.id) is False  # tamper detected
+
+
+def test_panel_receipt_signature_breaks_on_lens_results_tamper(monkeypatch):
+    """A stronger mutation: rewriting the persisted lens_results (the panel's per-family
+    adjudications) must break the signature — the panel verdict is only trustworthy if the votes
+    it was derived from are under the signature too."""
+    monkeypatch.setenv("PRISM_DEV", "1")
+    providers = _providers("fail", [(ModelFamily.LOCAL, "fail"), (ModelFamily.ANTHROPIC, "pass")])
+    engine = VerificationEngine(providers=providers)
+    resp = asyncio.run(engine.verify(_request(ModelFamily.OPENAI)))
+    assert isinstance(resp, VerifyResponse)
+    store = engine._receipt_store
+    store._conn.execute(
+        "UPDATE receipts SET lens_results = ? WHERE id = ?",
+        ('[{"forged": true}]', resp.receipt.id),
+    )
+    store._conn.commit()
+    assert store.verify_signature(resp.receipt.id) is False
+
+
+def test_single_lens_fallback_receipt_is_validly_signed(monkeypatch):
+    """The RESPONSE single-lens fallback path must also produce a validly signed receipt, and a
+    mutated signed field must fail — the same both-halves invariant as the panel path."""
+    monkeypatch.setenv("PRISM_DEV", "1")
+    providers = {"local-sycophancy": _FakeJudge(ModelFamily.LOCAL_SYCOPHANCY, "fail")}
+    engine = VerificationEngine(providers=providers)
+    resp = asyncio.run(engine.verify(_request(ModelFamily.OPENAI)))
+    assert isinstance(resp, VerifyResponse)
+    store = engine._receipt_store
+    assert store.verify_signature(resp.receipt.id) is True
+    store._conn.execute(
+        "UPDATE receipts SET verdict = ? WHERE id = ?", ("accept", resp.receipt.id)
+    )
+    store._conn.commit()
+    assert store.verify_signature(resp.receipt.id) is False

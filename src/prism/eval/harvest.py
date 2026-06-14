@@ -34,6 +34,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -52,6 +53,26 @@ from prism.core.types import (
 
 HARVEST_SCHEMA = "prism-l4-harvest/v1"
 _ENV_PATH = "PRISM_HARVEST_PATH"
+_ENV_MAX_BYTES = "PRISM_HARVEST_MAX_BYTES"
+# Per-field input cap applied BEFORE regex scrubbing. The scrub patterns run synchronously in the
+# verify path over the full untrusted artifact (claim=request.artifact.content), and several shapes
+# (the connection-string and email patterns) backtrack quadratically — a long credential-less run
+# made scrubbing O(n^2) (~11s on 100k chars), a CPU-exhaustion DoS. The harvest sink captures
+# training triples, NOT a faithful full-artifact archive (it already lossily redacts secrets and
+# stores artifact *hashes* in receipts for provenance — see module docstring), so truncating an
+# oversized field to a bounded prefix matches the module's intent and caps the regex work.
+_SCRUB_MAX_CHARS = 16 * 1024
+_TRUNCATION_MARKER = "…[truncated]"
+# 100 MB — stop appending past this rather than letting the file grow unbounded.
+_DEFAULT_MAX_BYTES = 100 * 1024 * 1024
+
+# EVL-A-002: serialize the gated file append. A module-global lock is sufficient for the in-process
+# async case (the engine hook runs in one process). It does NOT coordinate across processes — if you
+# run multiple `prism` processes pointed at the SAME harvest file, prefer one file per process or an
+# OS file lock; we keep this simple deliberately (best-effort instrumentation, never the verdict
+# contract). The lock also guards the one-time size-cap note flag below.
+_WRITE_LOCK = threading.Lock()
+_size_cap_noted = False  # one-time guard so a tripped cap logs/notes once, not per record
 
 # Citation finding_match -> L4 label, mirroring prism's verdict semantics (see module docstring).
 # UNCHECKED is never a groundedness signal (the existence floor handled it) -> not captured.
@@ -68,14 +89,31 @@ _LENS_OUTCOME_LABEL: dict[LensOutcome, str] = {
     LensOutcome.UNCERTAIN: "abstain",
 }
 
-# Conservative best-effort secret redaction (NOT a guarantee — see module docstring).
+# Conservative best-effort secret redaction (NOT a guarantee — see module docstring). Ordering is
+# load-bearing: the broad multi-line/structured shapes (PEM key block, inline-cred URLs) run FIRST
+# so a narrower pattern can't shred them into un-redacted fragments. EVL-A-002 broadened the set.
 _SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # PEM private-key blocks, body and all (DOTALL: the base64 body between the fences is consumed).
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.DOTALL),
+    # A bare BEGIN ... PRIVATE KEY header even without a matching END (truncated/partial leaks).
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    # Connection strings with inline credentials: scheme://user:pass@host (DB/URL creds).
+    # Quantifiers are bounded ({1,N}) so the pattern cannot backtrack quadratically on a long
+    # credential-less alphanumeric run (the ReDoS that made scrubbing O(n^2)); real schemes, users,
+    # passwords, and hosts are all far shorter than these caps, so genuine matches are unaffected.
+    re.compile(r"\w{1,32}://[^:@\s/]{1,256}:[^@\s/]{1,256}@[^\s/]{1,256}"),
+    # JWTs: three base64url segments separated by dots, leading with the standard eyJ header.
+    re.compile(r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"),
+    # Slack tokens (bot/app/refresh/etc.).
+    re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"),
     re.compile(r"sk-[A-Za-z0-9]{16,}"),               # OpenAI-style API keys
     re.compile(r"AKIA[0-9A-Z]{16}"),                  # AWS access key id
     re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}"),        # GitHub tokens
     re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{16,}"),  # bearer tokens
-    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),  # PEM private-key blocks
     re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}"),  # emails
+    # Long generic high-entropy hex/base64 secrets (>=40 chars, no spaces). Word-boundary anchored
+    # so ordinary prose (spaces every few chars) is not swept up. Last, so specific shapes win.
+    re.compile(r"\b[A-Za-z0-9+/_-]{40,}={0,2}\b"),
 )
 _REDACTED = "[REDACTED]"
 
@@ -91,8 +129,40 @@ def harvest_enabled() -> bool:
     return harvest_path() is not None
 
 
+def harvest_max_bytes() -> int:
+    """The size budget for the harvest file. Past this, ``capture`` stops appending (EVL-A-002).
+
+    Configurable via ``PRISM_HARVEST_MAX_BYTES``; a non-positive or unparseable value falls back to
+    the 100 MB default rather than disabling the guard.
+    """
+    raw = os.environ.get(_ENV_MAX_BYTES)
+    if raw is None:
+        return _DEFAULT_MAX_BYTES
+    try:
+        val = int(raw)
+    except ValueError:
+        return _DEFAULT_MAX_BYTES
+    return val if val > 0 else _DEFAULT_MAX_BYTES
+
+
+def _reset_state_for_tests() -> None:
+    """Reset the module-level one-time-note flag (test-only hook)."""
+    global _size_cap_noted
+    with _WRITE_LOCK:
+        _size_cap_noted = False
+
+
 def _default_scrub(text: str) -> str:
-    """Redact a few high-signal secret shapes. Best-effort only (see module docstring)."""
+    """Redact a few high-signal secret shapes. Best-effort only (see module docstring).
+
+    Caps the input to ``_SCRUB_MAX_CHARS`` BEFORE applying the regexes. The patterns run
+    synchronously in the verify path over untrusted artifact text and several backtrack
+    quadratically; bounding the input is the defense-in-depth floor (the per-pattern quantifier
+    caps are the primary fix) and it also covers the pre-existing quadratic email pattern.
+    Truncation is acceptable — the sink captures training triples, not a faithful artifact archive.
+    """
+    if len(text) > _SCRUB_MAX_CHARS:
+        text = text[:_SCRUB_MAX_CHARS] + _TRUNCATION_MARKER
     for pattern in _SECRET_PATTERNS:
         text = pattern.sub(_REDACTED, text)
     return text
@@ -219,22 +289,46 @@ def capture(
 ) -> int:
     """Append L4 training records for a completed verification — IFF capture is enabled.
 
-    Returns the number of records written (0 when disabled or when there is no signal). No-op when
-    ``PRISM_HARVEST_PATH`` is unset or when ``response`` is not a successful ``VerifyResponse``
-    (e.g. a ``VerifyError``). Never raises into the verify path: harvesting is best-effort
-    instrumentation, never part of the verdict contract, so I/O errors are swallowed.
+    Returns the number of records written (0 when disabled, when there is no signal, or when the
+    size cap has been reached). No-op when ``PRISM_HARVEST_PATH`` is unset or when ``response`` is
+    not a successful ``VerifyResponse`` (e.g. a ``VerifyError``). Never raises into the verify path:
+    harvesting is best-effort instrumentation, never part of the verdict contract, so I/O errors are
+    swallowed.
+
+    EVL-A-002: the append is serialized under a module lock (atomic per-line writes, no interleaving
+    in the in-process async case) and bounded by a size budget (``PRISM_HARVEST_MAX_BYTES``, default
+    100 MB) so a long-running capture can never grow the file without limit. When the cap is hit we
+    emit a one-time note and stop appending rather than rotating/truncating (truncation would risk
+    discarding earlier records the operator may still want).
     """
+    global _size_cap_noted
     path = harvest_path()
     if path is None or not isinstance(response, VerifyResponse):
         return 0
     records = build_records(request, response, scrub=scrub)
     if not records:
         return 0
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as handle:
-            for record in records:
-                handle.write(json.dumps(record) + "\n")
-    except OSError:
-        return 0
+    max_bytes = harvest_max_bytes()
+    with _WRITE_LOCK:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # Size-cap guard: refuse to grow past the budget. Checked under the lock so the decision
+            # and the write are atomic w.r.t. concurrent captures.
+            if path.exists() and path.stat().st_size >= max_bytes:
+                if not _size_cap_noted:
+                    _size_cap_noted = True
+                    # One-time disclosure to stderr; never raises into the verify path.
+                    import sys
+
+                    print(
+                        f"prism harvest: {path} reached the {max_bytes}-byte cap "
+                        f"(PRISM_HARVEST_MAX_BYTES); capture paused.",
+                        file=sys.stderr,
+                    )
+                return 0
+            with path.open("a", encoding="utf-8") as handle:
+                for record in records:
+                    handle.write(json.dumps(record) + "\n")
+        except OSError:
+            return 0
     return len(records)

@@ -59,10 +59,13 @@ DESIGN_CITATIONS = {
 }
 
 
-def _feed(title: str, summary: str) -> str:
+def _feed(title: str, summary: str, arxiv_id: str) -> str:
+    # A real arXiv feed echoes the requested id in <id>; the oracle's id-match guard verifies it,
+    # so the mock must embed the id it is standing in for (not a placeholder).
     return (
         '<feed xmlns="http://www.w3.org/2005/Atom"><entry>'
-        "<id>http://arxiv.org/abs/x</id><published>2024-01-01T00:00:00Z</published>"
+        f"<id>http://arxiv.org/abs/{arxiv_id}</id>"
+        "<published>2024-01-01T00:00:00Z</published>"
         f"<title>{title}</title><summary>{summary}</summary></entry></feed>"
     )
 
@@ -72,7 +75,7 @@ def _arxiv_router(request: httpx.Request) -> httpx.Response:
     ident = re.sub(r"v\d+$", "", request.url.params.get("id_list", ""))
     if ident in DESIGN_CITATIONS:
         title, summary = DESIGN_CITATIONS[ident]
-        return httpx.Response(200, text=_feed(title, summary))
+        return httpx.Response(200, text=_feed(title, summary, ident))
     return httpx.Response(200, text=_EMPTY)
 
 
@@ -163,7 +166,7 @@ async def test_meta_mr3_numeric_swap_moves_off_accept(tmp_path):
         {"id": "n", "claim": "improves coverage by 95.8%", "identifier": ident, "title": title}
     ]
     # The source states a DIFFERENT percentage than the claim.
-    source = _feed(title, "Submodular coverage improves recall by 30% over one verifier.")
+    source = _feed(title, "Submodular coverage improves recall by 30% over one verifier.", ident)
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(return_value=httpx.Response(200, text=source))
         result = await engine.verify(_request(cits))

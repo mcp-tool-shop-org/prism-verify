@@ -156,6 +156,16 @@ jobs:
             exit 1
           fi
 
+      - name: Verify the launcher derives its binary pin (no hard-coded version)
+        run: |
+          # prism.js must parse and must NOT pin a literal version: the binary it fetches is
+          # derived from package.json at runtime, so the tag check above also covers the binary.
+          node --check npm/bin/prism.js
+          if grep -E 'version:\s*"[0-9]' npm/bin/prism.js; then
+            echo "::error::npm/bin/prism.js hard-codes a version: literal — it must derive version/tag from package.json"
+            exit 1
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

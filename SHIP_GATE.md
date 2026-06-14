@@ -1,7 +1,9 @@
-# Ship Gate — prism-verify v0.4.0
+# Ship Gate — prism-verify v1.3.0
 
-> Worked 2026-06-02 for the v0.4.0 release. Tags in play: `[all]` `[pypi]` `[cli]` `[mcp]`.
-> (Also ships an HTTP service — covered under `[all]`/`[cli]`.)
+> Reconciled 2026-06-13 for the v1.3.0 line (originally worked 2026-06-02 for v0.4.0). Tags in
+> play: `[all]` `[pypi]` `[npm]` `[cli]` `[mcp]`.
+> (Also ships an HTTP service — covered under `[all]`/`[cli]` — and the `@mcptoolshop/prism-verify`
+> npm launcher, covered under `[npm]`.)
 
 **Tags:** `[all]` every repo · `[npm]` `[pypi]` `[vsix]` `[desktop]` `[container]` published artifacts · `[mcp]` MCP servers · `[cli]` CLI tools
 
@@ -48,7 +50,8 @@
 - [x] `[pypi]` `python_requires` set — `requires-python = ">=3.11"` (2026-06-02)
 - [x] `[pypi]` Clean wheel + sdist build — `uv build`; `release.yml` runs `twine check dist/*` (2026-06-02)
 - [x] `[pypi]` Lockfile committed — `uv.lock` (2026-06-02)
-- [ ] `[npm]` `[vsix]` `[desktop]` `[container]` — **SKIP:** not an npm / VS Code / desktop / container artifact.
+- [x] `[npm]` Clean packaging — `@mcptoolshop/prism-verify` wrapper: `package.json` `files` pins `bin/` + READMEs + LICENSE; `bin/prism.js` passes `node --check` and derives its binary `version`/`tag` from `package.json` at runtime (self-syncing — can't ship a stale binary pin); `release.yml` asserts tag == `npm/package.json` version and that the launcher carries no hard-coded `version:` literal before publishing with provenance (2026-06-13)
+- [ ] `[vsix]` `[desktop]` `[container]` — **SKIP:** not a VS Code / desktop / container artifact.
 
 ## E. Identity (soft gate — does not block ship)
 
@@ -62,6 +65,9 @@
 ## Gate result
 
 **Hard gates A–D: PASS** (every applicable line checked; SKIPs justified — egress is the product,
-Dependabot is org-forbidden, npm/vsix/desktop/container N/A, ops-handbook covered by README/SECURITY
-with the docs handbook as the Phase-10 deliverable). **Soft gate E:** logo done; translations /
-landing / handbook / topics are the Phase-10 brand treatment, to land before the release tag.
+Dependabot is org-forbidden, vsix/desktop/container N/A, ops-handbook covered by README/SECURITY
+with the docs handbook as the Phase-10 deliverable). The `[npm]` packaging gate is now **audited,
+not skipped**: the repo does ship `@mcptoolshop/prism-verify`, the launcher self-syncs its binary
+pin from `package.json`, and `release.yml` guards both the version match and the absence of a
+hard-coded pin. **Soft gate E:** logo + translations / landing / handbook / topics shipped in the
+Phase-10 brand treatment.

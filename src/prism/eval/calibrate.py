@@ -33,13 +33,25 @@ def _by_sample(run: EvalRun) -> dict[str, list[RunRecord]]:
 
 
 def _sample_rows(run: EvalRun) -> list[tuple[float, bool]]:
-    """Per sample: (max pairwise rho across runs, whether prism's modal verdict was correct)."""
+    """Per sample: (max pairwise rho across runs, whether prism's modal verdict was correct).
+
+    EVL-A-001 (sibling of report.summarize): records the engine could not adjudicate (a structural
+    ``VerifyError`` -> ``unavailable=True``, stored with ``verdict=reason, confidence=0.0``) carry
+    no real verdict and must NOT feed the modal-verdict / accuracy math here either — otherwise a
+    transient provider outage during ``prism eval`` corrupts ``baseline_accuracy``, the per-cutoff
+    accuracy, and the ``family_ab`` control. We mirror ``report.summarize`` exactly: ``unavailable``
+    records are excluded; a sample with ZERO genuine records is SKIPPED (dropped, never scored as
+    wrong); ``errored``-but-available records (a lens fault with a real verdict) are KEPT.
+    """
     rows: list[tuple[float, bool]] = []
     for sid, recs in _by_sample(run).items():
+        genuine = [r for r in recs if not r.unavailable]
+        if not genuine:
+            continue  # every run was verifier-unavailable: no measurement -> drop, don't score
         sample = run.samples[sid]
-        modal = Counter(r.verdict for r in recs).most_common(1)[0][0]
+        modal = Counter(r.verdict for r in genuine).most_common(1)[0][0]
         correct = (modal in _OFF_ACCEPT) if sample.positive else (modal == "accept")
-        rhos = [v for r in recs for v in r.pairwise_rho.values()]
+        rhos = [v for r in genuine for v in r.pairwise_rho.values()]
         rows.append((max(rhos) if rhos else 0.0, correct))
     return rows
 

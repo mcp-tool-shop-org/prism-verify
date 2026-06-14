@@ -46,7 +46,8 @@ CASES = [
     ),
     # deliberately mismatched: the abstract says the OPPOSITE -> NOT_SUPPORTED (contradicted)
     (
-        "The Transformer relies heavily on recurrent and convolutional layers to achieve its results.",
+        "The Transformer relies heavily on recurrent and convolutional layers "
+        "to achieve its results.",
         "contradicted",
     ),
     # orthogonal claim the abstract is silent on -> NOT_SUPPORTED (not_addressed, not a fabrication)

@@ -8,6 +8,7 @@ deterministically before the lens), escalate (oracle down), and contradicted-by-
 from __future__ import annotations
 
 import json
+import re
 
 import httpx
 import pytest
@@ -35,12 +36,26 @@ ARXIV = "https://export.arxiv.org/api/query"
 _EMPTY = '<feed xmlns="http://www.w3.org/2005/Atom"></feed>'
 
 
-def _feed(title: str, summary: str) -> str:
+def _feed(title: str, summary: str, arxiv_id: str) -> str:
+    # A real arXiv feed echoes the requested id in <id>; the oracle's id-match guard verifies it,
+    # so the mock must embed the id it is standing in for (not a placeholder).
     return (
         '<feed xmlns="http://www.w3.org/2005/Atom"><entry>'
-        "<id>http://arxiv.org/abs/x</id><published>2024-01-01T00:00:00Z</published>"
+        f"<id>http://arxiv.org/abs/{arxiv_id}</id>"
+        "<published>2024-01-01T00:00:00Z</published>"
         f"<title>{title}</title><summary>{summary}</summary></entry></feed>"
     )
+
+
+def _arxiv_ok(title: str, summary: str):
+    """respx side_effect echoing the requested id_list into the feed's <id>, as live arXiv does,
+    so the oracle's id-match guard resolves the entry. Use for the RESOLVED-path mocks."""
+
+    def _se(request: httpx.Request) -> httpx.Response:
+        ident = re.sub(r"v\d+$", "", request.url.params.get("id_list", "x"))
+        return httpx.Response(200, text=_feed(title, summary, ident))
+
+    return _se
 
 
 class _GroundProvider(ModelProvider):
@@ -105,10 +120,7 @@ async def test_resolved_and_supported_accepts(tmp_path):
     ]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(
-                200,
-                text=_feed("LLMs Cannot Self-Verify", "We show LLMs cannot self-verify."),
-            )
+            side_effect=_arxiv_ok("LLMs Cannot Self-Verify", "We show LLMs cannot self-verify.")
         )
         result = await engine.verify(_request(cits))
 
@@ -139,9 +151,7 @@ async def test_resolved_supported_surfaces_full_abstract(tmp_path):
     )
     cits = [{"id": "c1", "claim": "LLMs cannot self-verify", "identifier": "2402.01817"}]
     with respx.mock:
-        respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(200, text=_feed("A Paper", abstract))
-        )
+        respx.get(url__startswith=ARXIV).mock(side_effect=_arxiv_ok("A Paper", abstract))
         result = await engine.verify(_request(cits))
 
     cr = result.citation_results[0]
@@ -165,9 +175,7 @@ async def test_two_citations_same_identifier_keep_distinct_pins(tmp_path):
     ]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(
-                200, text=_feed("A Paper", "We show LLMs cannot self-verify without an oracle.")
-            )
+            side_effect=_arxiv_ok("A Paper", "We show LLMs cannot self-verify without an oracle.")
         )
         result = await engine.verify(_request(cits))
 
@@ -191,9 +199,7 @@ async def test_resolved_groundedness_surfaces_real_lens_confidence(tmp_path):
     ]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(
-                200, text=_feed("A Paper", "We show LLMs cannot self-verify.")
-            )
+            side_effect=_arxiv_ok("A Paper", "We show LLMs cannot self-verify.")
         )
         result = await engine.verify(_request(cits))
 
@@ -236,9 +242,7 @@ async def test_numeric_mismatch_revises_before_lens(tmp_path):
     ]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(
-                200, text=_feed("A Paper", "Our method reaches 89% accuracy on the benchmark.")
-            )
+            side_effect=_arxiv_ok("A Paper", "Our method reaches 89% accuracy on the benchmark.")
         )
         result = await engine.verify(_request(cits))
 
@@ -261,7 +265,7 @@ async def test_nli_floor_vetoes_supported_when_enabled(tmp_path, monkeypatch):
     cits = [{"id": "c1", "claim": "X holds", "identifier": "2402.01817", "title": "A Paper"}]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(200, text=_feed("A Paper", "We show that X holds."))
+            side_effect=_arxiv_ok("A Paper", "We show that X holds.")
         )
         result = await engine.verify(_request(cits))
 
@@ -282,7 +286,7 @@ async def test_nli_floor_absent_keeps_accept(tmp_path, monkeypatch):
     cits = [{"id": "c1", "claim": "X holds", "identifier": "2402.01817", "title": "A Paper"}]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(200, text=_feed("A Paper", "We show that X holds."))
+            side_effect=_arxiv_ok("A Paper", "We show that X holds.")
         )
         result = await engine.verify(_request(cits))
 
@@ -315,9 +319,7 @@ async def test_contradicted_by_lens_revises(tmp_path):
     ]
     with respx.mock:
         respx.get(url__startswith=ARXIV).mock(
-            return_value=httpx.Response(
-                200, text=_feed("A Paper", "An abstract that discusses something else entirely.")
-            )
+            side_effect=_arxiv_ok("A Paper", "An abstract that discusses something else entirely.")
         )
         result = await engine.verify(_request(cits))
 

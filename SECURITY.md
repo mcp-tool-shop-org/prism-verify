@@ -4,10 +4,10 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.4.x   | Yes       |
-| < 0.4   | No        |
+| 1.3.x   | Yes       |
+| < 1.3   | No        |
 
-Only the latest minor (`0.4.x`) receives security fixes. Older `0.x` lines are not maintained — upgrade to the current release.
+Only the latest minor (`1.3.x`) receives security fixes. Older `1.x` and all `0.x` lines are not maintained — upgrade to the current release.
 
 ## Reporting a Vulnerability
 
