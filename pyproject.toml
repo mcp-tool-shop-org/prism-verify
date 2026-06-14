@@ -41,6 +41,9 @@ http = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
 # Orthogonal NLI floor (opt-in): an encoder NLI cross-encoder vetoes a "supported" the LLM
 # groundedness lens gave but a mechanistically-different model does not corroborate. Heavy; opt-in.
 nli = ["torch>=2.0,<3", "transformers>=4.40,<5", "sentencepiece>=0.2,<1"]
+# CodeJudgeBench harness (opt-in): the HF `datasets` lib to load mattymchen/codejudgebench on
+# demand. The offline fixture path needs NEITHER network nor this lib (like nli works torch-free).
+bench = ["datasets>=2.18,<4"]
 all = [
     "anthropic>=0.40,<1",
     "openai>=1.50,<2",
@@ -51,6 +54,7 @@ all = [
     "torch>=2.0,<3",
     "transformers>=4.40,<5",
     "sentencepiece>=0.2,<1",
+    "datasets>=2.18,<4",
 ]
 dev = [
     "pytest>=8.0",

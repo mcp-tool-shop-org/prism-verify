@@ -18,12 +18,12 @@ import sys
 # Use `uv run python -m <tool>` (not the bare `uv run <tool>`): the bare form hits a
 # uv-on-Windows trampoline bug ("failed to canonicalize script path").
 #
-# The `sync` step MUST match ci.yml's install line exactly. CI installs every extra except the two
-# that bundle torch + transformers (`nli` and the `all` meta-extra); the NLI floor's tests run
-# torch-free, so syncing it here would diverge local from CI. Keep this flag set in lockstep with
-# `.github/workflows/ci.yml`.
+# The `sync` step MUST match ci.yml's install line exactly. CI installs every extra except the
+# heavy optional ones: `nli`/`all` (torch + transformers) and `bench` (HuggingFace datasets). Those
+# extras' tests run without them (nli torch-free; codejudgebench via the offline fixture), so syncing
+# them here would diverge local from CI. Keep this flag set in lockstep with `.github/workflows/ci.yml`.
 STEPS: list[tuple[str, list[str]]] = [
-    ("sync", ["uv", "sync", "--all-extras", "--no-extra", "nli", "--no-extra", "all"]),
+    ("sync", ["uv", "sync", "--all-extras", "--no-extra", "nli", "--no-extra", "all", "--no-extra", "bench"]),
     ("ruff", ["uv", "run", "python", "-m", "ruff", "check", "src/", "tests/"]),
     ("mypy", ["uv", "run", "python", "-m", "mypy", "src/"]),
     ("pytest", ["uv", "run", "python", "-m", "pytest", "--tb=short"]),
