@@ -1,0 +1,79 @@
+summary: ""
+boundaries:
+  - name: .github
+    globs:
+      - .github/**
+    role: config
+  - name: assets
+    globs:
+      - assets/**
+    role: data
+  - name: cli
+    globs:
+      - src/prism/__main__.py
+      - src/prism/cli/**
+    role: code
+  - name: core
+    globs:
+      - src/prism/__init__.py
+      - src/prism/core/**
+      - src/prism/retrieval/**
+      - src/prism/security/**
+    role: code
+  - name: eval-harness
+    globs:
+      - src/prism/eval/**
+    role: code
+  - name: lenses
+    globs:
+      - src/prism/lenses/**
+    role: code
+  - name: probes
+    globs:
+      - src/prism/probes/**
+    role: code
+  - name: providers
+    globs:
+      - src/prism/providers/**
+    role: code
+  - name: receipts
+    globs:
+      - src/prism/receipts/**
+    role: code
+  - name: servers
+    globs:
+      - src/prism/http/**
+      - src/prism/mcp/**
+    role: code
+  - name: design
+    globs:
+      - design/**
+    role: docs
+  - name: eval
+    globs:
+      - eval/**
+    role: code
+  - name: npm
+    globs:
+      - npm/**
+    role: code
+  - name: root
+    globs:
+      - "*"
+    role: config
+  - name: scripts
+    globs:
+      - scripts/**
+    role: code
+  - name: site
+    globs:
+      - site/**
+    role: site
+  - name: specialist
+    globs:
+      - specialist/**
+    role: code
+  - name: tests
+    globs:
+      - tests/**
+    role: test

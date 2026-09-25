@@ -1,0 +1,2291 @@
+{
+  "authorship": {
+    "parts": [],
+    "places": []
+  },
+  "boundaries": [
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": ".github",
+      "qualifyingSourceCommits": 0,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "assets",
+      "qualifyingSourceCommits": 0,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": [
+          "tests"
+        ]
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "cli",
+      "qualifyingSourceCommits": 17,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": [
+          "cli",
+          "eval-harness",
+          "lenses",
+          "providers",
+          "receipts",
+          "servers",
+          "tests"
+        ]
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "full",
+      "highWater": null,
+      "name": "core",
+      "qualifyingSourceCommits": 42,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "design",
+      "qualifyingSourceCommits": 1,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "eval",
+      "qualifyingSourceCommits": 2,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [
+          "tests"
+        ],
+        "importsOnly": [
+          "cli",
+          "core",
+          "eval"
+        ]
+      },
+      "cohesion": 0,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "eval-harness",
+      "qualifyingSourceCommits": 23,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": [
+          "core",
+          "tests"
+        ]
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "lenses",
+      "qualifyingSourceCommits": 8,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "npm",
+      "qualifyingSourceCommits": 5,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": [
+          "cli",
+          "tests"
+        ]
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "probes",
+      "qualifyingSourceCommits": 1,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": [
+          "cli",
+          "core",
+          "eval-harness",
+          "lenses",
+          "probes",
+          "tests"
+        ]
+      },
+      "cohesion": 1,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "providers",
+      "qualifyingSourceCommits": 12,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [
+          "tests"
+        ],
+        "importsOnly": [
+          "cli",
+          "core",
+          "servers"
+        ]
+      },
+      "cohesion": 0,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "receipts",
+      "qualifyingSourceCommits": 10,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "root",
+      "qualifyingSourceCommits": 0,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "scripts",
+      "qualifyingSourceCommits": 3,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [
+          "tests"
+        ],
+        "importsOnly": [
+          "cli"
+        ]
+      },
+      "cohesion": 0,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "servers",
+      "qualifyingSourceCommits": 10,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "site",
+      "qualifyingSourceCommits": 4,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": null,
+      "cohesionDropped": false,
+      "confidence": "low",
+      "highWater": null,
+      "name": "specialist",
+      "qualifyingSourceCommits": 0,
+      "rebaseline": null
+    },
+    {
+      "breakage": {
+        "coChangesOnly": [
+          "eval-harness",
+          "receipts",
+          "servers"
+        ],
+        "collapsed": false,
+        "confidence": "low",
+        "importsAndCoChanges": [],
+        "importsOnly": []
+      },
+      "cohesion": 0,
+      "cohesionDropped": false,
+      "confidence": "full",
+      "highWater": null,
+      "name": "tests",
+      "qualifyingSourceCommits": 65,
+      "rebaseline": null
+    }
+  ],
+  "churn": {
+    "definition": "commits is how many commits in the window touch the file, including merges and commits dropped from coupling. lines is added plus deleted in those commits.",
+    "files": [
+      {
+        "commits": 10,
+        "lines": 82,
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "commits": 5,
+        "lines": 66,
+        "path": ".github/workflows/pages.yml"
+      },
+      {
+        "commits": 12,
+        "lines": 447,
+        "path": ".github/workflows/release.yml"
+      },
+      {
+        "commits": 7,
+        "lines": 37,
+        "path": ".gitignore"
+      },
+      {
+        "commits": 40,
+        "lines": 968,
+        "path": "CHANGELOG.md"
+      },
+      {
+        "commits": 2,
+        "lines": 226,
+        "path": "CONTRIBUTING.md"
+      },
+      {
+        "commits": 1,
+        "lines": 21,
+        "path": "LICENSE"
+      },
+      {
+        "commits": 9,
+        "lines": 390,
+        "path": "README.es.md"
+      },
+      {
+        "commits": 9,
+        "lines": 323,
+        "path": "README.fr.md"
+      },
+      {
+        "commits": 9,
+        "lines": 337,
+        "path": "README.hi.md"
+      },
+      {
+        "commits": 9,
+        "lines": 377,
+        "path": "README.it.md"
+      },
+      {
+        "commits": 9,
+        "lines": 309,
+        "path": "README.ja.md"
+      },
+      {
+        "commits": 17,
+        "lines": 372,
+        "path": "README.md"
+      },
+      {
+        "commits": 9,
+        "lines": 353,
+        "path": "README.pt-BR.md"
+      },
+      {
+        "commits": 9,
+        "lines": 363,
+        "path": "README.zh.md"
+      },
+      {
+        "commits": 5,
+        "lines": 142,
+        "path": "SCORECARD.md"
+      },
+      {
+        "commits": 5,
+        "lines": 209,
+        "path": "SECURITY.md"
+      },
+      {
+        "commits": 5,
+        "lines": 188,
+        "path": "SHIP_GATE.md"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "assets/prism-verify-logo.png"
+      },
+      {
+        "commits": 2,
+        "lines": 245,
+        "path": "design/01-research-grounding.md"
+      },
+      {
+        "commits": 5,
+        "lines": 175,
+        "path": "design/02-standards-compliance.md"
+      },
+      {
+        "commits": 5,
+        "lines": 87,
+        "path": "design/03-compensators.md"
+      },
+      {
+        "commits": 2,
+        "lines": 237,
+        "path": "design/04-citation-verification.md"
+      },
+      {
+        "commits": 3,
+        "lines": 668,
+        "path": "design/05-http-and-receipts.md"
+      },
+      {
+        "commits": 1,
+        "lines": 139,
+        "path": "design/06-roadmap.md"
+      },
+      {
+        "commits": 1,
+        "lines": 207,
+        "path": "design/07-slice1-calibration.md"
+      },
+      {
+        "commits": 5,
+        "lines": 676,
+        "path": "design/08-familyab-harder-corpus.md"
+      },
+      {
+        "commits": 2,
+        "lines": 44,
+        "path": "design/_run_citation_gate.mjs"
+      },
+      {
+        "commits": 2,
+        "lines": 46,
+        "path": "design/_run_fleet_gate.mjs"
+      },
+      {
+        "commits": 2,
+        "lines": 518,
+        "path": "design/fleet-receipts-dispatch.md"
+      },
+      {
+        "commits": 2,
+        "lines": 2056,
+        "path": "design/fleet-receipts-gate-result.json"
+      },
+      {
+        "commits": 2,
+        "lines": 228,
+        "path": "design/honeypot-role-dispatch.md"
+      },
+      {
+        "commits": 2,
+        "lines": 448,
+        "path": "design/honeypot-role-gate-result.json"
+      },
+      {
+        "commits": 2,
+        "lines": 260,
+        "path": "design/specialist-injection-hardening-dispatch.md"
+      },
+      {
+        "commits": 2,
+        "lines": 1052,
+        "path": "design/specialist-injection-hardening-gate-result.json"
+      },
+      {
+        "commits": 2,
+        "lines": 856,
+        "path": "design/sycophancy-gate-result.json"
+      },
+      {
+        "commits": 2,
+        "lines": 246,
+        "path": "design/sycophancy-v0.2-dispatch.md"
+      },
+      {
+        "commits": 2,
+        "lines": 1084,
+        "path": "design/sycophancy-v0.2-gate-result.json"
+      },
+      {
+        "commits": 2,
+        "lines": 284,
+        "path": "design/sycophancy-wedge-dispatch.md"
+      },
+      {
+        "commits": 12,
+        "lines": 824,
+        "path": "eval/RESULTS.md"
+      },
+      {
+        "commits": 2,
+        "lines": 78,
+        "path": "eval/benchmarks/codejudgebench/NOTICE.md"
+      },
+      {
+        "commits": 2,
+        "lines": 12,
+        "path": "eval/benchmarks/codejudgebench/fixture.jsonl"
+      },
+      {
+        "commits": 4,
+        "lines": 116,
+        "path": "eval/corpus/MANIFEST.json"
+      },
+      {
+        "commits": 1,
+        "lines": 6,
+        "path": "eval/corpus/citations/fresh.jsonl"
+      },
+      {
+        "commits": 1,
+        "lines": 9,
+        "path": "eval/corpus/citations/public.jsonl"
+      },
+      {
+        "commits": 1,
+        "lines": 8,
+        "path": "eval/corpus/code/fresh.jsonl"
+      },
+      {
+        "commits": 3,
+        "lines": 120,
+        "path": "eval/corpus/code/public.jsonl"
+      },
+      {
+        "commits": 4,
+        "lines": 18,
+        "path": "eval/corpus/prevalence.json"
+      },
+      {
+        "commits": 1,
+        "lines": 6,
+        "path": "eval/corpus/tool_call/fresh.jsonl"
+      },
+      {
+        "commits": 1,
+        "lines": 12,
+        "path": "eval/corpus/tool_call/public.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 82,
+        "path": "eval/docker/labeler.Dockerfile"
+      },
+      {
+        "commits": 3,
+        "lines": 110,
+        "path": "eval/run_familyab_v3.py"
+      },
+      {
+        "commits": 2,
+        "lines": 4,
+        "path": "eval/sources/bigcodebench/fixture.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 6,
+        "path": "eval/sources/livecodebench/fixture.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 14,
+        "path": "eval/vendor/quixbugs/LICENSE"
+      },
+      {
+        "commits": 2,
+        "lines": 110,
+        "path": "eval/vendor/quixbugs/PROVENANCE.md"
+      },
+      {
+        "commits": 2,
+        "lines": 14,
+        "path": "eval/vendor/quixbugs/correct_python_programs/bitcount.py"
+      },
+      {
+        "commits": 2,
+        "lines": 114,
+        "path": "eval/vendor/quixbugs/correct_python_programs/find_first_in_sorted.py"
+      },
+      {
+        "commits": 2,
+        "lines": 28,
+        "path": "eval/vendor/quixbugs/correct_python_programs/find_in_sorted.py"
+      },
+      {
+        "commits": 2,
+        "lines": 18,
+        "path": "eval/vendor/quixbugs/correct_python_programs/flatten.py"
+      },
+      {
+        "commits": 2,
+        "lines": 14,
+        "path": "eval/vendor/quixbugs/correct_python_programs/gcd.py"
+      },
+      {
+        "commits": 2,
+        "lines": 44,
+        "path": "eval/vendor/quixbugs/correct_python_programs/get_factors.py"
+      },
+      {
+        "commits": 2,
+        "lines": 20,
+        "path": "eval/vendor/quixbugs/correct_python_programs/hanoi.py"
+      },
+      {
+        "commits": 2,
+        "lines": 228,
+        "path": "eval/vendor/quixbugs/correct_python_programs/is_valid_parenthesization.py"
+      },
+      {
+        "commits": 2,
+        "lines": 26,
+        "path": "eval/vendor/quixbugs/correct_python_programs/kheapsort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 38,
+        "path": "eval/vendor/quixbugs/correct_python_programs/knapsack.py"
+      },
+      {
+        "commits": 2,
+        "lines": 30,
+        "path": "eval/vendor/quixbugs/correct_python_programs/kth.py"
+      },
+      {
+        "commits": 2,
+        "lines": 24,
+        "path": "eval/vendor/quixbugs/correct_python_programs/lcs_length.py"
+      },
+      {
+        "commits": 2,
+        "lines": 30,
+        "path": "eval/vendor/quixbugs/correct_python_programs/levenshtein.py"
+      },
+      {
+        "commits": 2,
+        "lines": 88,
+        "path": "eval/vendor/quixbugs/correct_python_programs/max_sublist_sum.py"
+      },
+      {
+        "commits": 2,
+        "lines": 188,
+        "path": "eval/vendor/quixbugs/correct_python_programs/mergesort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 30,
+        "path": "eval/vendor/quixbugs/correct_python_programs/next_palindrome.py"
+      },
+      {
+        "commits": 2,
+        "lines": 44,
+        "path": "eval/vendor/quixbugs/correct_python_programs/next_permutation.py"
+      },
+      {
+        "commits": 2,
+        "lines": 26,
+        "path": "eval/vendor/quixbugs/correct_python_programs/pascal.py"
+      },
+      {
+        "commits": 2,
+        "lines": 118,
+        "path": "eval/vendor/quixbugs/correct_python_programs/possible_change.py"
+      },
+      {
+        "commits": 2,
+        "lines": 36,
+        "path": "eval/vendor/quixbugs/correct_python_programs/powerset.py"
+      },
+      {
+        "commits": 2,
+        "lines": 40,
+        "path": "eval/vendor/quixbugs/correct_python_programs/quicksort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/correct_python_programs/sieve.py"
+      },
+      {
+        "commits": 2,
+        "lines": 28,
+        "path": "eval/vendor/quixbugs/correct_python_programs/sqrt.py"
+      },
+      {
+        "commits": 2,
+        "lines": 26,
+        "path": "eval/vendor/quixbugs/correct_python_programs/subsequences.py"
+      },
+      {
+        "commits": 2,
+        "lines": 44,
+        "path": "eval/vendor/quixbugs/correct_python_programs/to_base.py"
+      },
+      {
+        "commits": 2,
+        "lines": 52,
+        "path": "eval/vendor/quixbugs/python_programs/bitcount.py"
+      },
+      {
+        "commits": 2,
+        "lines": 70,
+        "path": "eval/vendor/quixbugs/python_programs/find_first_in_sorted.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/find_in_sorted.py"
+      },
+      {
+        "commits": 2,
+        "lines": 58,
+        "path": "eval/vendor/quixbugs/python_programs/flatten.py"
+      },
+      {
+        "commits": 2,
+        "lines": 52,
+        "path": "eval/vendor/quixbugs/python_programs/gcd.py"
+      },
+      {
+        "commits": 2,
+        "lines": 70,
+        "path": "eval/vendor/quixbugs/python_programs/get_factors.py"
+      },
+      {
+        "commits": 2,
+        "lines": 70,
+        "path": "eval/vendor/quixbugs/python_programs/hanoi.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/is_valid_parenthesization.py"
+      },
+      {
+        "commits": 2,
+        "lines": 76,
+        "path": "eval/vendor/quixbugs/python_programs/kheapsort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 74,
+        "path": "eval/vendor/quixbugs/python_programs/knapsack.py"
+      },
+      {
+        "commits": 2,
+        "lines": 64,
+        "path": "eval/vendor/quixbugs/python_programs/kth.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/lcs_length.py"
+      },
+      {
+        "commits": 2,
+        "lines": 64,
+        "path": "eval/vendor/quixbugs/python_programs/levenshtein.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/max_sublist_sum.py"
+      },
+      {
+        "commits": 2,
+        "lines": 72,
+        "path": "eval/vendor/quixbugs/python_programs/mergesort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 66,
+        "path": "eval/vendor/quixbugs/python_programs/next_palindrome.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/next_permutation.py"
+      },
+      {
+        "commits": 2,
+        "lines": 66,
+        "path": "eval/vendor/quixbugs/python_programs/pascal.py"
+      },
+      {
+        "commits": 2,
+        "lines": 66,
+        "path": "eval/vendor/quixbugs/python_programs/possible_change.py"
+      },
+      {
+        "commits": 2,
+        "lines": 52,
+        "path": "eval/vendor/quixbugs/python_programs/powerset.py"
+      },
+      {
+        "commits": 2,
+        "lines": 38,
+        "path": "eval/vendor/quixbugs/python_programs/quicksort.py"
+      },
+      {
+        "commits": 2,
+        "lines": 34,
+        "path": "eval/vendor/quixbugs/python_programs/sieve.py"
+      },
+      {
+        "commits": 2,
+        "lines": 54,
+        "path": "eval/vendor/quixbugs/python_programs/sqrt.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "eval/vendor/quixbugs/python_programs/subsequences.py"
+      },
+      {
+        "commits": 2,
+        "lines": 64,
+        "path": "eval/vendor/quixbugs/python_programs/to_base.py"
+      },
+      {
+        "commits": 2,
+        "lines": 42,
+        "path": "npm/LICENSE"
+      },
+      {
+        "commits": 2,
+        "lines": 37,
+        "path": "npm/README.es.md"
+      },
+      {
+        "commits": 2,
+        "lines": 35,
+        "path": "npm/README.fr.md"
+      },
+      {
+        "commits": 2,
+        "lines": 44,
+        "path": "npm/README.hi.md"
+      },
+      {
+        "commits": 2,
+        "lines": 35,
+        "path": "npm/README.it.md"
+      },
+      {
+        "commits": 2,
+        "lines": 35,
+        "path": "npm/README.ja.md"
+      },
+      {
+        "commits": 5,
+        "lines": 75,
+        "path": "npm/README.md"
+      },
+      {
+        "commits": 2,
+        "lines": 37,
+        "path": "npm/README.pt-BR.md"
+      },
+      {
+        "commits": 2,
+        "lines": 37,
+        "path": "npm/README.zh.md"
+      },
+      {
+        "commits": 7,
+        "lines": 76,
+        "path": "npm/bin/prism.js"
+      },
+      {
+        "commits": 15,
+        "lines": 105,
+        "path": "npm/package.json"
+      },
+      {
+        "commits": 26,
+        "lines": 247,
+        "path": "pyproject.toml"
+      },
+      {
+        "commits": 5,
+        "lines": 110,
+        "path": "scripts/verify.py"
+      },
+      {
+        "commits": 2,
+        "lines": 41,
+        "path": "site/astro.config.mjs"
+      },
+      {
+        "commits": 2,
+        "lines": 13784,
+        "path": "site/package-lock.json"
+      },
+      {
+        "commits": 2,
+        "lines": 24,
+        "path": "site/package.json"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "site/src/assets/logo.png"
+      },
+      {
+        "commits": 1,
+        "lines": 7,
+        "path": "site/src/content.config.ts"
+      },
+      {
+        "commits": 1,
+        "lines": 57,
+        "path": "site/src/content/docs/handbook/evaluation.md"
+      },
+      {
+        "commits": 1,
+        "lines": 72,
+        "path": "site/src/content/docs/handbook/getting-started.md"
+      },
+      {
+        "commits": 1,
+        "lines": 70,
+        "path": "site/src/content/docs/handbook/harvest-sink.md"
+      },
+      {
+        "commits": 1,
+        "lines": 60,
+        "path": "site/src/content/docs/handbook/http-service.md"
+      },
+      {
+        "commits": 2,
+        "lines": 48,
+        "path": "site/src/content/docs/handbook/index.md"
+      },
+      {
+        "commits": 1,
+        "lines": 102,
+        "path": "site/src/content/docs/handbook/local-verifier.md"
+      },
+      {
+        "commits": 1,
+        "lines": 52,
+        "path": "site/src/content/docs/handbook/receipts.md"
+      },
+      {
+        "commits": 8,
+        "lines": 174,
+        "path": "site/src/content/docs/handbook/reference.md"
+      },
+      {
+        "commits": 1,
+        "lines": 70,
+        "path": "site/src/content/docs/handbook/sycophancy.md"
+      },
+      {
+        "commits": 1,
+        "lines": 33,
+        "path": "site/src/pages/index.astro"
+      },
+      {
+        "commits": 3,
+        "lines": 97,
+        "path": "site/src/site-config.ts"
+      },
+      {
+        "commits": 1,
+        "lines": 3,
+        "path": "site/src/styles/global.css"
+      },
+      {
+        "commits": 1,
+        "lines": 5,
+        "path": "site/src/styles/starlight-custom.css"
+      },
+      {
+        "commits": 1,
+        "lines": 5,
+        "path": "site/tsconfig.json"
+      },
+      {
+        "commits": 2,
+        "lines": 274,
+        "path": "specialist/V-D-INTEGRATION.md"
+      },
+      {
+        "commits": 2,
+        "lines": 102,
+        "path": "specialist/dataset/PUBLISH_PLAN.md"
+      },
+      {
+        "commits": 3,
+        "lines": 152,
+        "path": "specialist/dataset/SYCOPHANCY_RESULTS.md"
+      },
+      {
+        "commits": 2,
+        "lines": 110,
+        "path": "specialist/dataset/audit.py"
+      },
+      {
+        "commits": 2,
+        "lines": 216,
+        "path": "specialist/dataset/build_demo.py"
+      },
+      {
+        "commits": 2,
+        "lines": 86,
+        "path": "specialist/dataset/build_sycophancy_ood.mjs"
+      },
+      {
+        "commits": 2,
+        "lines": 208,
+        "path": "specialist/dataset/build_sycophancy_records.mjs"
+      },
+      {
+        "commits": 2,
+        "lines": 254,
+        "path": "specialist/dataset/build_verifier_dataset.py"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-ood-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-seed1337.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-seed42.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-v02-ood-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-v02-seed1337.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-v02-seed42.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/sycophancy-v02-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/verifier-seed1337.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/verifier-seed42.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/verifier-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 146,
+        "path": "specialist/dataset/certify/verifier-v2-soup.json"
+      },
+      {
+        "commits": 2,
+        "lines": 246,
+        "path": "specialist/dataset/certify_sycophancy.py"
+      },
+      {
+        "commits": 2,
+        "lines": 248,
+        "path": "specialist/dataset/certify_verifier.py"
+      },
+      {
+        "commits": 2,
+        "lines": 82,
+        "path": "specialist/dataset/config.py"
+      },
+      {
+        "commits": 2,
+        "lines": 704,
+        "path": "specialist/dataset/corpus_conjuncts.json"
+      },
+      {
+        "commits": 2,
+        "lines": 474,
+        "path": "specialist/dataset/corpus_evidence.json"
+      },
+      {
+        "commits": 2,
+        "lines": 964,
+        "path": "specialist/dataset/corpus_hops.json"
+      },
+      {
+        "commits": 2,
+        "lines": 1634,
+        "path": "specialist/dataset/corpus_triples.json"
+      },
+      {
+        "commits": 2,
+        "lines": 76,
+        "path": "specialist/dataset/corpus_voice.json"
+      },
+      {
+        "commits": 2,
+        "lines": 144,
+        "path": "specialist/dataset/corrupt.py"
+      },
+      {
+        "commits": 2,
+        "lines": 56,
+        "path": "specialist/dataset/demo_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 56,
+        "path": "specialist/dataset/demo_train_sft.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 2452,
+        "path": "specialist/dataset/gate_validation_records.json"
+      },
+      {
+        "commits": 2,
+        "lines": 50,
+        "path": "specialist/dataset/gate_validation_report.txt"
+      },
+      {
+        "commits": 2,
+        "lines": 3290,
+        "path": "specialist/dataset/gated_phase2.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 3290,
+        "path": "specialist/dataset/gen_phase2.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 196,
+        "path": "specialist/dataset/gen_phase2.out"
+      },
+      {
+        "commits": 2,
+        "lines": 318,
+        "path": "specialist/dataset/gen_phase2.py"
+      },
+      {
+        "commits": 2,
+        "lines": 172,
+        "path": "specialist/dataset/ingest_corpus.py"
+      },
+      {
+        "commits": 2,
+        "lines": 94,
+        "path": "specialist/dataset/merge_corpus.py"
+      },
+      {
+        "commits": 2,
+        "lines": 1578,
+        "path": "specialist/dataset/phase2_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 316,
+        "path": "specialist/dataset/puzzles.py"
+      },
+      {
+        "commits": 2,
+        "lines": 144,
+        "path": "specialist/dataset/sample_for_eyeball.py"
+      },
+      {
+        "commits": 2,
+        "lines": 120,
+        "path": "specialist/dataset/sycophancy_config.py"
+      },
+      {
+        "commits": 2,
+        "lines": 292,
+        "path": "specialist/dataset/sycophancy_exam_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 764,
+        "path": "specialist/dataset/sycophancy_ood.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 2232,
+        "path": "specialist/dataset/sycophancy_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 1940,
+        "path": "specialist/dataset/sycophancy_train_sft.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 292,
+        "path": "specialist/dataset/sycophancy_v02_exam_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 2588,
+        "path": "specialist/dataset/sycophancy_v02_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 2296,
+        "path": "specialist/dataset/sycophancy_v02_train_sft.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 254,
+        "path": "specialist/dataset/synth.py"
+      },
+      {
+        "commits": 2,
+        "lines": 118,
+        "path": "specialist/dataset/validate_gate.out"
+      },
+      {
+        "commits": 2,
+        "lines": 290,
+        "path": "specialist/dataset/validate_gate.py"
+      },
+      {
+        "commits": 2,
+        "lines": 664,
+        "path": "specialist/dataset/verifier_exam_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 2398,
+        "path": "specialist/dataset/verifier_records.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 1734,
+        "path": "specialist/dataset/verifier_train_sft.jsonl"
+      },
+      {
+        "commits": 2,
+        "lines": 250,
+        "path": "specialist/probes/sycophancy_probes.py"
+      },
+      {
+        "commits": 2,
+        "lines": 176,
+        "path": "specialist/probes/test_sycophancy_probes.py"
+      },
+      {
+        "commits": 2,
+        "lines": 56,
+        "path": "specialist/verifier-v1.json"
+      },
+      {
+        "commits": 14,
+        "lines": 29,
+        "path": "src/prism/__init__.py"
+      },
+      {
+        "commits": 2,
+        "lines": 12,
+        "path": "src/prism/__main__.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/cli/__init__.py"
+      },
+      {
+        "commits": 21,
+        "lines": 2830,
+        "path": "src/prism/cli/main.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/core/__init__.py"
+      },
+      {
+        "commits": 5,
+        "lines": 393,
+        "path": "src/prism/core/citations.py"
+      },
+      {
+        "commits": 20,
+        "lines": 1915,
+        "path": "src/prism/core/engine.py"
+      },
+      {
+        "commits": 2,
+        "lines": 134,
+        "path": "src/prism/core/observability.py"
+      },
+      {
+        "commits": 16,
+        "lines": 747,
+        "path": "src/prism/core/routing.py"
+      },
+      {
+        "commits": 12,
+        "lines": 480,
+        "path": "src/prism/core/setup.py"
+      },
+      {
+        "commits": 3,
+        "lines": 287,
+        "path": "src/prism/core/stripping.py"
+      },
+      {
+        "commits": 3,
+        "lines": 161,
+        "path": "src/prism/core/submodularity.py"
+      },
+      {
+        "commits": 2,
+        "lines": 376,
+        "path": "src/prism/core/sycophancy_panel.py"
+      },
+      {
+        "commits": 15,
+        "lines": 284,
+        "path": "src/prism/core/types.py"
+      },
+      {
+        "commits": 1,
+        "lines": 13,
+        "path": "src/prism/eval/__init__.py"
+      },
+      {
+        "commits": 2,
+        "lines": 284,
+        "path": "src/prism/eval/_familygen_problems.py"
+      },
+      {
+        "commits": 2,
+        "lines": 18,
+        "path": "src/prism/eval/benchmarks/__init__.py"
+      },
+      {
+        "commits": 2,
+        "lines": 478,
+        "path": "src/prism/eval/benchmarks/codejudgebench.py"
+      },
+      {
+        "commits": 2,
+        "lines": 606,
+        "path": "src/prism/eval/benchmarks/harness.py"
+      },
+      {
+        "commits": 3,
+        "lines": 472,
+        "path": "src/prism/eval/bigcodebench.py"
+      },
+      {
+        "commits": 7,
+        "lines": 535,
+        "path": "src/prism/eval/calibrate.py"
+      },
+      {
+        "commits": 4,
+        "lines": 526,
+        "path": "src/prism/eval/container_sandbox.py"
+      },
+      {
+        "commits": 4,
+        "lines": 700,
+        "path": "src/prism/eval/corpus.py"
+      },
+      {
+        "commits": 5,
+        "lines": 678,
+        "path": "src/prism/eval/familyab.py"
+      },
+      {
+        "commits": 9,
+        "lines": 1078,
+        "path": "src/prism/eval/familygen.py"
+      },
+      {
+        "commits": 3,
+        "lines": 484,
+        "path": "src/prism/eval/harvest.py"
+      },
+      {
+        "commits": 4,
+        "lines": 636,
+        "path": "src/prism/eval/livecodebench.py"
+      },
+      {
+        "commits": 7,
+        "lines": 646,
+        "path": "src/prism/eval/metrics.py"
+      },
+      {
+        "commits": 2,
+        "lines": 258,
+        "path": "src/prism/eval/mutate.py"
+      },
+      {
+        "commits": 2,
+        "lines": 98,
+        "path": "src/prism/eval/problem_select.py"
+      },
+      {
+        "commits": 2,
+        "lines": 396,
+        "path": "src/prism/eval/realbug.py"
+      },
+      {
+        "commits": 8,
+        "lines": 873,
+        "path": "src/prism/eval/report.py"
+      },
+      {
+        "commits": 4,
+        "lines": 314,
+        "path": "src/prism/eval/runner.py"
+      },
+      {
+        "commits": 7,
+        "lines": 638,
+        "path": "src/prism/eval/sandbox.py"
+      },
+      {
+        "commits": 3,
+        "lines": 40,
+        "path": "src/prism/http/__init__.py"
+      },
+      {
+        "commits": 9,
+        "lines": 1358,
+        "path": "src/prism/http/app.py"
+      },
+      {
+        "commits": 3,
+        "lines": 388,
+        "path": "src/prism/http/auth.py"
+      },
+      {
+        "commits": 2,
+        "lines": 202,
+        "path": "src/prism/http/errors.py"
+      },
+      {
+        "commits": 3,
+        "lines": 612,
+        "path": "src/prism/http/webhook.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/lenses/__init__.py"
+      },
+      {
+        "commits": 4,
+        "lines": 245,
+        "path": "src/prism/lenses/base.py"
+      },
+      {
+        "commits": 4,
+        "lines": 196,
+        "path": "src/prism/lenses/boundary.py"
+      },
+      {
+        "commits": 3,
+        "lines": 190,
+        "path": "src/prism/lenses/contract.py"
+      },
+      {
+        "commits": 4,
+        "lines": 197,
+        "path": "src/prism/lenses/groundedness.py"
+      },
+      {
+        "commits": 4,
+        "lines": 195,
+        "path": "src/prism/lenses/invariant.py"
+      },
+      {
+        "commits": 4,
+        "lines": 116,
+        "path": "src/prism/lenses/nli.py"
+      },
+      {
+        "commits": 2,
+        "lines": 56,
+        "path": "src/prism/lenses/registry.py"
+      },
+      {
+        "commits": 2,
+        "lines": 178,
+        "path": "src/prism/lenses/sycophancy.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/mcp/__init__.py"
+      },
+      {
+        "commits": 7,
+        "lines": 369,
+        "path": "src/prism/mcp/server.py"
+      },
+      {
+        "commits": 2,
+        "lines": 38,
+        "path": "src/prism/probes/__init__.py"
+      },
+      {
+        "commits": 2,
+        "lines": 358,
+        "path": "src/prism/probes/sycophancy.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/providers/__init__.py"
+      },
+      {
+        "commits": 7,
+        "lines": 191,
+        "path": "src/prism/providers/anthropic.py"
+      },
+      {
+        "commits": 3,
+        "lines": 182,
+        "path": "src/prism/providers/base.py"
+      },
+      {
+        "commits": 5,
+        "lines": 189,
+        "path": "src/prism/providers/google.py"
+      },
+      {
+        "commits": 4,
+        "lines": 234,
+        "path": "src/prism/providers/local_verifier.py"
+      },
+      {
+        "commits": 7,
+        "lines": 187,
+        "path": "src/prism/providers/ollama.py"
+      },
+      {
+        "commits": 6,
+        "lines": 225,
+        "path": "src/prism/providers/openai.py"
+      },
+      {
+        "commits": 4,
+        "lines": 528,
+        "path": "src/prism/providers/openrouter.py"
+      },
+      {
+        "commits": 4,
+        "lines": 398,
+        "path": "src/prism/providers/sycophancy.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "src/prism/receipts/__init__.py"
+      },
+      {
+        "commits": 3,
+        "lines": 457,
+        "path": "src/prism/receipts/signing.py"
+      },
+      {
+        "commits": 11,
+        "lines": 1368,
+        "path": "src/prism/receipts/store.py"
+      },
+      {
+        "commits": 1,
+        "lines": 1,
+        "path": "src/prism/retrieval/__init__.py"
+      },
+      {
+        "commits": 7,
+        "lines": 687,
+        "path": "src/prism/retrieval/oracle.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "src/prism/security/__init__.py"
+      },
+      {
+        "commits": 4,
+        "lines": 288,
+        "path": "src/prism/security/normalize.py"
+      },
+      {
+        "commits": 2,
+        "lines": 110,
+        "path": "src/prism/security/spotlight.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "tests/__init__.py"
+      },
+      {
+        "commits": 1,
+        "lines": 19,
+        "path": "tests/conftest.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "tests/integration/__init__.py"
+      },
+      {
+        "commits": 3,
+        "lines": 156,
+        "path": "tests/integration/test_citation_groundedness_ollama_live.py"
+      },
+      {
+        "commits": 8,
+        "lines": 442,
+        "path": "tests/integration/test_citations.py"
+      },
+      {
+        "commits": 1,
+        "lines": 102,
+        "path": "tests/integration/test_compensate_after_verify.py"
+      },
+      {
+        "commits": 2,
+        "lines": 234,
+        "path": "tests/integration/test_eval_family_ab_cli.py"
+      },
+      {
+        "commits": 2,
+        "lines": 164,
+        "path": "tests/integration/test_eval_round_robin_cli.py"
+      },
+      {
+        "commits": 3,
+        "lines": 201,
+        "path": "tests/integration/test_eval_runner.py"
+      },
+      {
+        "commits": 7,
+        "lines": 1092,
+        "path": "tests/integration/test_http.py"
+      },
+      {
+        "commits": 2,
+        "lines": 62,
+        "path": "tests/integration/test_local_verifier_live.py"
+      },
+      {
+        "commits": 5,
+        "lines": 223,
+        "path": "tests/integration/test_meta_citations.py"
+      },
+      {
+        "commits": 4,
+        "lines": 450,
+        "path": "tests/integration/test_sycophancy_panel_engine.py"
+      },
+      {
+        "commits": 4,
+        "lines": 345,
+        "path": "tests/integration/test_verify_pipeline.py"
+      },
+      {
+        "commits": 1,
+        "lines": 0,
+        "path": "tests/unit/__init__.py"
+      },
+      {
+        "commits": 2,
+        "lines": 296,
+        "path": "tests/unit/test_active_probes.py"
+      },
+      {
+        "commits": 2,
+        "lines": 650,
+        "path": "tests/unit/test_auth.py"
+      },
+      {
+        "commits": 2,
+        "lines": 162,
+        "path": "tests/unit/test_bigcodebench.py"
+      },
+      {
+        "commits": 2,
+        "lines": 68,
+        "path": "tests/unit/test_bypass_safety.py"
+      },
+      {
+        "commits": 2,
+        "lines": 90,
+        "path": "tests/unit/test_citation_spotlight.py"
+      },
+      {
+        "commits": 2,
+        "lines": 134,
+        "path": "tests/unit/test_citations.py"
+      },
+      {
+        "commits": 7,
+        "lines": 245,
+        "path": "tests/unit/test_cli.py"
+      },
+      {
+        "commits": 2,
+        "lines": 184,
+        "path": "tests/unit/test_cli_probe_sycophancy.py"
+      },
+      {
+        "commits": 2,
+        "lines": 486,
+        "path": "tests/unit/test_codejudgebench.py"
+      },
+      {
+        "commits": 2,
+        "lines": 218,
+        "path": "tests/unit/test_container_sandbox.py"
+      },
+      {
+        "commits": 5,
+        "lines": 674,
+        "path": "tests/unit/test_engine.py"
+      },
+      {
+        "commits": 5,
+        "lines": 521,
+        "path": "tests/unit/test_eval_calibrate.py"
+      },
+      {
+        "commits": 4,
+        "lines": 368,
+        "path": "tests/unit/test_eval_corpus.py"
+      },
+      {
+        "commits": 3,
+        "lines": 665,
+        "path": "tests/unit/test_eval_harvest.py"
+      },
+      {
+        "commits": 3,
+        "lines": 217,
+        "path": "tests/unit/test_eval_metrics.py"
+      },
+      {
+        "commits": 6,
+        "lines": 978,
+        "path": "tests/unit/test_eval_report.py"
+      },
+      {
+        "commits": 4,
+        "lines": 250,
+        "path": "tests/unit/test_eval_stats.py"
+      },
+      {
+        "commits": 2,
+        "lines": 116,
+        "path": "tests/unit/test_failure_signature.py"
+      },
+      {
+        "commits": 5,
+        "lines": 454,
+        "path": "tests/unit/test_familyab.py"
+      },
+      {
+        "commits": 8,
+        "lines": 532,
+        "path": "tests/unit/test_familygen.py"
+      },
+      {
+        "commits": 1,
+        "lines": 111,
+        "path": "tests/unit/test_lenses.py"
+      },
+      {
+        "commits": 3,
+        "lines": 214,
+        "path": "tests/unit/test_livecodebench.py"
+      },
+      {
+        "commits": 2,
+        "lines": 185,
+        "path": "tests/unit/test_local_verifier.py"
+      },
+      {
+        "commits": 1,
+        "lines": 47,
+        "path": "tests/unit/test_mcp.py"
+      },
+      {
+        "commits": 2,
+        "lines": 130,
+        "path": "tests/unit/test_mutate.py"
+      },
+      {
+        "commits": 5,
+        "lines": 286,
+        "path": "tests/unit/test_nli.py"
+      },
+      {
+        "commits": 2,
+        "lines": 230,
+        "path": "tests/unit/test_observability.py"
+      },
+      {
+        "commits": 4,
+        "lines": 694,
+        "path": "tests/unit/test_openrouter.py"
+      },
+      {
+        "commits": 4,
+        "lines": 696,
+        "path": "tests/unit/test_oracle.py"
+      },
+      {
+        "commits": 2,
+        "lines": 76,
+        "path": "tests/unit/test_problem_select.py"
+      },
+      {
+        "commits": 4,
+        "lines": 295,
+        "path": "tests/unit/test_providers.py"
+      },
+      {
+        "commits": 2,
+        "lines": 228,
+        "path": "tests/unit/test_realbug.py"
+      },
+      {
+        "commits": 11,
+        "lines": 705,
+        "path": "tests/unit/test_receipts.py"
+      },
+      {
+        "commits": 3,
+        "lines": 220,
+        "path": "tests/unit/test_retrieval.py"
+      },
+      {
+        "commits": 5,
+        "lines": 209,
+        "path": "tests/unit/test_routing.py"
+      },
+      {
+        "commits": 2,
+        "lines": 128,
+        "path": "tests/unit/test_routing_config.py"
+      },
+      {
+        "commits": 2,
+        "lines": 152,
+        "path": "tests/unit/test_routing_same_family_bypass.py"
+      },
+      {
+        "commits": 3,
+        "lines": 144,
+        "path": "tests/unit/test_sandbox.py"
+      },
+      {
+        "commits": 4,
+        "lines": 178,
+        "path": "tests/unit/test_security_normalize.py"
+      },
+      {
+        "commits": 2,
+        "lines": 98,
+        "path": "tests/unit/test_security_spotlight.py"
+      },
+      {
+        "commits": 3,
+        "lines": 613,
+        "path": "tests/unit/test_signing.py"
+      },
+      {
+        "commits": 2,
+        "lines": 310,
+        "path": "tests/unit/test_stripping.py"
+      },
+      {
+        "commits": 5,
+        "lines": 270,
+        "path": "tests/unit/test_submodularity.py"
+      },
+      {
+        "commits": 3,
+        "lines": 468,
+        "path": "tests/unit/test_sycophancy.py"
+      },
+      {
+        "commits": 2,
+        "lines": 258,
+        "path": "tests/unit/test_sycophancy_panel.py"
+      },
+      {
+        "commits": 4,
+        "lines": 502,
+        "path": "tests/unit/test_verifier_registry_surfaces.py"
+      },
+      {
+        "commits": 4,
+        "lines": 538,
+        "path": "tests/unit/test_webhook.py"
+      },
+      {
+        "commits": 22,
+        "lines": 5700,
+        "path": "uv.lock"
+      }
+    ]
+  },
+  "confidence": {
+    "level": "low",
+    "reason": "fewer than 20 source files reach 10 revisions in the window"
+  },
+  "generatedAt": "2026-09-25T09:47:43.437Z",
+  "generatedFrom": {
+    "commit": "a89ace7eaf557b93958833d9011c31e72f9215ff"
+  },
+  "pairs": [
+    {
+      "a": "README.es.md",
+      "b": "README.fr.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.hi.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.it.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.ja.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.pt-BR.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.es.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.hi.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.it.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.ja.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.pt-BR.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.fr.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.hi.md",
+      "b": "README.it.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.hi.md",
+      "b": "README.ja.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.hi.md",
+      "b": "README.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.hi.md",
+      "b": "README.pt-BR.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.hi.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.it.md",
+      "b": "README.ja.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.it.md",
+      "b": "README.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.it.md",
+      "b": "README.pt-BR.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.it.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.ja.md",
+      "b": "README.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.ja.md",
+      "b": "README.pt-BR.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.ja.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "README.md",
+      "b": "README.pt-BR.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.md",
+      "b": "README.zh.md",
+      "either": 16,
+      "shared": 8,
+      "strength": 0.5
+    },
+    {
+      "a": "README.pt-BR.md",
+      "b": "README.zh.md",
+      "either": 8,
+      "shared": 8,
+      "strength": 1
+    },
+    {
+      "a": "pyproject.toml",
+      "b": "src/prism/__init__.py",
+      "either": 22,
+      "shared": 11,
+      "strength": 0.5
+    },
+    {
+      "a": "pyproject.toml",
+      "b": "uv.lock",
+      "either": 26,
+      "shared": 13,
+      "strength": 0.5
+    },
+    {
+      "a": "src/prism/eval/familygen.py",
+      "b": "tests/unit/test_familygen.py",
+      "either": 7,
+      "shared": 6,
+      "strength": 0.857143
+    },
+    {
+      "a": "src/prism/http/app.py",
+      "b": "tests/integration/test_http.py",
+      "either": 6,
+      "shared": 5,
+      "strength": 0.833333
+    },
+    {
+      "a": "src/prism/providers/anthropic.py",
+      "b": "src/prism/providers/ollama.py",
+      "either": 7,
+      "shared": 4,
+      "strength": 0.571429
+    },
+    {
+      "a": "src/prism/providers/anthropic.py",
+      "b": "src/prism/providers/openai.py",
+      "either": 6,
+      "shared": 4,
+      "strength": 0.666667
+    },
+    {
+      "a": "src/prism/providers/ollama.py",
+      "b": "src/prism/providers/openai.py",
+      "either": 6,
+      "shared": 5,
+      "strength": 0.833333
+    },
+    {
+      "a": "src/prism/receipts/store.py",
+      "b": "tests/unit/test_receipts.py",
+      "either": 11,
+      "shared": 9,
+      "strength": 0.818182
+    }
+  ],
+  "parameters": {
+    "appliedChangesetLimit": 50,
+    "changeset": 50,
+    "changesetFraction": 0.25,
+    "cohesionDrop": 0.2,
+    "couplingPopulation": "source",
+    "fallenShared": 3,
+    "floor": "fallen",
+    "floorHeld": false,
+    "floorTrigger": "revision-depth",
+    "headDate": "2026-09-17T18:18:53-07:00",
+    "inScopeFiles": 329,
+    "pinnedStart": null,
+    "priorFloor": null,
+    "qualifyingCommits": 113,
+    "qualifyingMinimum": 30,
+    "revisions": 5,
+    "shared": 10,
+    "sharedFloorUsed": 3,
+    "since": "2026-03-22T01:18:53.000Z",
+    "sourceExtensions": [
+      ".js",
+      ".mjs",
+      ".cjs",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mts",
+      ".cts",
+      ".py",
+      ".rs",
+      ".gd"
+    ],
+    "sourceFileReach": 20,
+    "sourceFileRise": 25,
+    "sourceFilesReachingStrongFloor": 7,
+    "strength": 0.5,
+    "windowDays": 180
+  },
+  "strengthDefinition": "strength is the shared qualifying commits divided by either. either is the number of qualifying commits that touch either file."
+}
