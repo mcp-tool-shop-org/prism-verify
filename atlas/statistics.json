@@ -340,8 +340,8 @@
     "definition": "commits is how many commits in the window touch the file, including merges and commits dropped from coupling. lines is added plus deleted in those commits.",
     "files": [
       {
-        "commits": 10,
-        "lines": 82,
+        "commits": 13,
+        "lines": 281,
         "path": ".github/workflows/ci.yml"
       },
       {
@@ -433,6 +433,36 @@
         "commits": 1,
         "lines": 0,
         "path": "assets/prism-verify-logo.png"
+      },
+      {
+        "commits": 1,
+        "lines": 118,
+        "path": "atlas/README.md"
+      },
+      {
+        "commits": 1,
+        "lines": 79,
+        "path": "atlas/boundaries.yaml"
+      },
+      {
+        "commits": 1,
+        "lines": 760,
+        "path": "atlas/page.json"
+      },
+      {
+        "commits": 1,
+        "lines": 2291,
+        "path": "atlas/statistics.json"
+      },
+      {
+        "commits": 1,
+        "lines": 6830,
+        "path": "atlas/structure.json"
+      },
+      {
+        "commits": 2,
+        "lines": 36,
+        "path": "codecov.yml"
       },
       {
         "commits": 2,
@@ -925,8 +955,8 @@
         "path": "npm/package.json"
       },
       {
-        "commits": 26,
-        "lines": 247,
+        "commits": 28,
+        "lines": 255,
         "path": "pyproject.toml"
       },
       {
@@ -1980,19 +2010,19 @@
         "path": "tests/unit/test_webhook.py"
       },
       {
-        "commits": 22,
-        "lines": 5700,
+        "commits": 24,
+        "lines": 6078,
         "path": "uv.lock"
       }
     ]
   },
   "confidence": {
     "level": "low",
-    "reason": "fewer than 20 source files reach 10 revisions in the window"
+    "reason": "fewer than 25 source files reach 10 revisions in the window"
   },
-  "generatedAt": "2026-09-25T09:47:43.437Z",
+  "generatedAt": "2026-09-30T20:11:38.986Z",
   "generatedFrom": {
-    "commit": "a89ace7eaf557b93958833d9011c31e72f9215ff"
+    "commit": "94925c605d4d481d581e0a4d2001a2a252ec60aa"
   },
   "pairs": [
     {
@@ -2193,17 +2223,10 @@
     },
     {
       "a": "pyproject.toml",
-      "b": "src/prism/__init__.py",
-      "either": 22,
-      "shared": 11,
-      "strength": 0.5
-    },
-    {
-      "a": "pyproject.toml",
       "b": "uv.lock",
-      "either": 26,
-      "shared": 13,
-      "strength": 0.5
+      "either": 27,
+      "shared": 14,
+      "strength": 0.518519
     },
     {
       "a": "src/prism/eval/familygen.py",
@@ -2258,16 +2281,16 @@
     "floor": "fallen",
     "floorHeld": false,
     "floorTrigger": "revision-depth",
-    "headDate": "2026-09-17T18:18:53-07:00",
-    "inScopeFiles": 329,
+    "headDate": "2026-09-29T16:48:40-07:00",
+    "inScopeFiles": 335,
     "pinnedStart": null,
-    "priorFloor": null,
-    "qualifyingCommits": 113,
+    "priorFloor": "fallen",
+    "qualifyingCommits": 116,
     "qualifyingMinimum": 30,
     "revisions": 5,
     "shared": 10,
     "sharedFloorUsed": 3,
-    "since": "2026-03-22T01:18:53.000Z",
+    "since": "2026-04-02T23:48:40.000Z",
     "sourceExtensions": [
       ".js",
       ".mjs",

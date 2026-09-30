@@ -54,7 +54,7 @@ jobs:
           node-version: '22'
       - name: Atlas check
         if: matrix.python-version == '3.12'
-        run: npx --yes @dogfood-lab/atlas@1.21.0 check
+        run: npx --yes @dogfood-lab/atlas@1.24.0 check
       - run: uv python install ${{ matrix.python-version }}
       # All extras EXCEPT the heavy optional ones: `nli`/`all` bundle torch + transformers, and
       # `bench` pulls HuggingFace `datasets` (+ pyarrow). All three have tests written to run
