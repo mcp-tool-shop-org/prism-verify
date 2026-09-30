@@ -1,25 +1,32 @@
 # prism-verify: how it works
 
-Mapped at 2026-09-25 from commit a89ace7.
+Mapped at 2026-09-30 from commit 94925c6 by Atlas 1.24.0.
 
 ## What this is
 
-18 parts, mostly Python (200 files), JavaScript (6) and TypeScript (2). Work enters through 4 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. People run prism.
+18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.
 
-## What changed since the last map
+## What changed since 2026-09-25 (a89ace7)
 
-This is the first map.
+- CI's pull request trigger now also names `codecov.yml`.
+- CI's push trigger now also names `codecov.yml`.
+- prism (npm/package.json) is a new command. It runs npm/bin/prism.js.
+- eval/corpus-familyab-v3 is now written by src/prism/eval/familygen.py.
+- eval/corpus-familyab-v3/FAMILYAB_MANIFEST.json is now written by src/prism/eval/familygen.py.
+- 1 file added and 3 changed content, across 2 parts.
 
 ## What comes in
 
-1. **CI.** On a pull request touching 8 paths; on a push touching 8 paths; or by hand. Runs tests/; checks src/.
+1. **CI.** On a pull request touching 9 paths; on a push touching 9 paths; or by hand. Checks src/ and tests/.
 2. **Release.** When a release is published; or by hand. Builds src/prism/__main__.py; checks npm/bin/prism.js and src/prism/.
 3. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
-4. **prism** (a command people run). Runs src/prism/cli/main.py.
+4. **prism** (a command people run, from pyproject.toml). Runs src/prism/cli/main.py.
+5. **prism** (a command people run, from npm/package.json). Runs npm/bin/prism.js.
 
 ## What happens through CI
 
-1. The workflow runs tests/ in tests; it checks src/ (8 parts).
+1. The workflow checks tests/ in tests and src/ (8 parts).
+2. It uploads coverage to Codecov.
 
 ## Who reads the results
 
@@ -31,7 +38,9 @@ CI writes nothing this map can see.
 
 **Deploy site to GitHub Pages** runs site/astro.config.mjs and site/src/, and deploys the site.
 
-**prism** (a command people run) runs src/prism/cli/main.py and reaches core, eval-harness, lenses, probes, providers, receipts and servers.
+**prism** (a command people run, from pyproject.toml) runs src/prism/cli/main.py and reaches core, eval-harness, lenses, probes, providers, receipts and servers.
+
+**prism** (a command people run, from npm/package.json) runs npm/bin/prism.js.
 
 ## What breaks what
 
@@ -54,7 +63,7 @@ CI writes nothing this map can see.
 
 1 file changed together with its own test, as expected.
 
-Confidence is low: fewer than 20 source files reach 10 revisions in the window.
+Confidence is low: fewer than 25 source files reach 10 revisions in the window.
 
 Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do.
 
@@ -99,20 +108,20 @@ No two parts export a helper that looks alike.
 
 ## Hand-authored
 
-People write .github/, assets/, design/, the repository root and site/; 5 writes with paths built at run time may land here.
+People write .github/, assets/, design/, the repository root and site/; 3 writes with paths built at run time may land here.
 
 ## Where to start
 
-Start at src/prism/cli/main.py to follow one run of prism end to end. This path follows prism (a command people run) from its entry, since CI runs only tests and checks.
+Start at src/prism/cli/main.py to follow one run of prism end to end. This path follows prism (a command people run, from pyproject.toml) from its entry, since CI only checks code.
 
 ## What this map cannot see
 
-- 6 import sites name a declared dependency that shares its name with a local module (mcp); they are read as the dependency, which is not in this repository.
 - 2 import sites name a path outside this repository, so what they load is not followed.
-- 5 writes and 16 reads use paths built at run time and are not named here.
-- 2 writes and 3 reads go to a path their caller passes, not to this repository.
+- 3 writes and 5 reads use paths built at run time and are not named here.
+- 2 writes go to places this repository does not track, so they are not listed as generated.
+- 18 writes and 28 reads go to a path their caller passes, not to this repository.
 - 1 read goes to the directory the command is run in (eval/), not to this repository.
 - There is a Dockerfile at eval/docker/labeler.Dockerfile that no workflow runs; what deploys from it does so from outside this repository, and is not on this page.
-- Statistics confidence is low: fewer than 20 source files reach 10 revisions in the window.
+- Statistics confidence is low: fewer than 25 source files reach 10 revisions in the window.
 
 Regenerate with `npx --yes @dogfood-lab/atlas map`.
