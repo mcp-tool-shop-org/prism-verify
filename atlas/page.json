@@ -117,60 +117,29 @@
   ],
   "changes": {
     "fileCounts": {
-      "added": 1,
-      "changed": 3,
+      "added": 0,
+      "changed": 1,
       "moved": 0,
-      "parts": 2,
+      "parts": 1,
       "removed": 0
     },
     "items": [
       {
         "kind": "door",
-        "sentence": "CI's pull request trigger now also names `codecov.yml`.",
+        "sentence": "CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `pyproject.toml`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tests/**`.",
         "subjects": [
           ".github/workflows/ci.yml"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "CI's push trigger now also names `codecov.yml`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "prism (npm/package.json) is a new command. It runs npm/bin/prism.js.",
-        "subjects": [
-          "npm/package.json",
-          "npm/bin/prism.js"
-        ]
-      },
-      {
-        "kind": "landing",
-        "sentence": "eval/corpus-familyab-v3 is now written by src/prism/eval/familygen.py.",
-        "subjects": [
-          "eval/corpus-familyab-v3",
-          "src/prism/eval/familygen.py"
-        ]
-      },
-      {
-        "kind": "landing",
-        "sentence": "eval/corpus-familyab-v3/FAMILYAB_MANIFEST.json is now written by src/prism/eval/familygen.py.",
-        "subjects": [
-          "eval/corpus-familyab-v3/FAMILYAB_MANIFEST.json",
-          "src/prism/eval/familygen.py"
         ]
       },
       {
         "kind": "counts",
-        "sentence": "1 file added and 3 changed content, across 2 parts.",
+        "sentence": "1 file changed content, across 1 part.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "a89ace7eaf557b93958833d9011c31e72f9215ff",
-      "generatedAt": "2026-09-25T09:47:43.437Z"
+      "commit": "94925c605d4d481d581e0a4d2001a2a252ec60aa",
+      "generatedAt": "2026-09-30T20:11:38.986Z"
     },
     "unchanged": false
   },
@@ -257,7 +226,7 @@
     "Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 1,
-  "commit": "94925c605d4d481d581e0a4d2001a2a252ec60aa",
+  "commit": "2d547750ddafb82cefe885624753f14af8da08f6",
   "defaultBranch": "main",
   "derived": "18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.",
   "doors": [
@@ -328,7 +297,7 @@
       ],
       "stages": [],
       "triggers": [
-        "on a pull request touching 9 paths",
+        "on a pull request",
         "on a push touching 9 paths",
         "or by hand"
       ]
@@ -710,7 +679,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-09-30T20:11:38.986Z",
+  "generatedAt": "2026-10-01T02:13:46.190Z",
   "limits": [
     "2 import sites name a path outside this repository, so what they load is not followed.",
     "3 writes and 5 reads use paths built at run time and are not named here.",

@@ -340,8 +340,8 @@
     "definition": "commits is how many commits in the window touch the file, including merges and commits dropped from coupling. lines is added plus deleted in those commits.",
     "files": [
       {
-        "commits": 13,
-        "lines": 281,
+        "commits": 15,
+        "lines": 285,
         "path": ".github/workflows/ci.yml"
       },
       {
@@ -435,8 +435,8 @@
         "path": "assets/prism-verify-logo.png"
       },
       {
-        "commits": 1,
-        "lines": 118,
+        "commits": 3,
+        "lines": 196,
         "path": "atlas/README.md"
       },
       {
@@ -445,18 +445,18 @@
         "path": "atlas/boundaries.yaml"
       },
       {
-        "commits": 1,
-        "lines": 760,
+        "commits": 3,
+        "lines": 1012,
         "path": "atlas/page.json"
       },
       {
-        "commits": 1,
-        "lines": 2291,
+        "commits": 3,
+        "lines": 2433,
         "path": "atlas/statistics.json"
       },
       {
-        "commits": 1,
-        "lines": 6830,
+        "commits": 3,
+        "lines": 10844,
         "path": "atlas/structure.json"
       },
       {
@@ -2020,9 +2020,9 @@
     "level": "low",
     "reason": "fewer than 25 source files reach 10 revisions in the window"
   },
-  "generatedAt": "2026-09-30T20:11:38.986Z",
+  "generatedAt": "2026-10-01T02:13:46.190Z",
   "generatedFrom": {
-    "commit": "94925c605d4d481d581e0a4d2001a2a252ec60aa"
+    "commit": "2d547750ddafb82cefe885624753f14af8da08f6"
   },
   "pairs": [
     {
@@ -2281,16 +2281,16 @@
     "floor": "fallen",
     "floorHeld": false,
     "floorTrigger": "revision-depth",
-    "headDate": "2026-09-29T16:48:40-07:00",
+    "headDate": "2026-09-30T13:46:09-07:00",
     "inScopeFiles": 335,
     "pinnedStart": null,
     "priorFloor": "fallen",
-    "qualifyingCommits": 116,
+    "qualifyingCommits": 117,
     "qualifyingMinimum": 30,
     "revisions": 5,
     "shared": 10,
     "sharedFloorUsed": 3,
-    "since": "2026-04-02T23:48:40.000Z",
+    "since": "2026-04-03T20:46:09.000Z",
     "sourceExtensions": [
       ".js",
       ".mjs",
