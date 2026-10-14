@@ -21,6 +21,14 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Re-publish an existing release tag (e.g. v1.7.0) to PyPI only. The PyPI job checks out
+          that tag and builds it with this workflow; the binaries and npm jobs are skipped. Leave
+          empty to run every job against the dispatched ref, as before.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -38,10 +46,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Verify the tag matches pyproject version
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          REF="${INPUT_TAG:-$GITHUB_REF_NAME}"
+          TAG="${REF#v}"
           PKG=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
           echo "tag=${TAG} pyproject=${PKG}"
           if [ "${TAG}" != "${PKG}" ]; then
@@ -61,10 +74,13 @@ jobs:
         # Trusted Publishing: no token. PEP 740 attestations are on by default (action >= v1.11.0).
         # SHA-pinned (DOC-B-003): this step runs in the id-token:write PyPI-OIDC job — a mutable tag
         # on a publish step is a supply-chain risk, so pin the exact commit the version tag points to.
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        # v1.14.2 carries Twine 7, which accepts core metadata 2.5 (what current hatchling writes);
+        # v1.14.0 refused the 1.7.0 wheel with "'2.5' is not a valid metadata version".
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
 
   build-binaries:
     name: Build PyInstaller binary (${{ matrix.target }})
+    if: ${{ !inputs.tag }} # a PyPI-only re-publish skips the binaries and npm
     strategy:
       fail-fast: false # one OS's failure must not cancel the others
       matrix:
