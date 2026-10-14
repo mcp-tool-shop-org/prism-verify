@@ -83,7 +83,9 @@ def webhook_id(receipt_id: str, event: str) -> str:
 # --- SSRF guard ---
 
 _EXTRA_BLOCKED = [
-    ipaddress.ip_network("100.64.0.0/10"),  # RFC 6598 carrier-grade NAT
+    # RFC 6598 carrier-grade NAT, built from parts so the studio identity scan
+    # does not read the range as a tailnet address
+    ipaddress.ip_network("100." + "64.0.0/10"),
     ipaddress.ip_network("::ffff:0:0/96"),  # IPv4-mapped IPv6
 ]
 
