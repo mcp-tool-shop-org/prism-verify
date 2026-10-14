@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- Build fake credentials at runtime in `tests/unit/test_eval_harvest.py` and `tests/integration/test_http.py` so secret scanners do not flag test fixtures.
+
 ### Documentation
 - **Lock 1's label-vs-lineage limitation is now stated, not implied** (docs + tests; no behavior
   change). Lock 1 compares family **labels**, and the self-preference literature it rests on is
