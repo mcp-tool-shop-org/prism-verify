@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Release workflow: the PyPI upload accepts core metadata 2.5.** The 1.7.0 release published the npm wrapper and the binaries, but the PyPI step refused the wheel: the pinned upload action (v1.14.0) carries a Twine that does not know metadata 2.5, which current hatchling writes. The action is now v1.14.2. A manual run of the workflow takes an optional `tag` input that re-publishes one existing tag to PyPI only, which is how 1.7.0 reaches PyPI.
+
 ## [1.7.0] - 2026-10-14
 
 - Build fake credentials at runtime in `tests/unit/test_eval_harvest.py` and `tests/integration/test_http.py` so secret scanners do not flag test fixtures.
