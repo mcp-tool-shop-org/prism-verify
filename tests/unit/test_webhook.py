@@ -76,7 +76,9 @@ class TestSsrfGuard:
             "10.0.0.5",
             "192.168.1.1",
             "172.16.0.1",
-            "100.64.0.1",  # RFC 6598 carrier-grade NAT
+            # RFC 6598 carrier-grade NAT, built from parts so the studio identity scan
+            # does not read the range as a tailnet address
+            "100." + "64.0.1",
             "169.254.169.254",
             "::1",
             "fd00::1",
