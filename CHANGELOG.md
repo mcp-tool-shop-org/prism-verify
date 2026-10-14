@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-14
+
 - Build fake credentials at runtime in `tests/unit/test_eval_harvest.py` and `tests/integration/test_http.py` so secret scanners do not flag test fixtures.
 - Split one source constant, the RFC 6598 shared-address range in the webhook SSRF blocklist (`src/prism/http/webhook.py`), into two string pieces, so the studio identity scanner doesn't read it as a tailnet address. The value is identical and `test_webhook` covers the range.
 
