@@ -118,115 +118,31 @@
   "changes": {
     "fileCounts": {
       "added": 0,
-      "changed": 1,
+      "changed": 15,
       "moved": 0,
-      "parts": 1,
+      "parts": 8,
       "removed": 0
     },
     "items": [
       {
-        "kind": "door",
-        "sentence": "CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `pyproject.toml`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tests/**`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
         "kind": "counts",
-        "sentence": "1 file changed content, across 1 part.",
+        "sentence": "Nothing structural changed since 2026-10-01; 15 files changed content.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "94925c605d4d481d581e0a4d2001a2a252ec60aa",
-      "generatedAt": "2026-09-30T20:11:38.986Z"
+      "commit": "2d547750ddafb82cefe885624753f14af8da08f6",
+      "generatedAt": "2026-10-01T02:13:46.190Z"
     },
-    "unchanged": false
+    "unchanged": true
   },
-  "changesTogether": [
-    {
-      "a": "src/prism/http/app.py",
-      "b": "tests/integration/test_http.py",
-      "either": 6,
-      "partLabels": [
-        "servers",
-        "tests"
-      ],
-      "parts": [
-        "servers",
-        "tests"
-      ],
-      "relation": "b-imports-a",
-      "shared": 5
-    },
-    {
-      "a": "src/prism/providers/ollama.py",
-      "b": "src/prism/providers/openai.py",
-      "either": 6,
-      "partLabels": [
-        "providers",
-        "providers"
-      ],
-      "parts": [
-        "providers",
-        "providers"
-      ],
-      "relation": "inside",
-      "shared": 5
-    },
-    {
-      "a": "src/prism/receipts/store.py",
-      "b": "tests/unit/test_receipts.py",
-      "either": 11,
-      "partLabels": [
-        "receipts",
-        "tests"
-      ],
-      "parts": [
-        "receipts",
-        "tests"
-      ],
-      "relation": "b-imports-a",
-      "shared": 9
-    },
-    {
-      "a": "src/prism/providers/anthropic.py",
-      "b": "src/prism/providers/openai.py",
-      "either": 6,
-      "partLabels": [
-        "providers",
-        "providers"
-      ],
-      "parts": [
-        "providers",
-        "providers"
-      ],
-      "relation": "inside",
-      "shared": 4
-    },
-    {
-      "a": "src/prism/providers/anthropic.py",
-      "b": "src/prism/providers/ollama.py",
-      "either": 7,
-      "partLabels": [
-        "providers",
-        "providers"
-      ],
-      "parts": [
-        "providers",
-        "providers"
-      ],
-      "relation": "inside",
-      "shared": 4
-    }
-  ],
+  "changesTogether": [],
   "changesTogetherNote": [
     "1 file changed together with its own test, as expected.",
-    "Confidence is low: fewer than 25 source files reach 10 revisions in the window.",
-    "Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do."
+    "Window: 180 days; a pair counts from 3 shared commits, since 0 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 1,
-  "commit": "2d547750ddafb82cefe885624753f14af8da08f6",
+  "commit": "551c1633abfa3d39e7e1480c2bc9cb5ccdb8de14",
   "defaultBranch": "main",
   "derived": "18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.",
   "doors": [
@@ -303,9 +219,6 @@
       ]
     },
     {
-      "builds": [
-        "src/prism/__main__.py"
-      ],
       "checks": [
         "npm/bin/prism.js",
         "src/prism/"
@@ -313,6 +226,19 @@
       "checksCount": 2,
       "checksMore": 0,
       "file": ".github/workflows/release.yml",
+      "held": [
+        {
+          "builds": [
+            "src/prism/__main__.py"
+          ],
+          "checks": [],
+          "checksMore": 0,
+          "lead": "on a run by hand with tag false",
+          "runs": [],
+          "runsMore": 0,
+          "when": "(on a run by hand, only with tag false)"
+        }
+      ],
       "id": ".github/workflows/release.yml",
       "landings": [],
       "name": "Release",
@@ -679,7 +605,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-10-01T02:13:46.190Z",
+  "generatedAt": "2026-10-15T01:17:07.097Z",
   "limits": [
     "2 import sites name a path outside this repository, so what they load is not followed.",
     "3 writes and 5 reads use paths built at run time and are not named here.",

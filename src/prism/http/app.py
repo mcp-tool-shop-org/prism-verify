@@ -49,6 +49,7 @@ from prism.http.webhook import (
     deliver,
     verdict_body,
 )
+from prism.receipts.signing import Ed25519Backend, SigningSecretError
 from prism.receipts.store import ReceiptStore, verify_receipt_dict
 
 DEFAULT_MAX_ARTIFACT_BYTES = 256 * 1024
@@ -571,7 +572,20 @@ def create_app(
     async def verify_receipt(body: VerifyReceiptHttpRequest, request: Request) -> Response:
         rate_headers = _authn(request)
         if body.public_key is not None:
-            valid = verify_receipt_dict(body.receipt, public_key_pem=body.public_key)
+            # Over HTTP the key is inline PEM only: a path here would make the server probe its own
+            # filesystem for the caller. Reject anything else with one generic 400.
+            try:
+                Ed25519Backend.from_public_pem(body.public_key, allow_path=False)
+            except SigningSecretError:
+                raise ProblemError(
+                    400,
+                    "invalid-public-key",
+                    "Bad Request",
+                    "public_key must be an inline Ed25519 public-key PEM.",
+                ) from None
+            valid = verify_receipt_dict(
+                body.receipt, public_key_pem=body.public_key, allow_key_path=False
+            )
         else:
             valid = store.verify_receipt(body.receipt)
         return _json(

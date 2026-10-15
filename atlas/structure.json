@@ -17,7 +17,7 @@
           "path": ".github/workflows/pages.yml"
         },
         {
-          "hash": "5a7b7f1cde25de58fd32ebd1b2bd53adacb183af6aee32b57880be87b6b83504",
+          "hash": "6e8b6e4ef87fa4f4266d0dc97bbe747db5ac11a8364101d93b919588a3790ac1",
           "path": ".github/workflows/release.yml"
         }
       ],
@@ -1744,7 +1744,7 @@
       "files": [
         {
           "constantOnly": true,
-          "hash": "2240a4eca314540fa705619c111e40193c99b6fc48bbe084608a33b080f59213",
+          "hash": "d6ae914c04fc7789c8d02819ba28cd64aa6c3d3f005e208c49d5bf4637d29aa4",
           "path": "src/prism/__init__.py"
         },
         {
@@ -4324,7 +4324,7 @@
           "path": "npm/bin/prism.js"
         },
         {
-          "hash": "62cf1f5f5db2f54366bd9ea9dafd48c030c83bef89f8d5929b0602df15418165",
+          "hash": "5882e7cd0832eec5126d50a08172730a420cccf7e2cbb759899ddebbb951dc77",
           "path": "npm/package.json"
         }
       ],
@@ -4850,21 +4850,41 @@
             },
             {
               "in": "from_public_pem",
+              "kind": "except",
+              "line": 146
+            },
+            {
+              "in": "from_public_pem",
               "kind": "raise",
-              "line": 142
+              "line": 147
+            },
+            {
+              "in": "from_public_pem",
+              "kind": "raise",
+              "line": 149
             },
             {
               "in": "_read_key_material",
               "kind": "raise",
-              "line": 159
+              "line": 168
+            },
+            {
+              "in": "_read_key_material",
+              "kind": "except",
+              "line": 173
+            },
+            {
+              "in": "_read_key_material",
+              "kind": "raise",
+              "line": 175
             },
             {
               "in": "resolve_backends",
               "kind": "raise",
-              "line": 215
+              "line": 231
             }
           ],
-          "hash": "62d637e3b945d48ca3cab98e5b8a953f7e6b4ae9b3fd0536660a54125d3c5cbf",
+          "hash": "8beb0b3deecbee122df272607af44f786cc9be8d794dffbdd517f9d62dd5586e",
           "path": "src/prism/receipts/signing.py",
           "sequences": [
             {
@@ -4912,15 +4932,15 @@
             {
               "in": "verify_receipt_dict",
               "kind": "except",
-              "line": 609
+              "line": 613
             },
             {
               "in": "verify_receipt_dict",
               "kind": "except",
-              "line": 658
+              "line": 662
             }
           ],
-          "hash": "593c5e95ab8c116cb4f39dc122d0ec6d27cc63d2e63d9cce3dca1a974f94f436",
+          "hash": "4982f6f5773046d2b3d493d2248e88545b9238108fab3d8a5ae659a5bd5f8a62",
           "importsFiles": [
             "src/prism/core/types.py",
             "src/prism/receipts/signing.py"
@@ -4945,14 +4965,14 @@
             {
               "calls": [
                 {
-                  "line": 605,
+                  "line": 607,
                   "name": "HmacBackend",
                   "target": {
                     "file": "src/prism/receipts/signing.py"
                   }
                 },
                 {
-                  "line": 608,
+                  "line": 610,
                   "name": "from_public_pem",
                   "target": {
                     "file": "src/prism/receipts/signing.py"
@@ -5008,7 +5028,7 @@
           "path": ".gitignore"
         },
         {
-          "hash": "6f7d1f1159a90a6e3aab1822c41523e352508244ddb4cf838aee5bd26ec17463",
+          "hash": "692e76833ffb04cb19b6bc390d36e3c7fb367fef71093b3e8a230075094a34b2",
           "path": "CHANGELOG.md"
         },
         {
@@ -5068,11 +5088,11 @@
           "path": "codecov.yml"
         },
         {
-          "hash": "1337c39dbb59e7b5d7b4fcbe57f665691354d987662000a5031e81bcfb9771c9",
+          "hash": "5cfc5b966be77100e82e70d0eaa998d38db9afe4df9a93f08c0401ed5381956f",
           "path": "pyproject.toml"
         },
         {
-          "hash": "217c01c970619561d7b62d9b477111991285488b7ad3517ebce4a443e5d7db21",
+          "hash": "5bc0842c69ff8a2f7b9d18fd106d68a843c689f1296ef07ec24a41d4fd8026f4",
           "path": "uv.lock"
         }
       ],
@@ -5149,60 +5169,70 @@
             {
               "in": "_is_trusted",
               "kind": "except",
-              "line": 224
+              "line": 225
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 482
+              "line": 483
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 496
+              "line": 497
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 503
+              "line": 504
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 511
+              "line": 512
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 519
+              "line": 520
             },
             {
               "in": "verify",
               "kind": "except",
-              "line": 527
-            },
-            {
-              "in": "verify",
-              "kind": "raise",
               "line": 528
             },
             {
               "in": "verify",
+              "kind": "raise",
+              "line": 529
+            },
+            {
+              "in": "verify",
               "kind": "except",
-              "line": 544
+              "line": 545
             },
             {
               "in": "verify",
               "kind": "raise",
-              "line": 549
+              "line": 550
             },
             {
               "in": "replay",
               "kind": "raise",
-              "line": 567
+              "line": 568
+            },
+            {
+              "in": "verify_receipt",
+              "kind": "except",
+              "line": 579
+            },
+            {
+              "in": "verify_receipt",
+              "kind": "raise",
+              "line": 580
             }
           ],
-          "hash": "c3c2c42b65b79a018b3729f2c18716daaa89ba2b8739bd9687f1254c8878d79e",
+          "hash": "ec6db0c1a1d11cc69c5bb5615d1dfee5ce2817dfbdfec7b75673ef4d4fe88fb1",
           "importsFiles": [
             "src/prism/__init__.py",
             "src/prism/core/engine.py",
@@ -5212,6 +5242,7 @@
             "src/prism/http/auth.py",
             "src/prism/http/errors.py",
             "src/prism/http/webhook.py",
+            "src/prism/receipts/signing.py",
             "src/prism/receipts/store.py"
           ],
           "path": "src/prism/http/app.py"
@@ -5283,40 +5314,40 @@
             {
               "in": "_default_resolver",
               "kind": "except",
-              "line": 114
+              "line": 116
             },
             {
               "in": "_default_resolver",
               "kind": "raise",
-              "line": 115
+              "line": 117
             },
             {
               "in": "assert_safe_url",
               "kind": "raise",
-              "line": 127
+              "line": 129
             },
             {
               "in": "assert_safe_url",
               "kind": "raise",
-              "line": 130
+              "line": 132
             },
             {
               "in": "assert_safe_url",
               "kind": "raise",
-              "line": 134
+              "line": 136
             },
             {
               "in": "assert_safe_url",
               "kind": "raise",
-              "line": 139
+              "line": 141
             },
             {
               "in": "deliver",
               "kind": "except",
-              "line": 241
+              "line": 243
             }
           ],
-          "hash": "90bfbf9457fb115bf9e75c469b4b2a5a8aa3aff2935f2df258e8d3060398cb30",
+          "hash": "3cbfa13a5ad3999ab23e6f1600407e8ba95aad7deba4c23a39f0ce9665498134",
           "path": "src/prism/http/webhook.py"
         },
         {
@@ -5393,7 +5424,7 @@
           "path": "site/astro.config.mjs"
         },
         {
-          "hash": "af5d4f54dca60686724d306eb58759fb25b6f5ba4d66559ab84a968112a184e5",
+          "hash": "0607a19c4f60b635244a906c7ad2424359b50e20c4a83bc140f202abce4a941e",
           "path": "site/package-lock.json"
         },
         {
@@ -6082,12 +6113,13 @@
             "make_app",
             "store"
           ],
-          "hash": "9f88f7022a8425e03908dea1af23a01a556e46f30492ab8b4bc4e3985251cbb6",
+          "hash": "db6b4c026c34f1ed470ddb62e02fab3b698ba6db3806222f2dead9b03de967e5",
           "importOrder": [
             "src/prism/core/types.py",
             "src/prism/http/app.py",
             "src/prism/http/auth.py",
             "src/prism/http/webhook.py",
+            "src/prism/receipts/signing.py",
             "src/prism/receipts/store.py",
             "src/prism/core/observability.py",
             "src/prism/core/engine.py",
@@ -6101,6 +6133,7 @@
             "src/prism/http/app.py",
             "src/prism/http/auth.py",
             "src/prism/http/webhook.py",
+            "src/prism/receipts/signing.py",
             "src/prism/receipts/store.py"
           ],
           "path": "tests/integration/test_http.py",
@@ -6385,7 +6418,7 @@
           "testFramework": "pytest"
         },
         {
-          "hash": "5673ce5600bde7368aeaffcc5153b9858c070933526f0a25db55cca7f31f1d06",
+          "hash": "b1c51c131f9e09607cfba33f087ac94ecc229379583e359762f22e9c695f8557",
           "importOrder": [
             "src/prism/core/types.py",
             "src/prism/eval/harvest.py",
@@ -6863,7 +6896,7 @@
           "path": "tests/unit/test_security_spotlight.py"
         },
         {
-          "hash": "e1f447a5b7b8f3a1d82090e867f18b8db8797bb7620b56ea3bcff57944008b2f",
+          "hash": "32f88ed4df88c636e40b6e65f813bc7841ada60b0d0591632ded5200bd2f322a",
           "importsFiles": [
             "src/prism/cli/main.py",
             "src/prism/core/types.py",
@@ -6959,7 +6992,7 @@
           "testFramework": "pytest"
         },
         {
-          "hash": "806a60b78ca4b1a8d93636a4d9ed0abe0ac71e62ea98cef04873f164bb7317c1",
+          "hash": "f17da5377f53c9f8283cdac2d7b69e82f0d10ec18c0f5fd2dc9ffad583bd677e",
           "importsFiles": [
             "src/prism/http/webhook.py"
           ],
@@ -7659,7 +7692,12 @@
           "built": true,
           "job": "build-binaries",
           "path": "src/prism/__main__.py",
-          "runKind": "executes"
+          "runKind": "executes",
+          "when": {
+            "inputs": {
+              "tag": false
+            }
+          }
         }
       ],
       "runsCount": 3,
@@ -8030,7 +8068,7 @@
   ],
   "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "2d547750ddafb82cefe885624753f14af8da08f6",
+    "commit": "551c1633abfa3d39e7e1480c2bc9cb5ccdb8de14",
     "tracked": 330
   },
   "landings": [

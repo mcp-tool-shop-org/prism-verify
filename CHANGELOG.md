@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-10-14
+
 ### Fixed
 
 - **Release workflow: the PyPI upload accepts core metadata 2.5.** The 1.7.0 release published the npm wrapper and the binaries, but the PyPI step refused the wheel: the pinned upload action (v1.14.0) carries a Twine that does not know metadata 2.5, which current hatchling writes. The action is now v1.14.2. A manual run of the workflow takes an optional `tag` input that re-publishes one existing tag to PyPI only, which is how 1.7.0 reaches PyPI.
+
+### Security
+
+- **`/verify-receipt` no longer opens the request's `public_key` as a file.** The HTTP route passed the body's `public_key` to code that accepts either inline PEM or a file path, so an authenticated caller could learn whether a path exists on the server, and a malformed key raised an uncaught `ValueError`. Over HTTP the key is inline PEM only: anything else gets one generic 400 (`invalid-public-key`) that does not echo the value, and a malformed PEM is a `SigningSecretError`, not a crash. `prism verify-receipt --public-key <path>` still reads a path. (CodeQL `py/path-injection`.)
 
 ## [1.7.0] - 2026-10-14
 
