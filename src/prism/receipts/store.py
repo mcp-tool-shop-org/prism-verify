@@ -589,13 +589,15 @@ def verify_receipt_dict(
     *,
     signing_secret: bytes | None = None,
     public_key_pem: str | None = None,
+    allow_key_path: bool = True,
 ) -> bool:
     """Verify a STANDALONE receipt dict (e.g. exported JSON) without a database.
 
     The cross-tool path: an Ed25519 receipt verifies with only ``public_key_pem`` — no shared
     secret, no prism database — which is how role-os (a different tool) confirms a prism receipt.
     An HMAC receipt needs ``signing_secret``. Returns False if no key for the receipt's ``alg``
-    is supplied.
+    is supplied. Pass ``allow_key_path=False`` when ``public_key_pem`` comes from an untrusted
+    caller (HTTP): it is then inline PEM only and is never opened as a file path.
     """
     alg = receipt.get("alg") or ALG_HMAC
     backend: SigningBackend | None = None
@@ -605,7 +607,9 @@ def verify_receipt_dict(
         backend = HmacBackend(signing_secret)
     elif alg != ALG_HMAC and public_key_pem is not None:
         try:
-            backend = Ed25519Backend.from_public_pem(public_key_pem)
+            backend = Ed25519Backend.from_public_pem(
+                public_key_pem, allow_path=allow_key_path
+            )
         except SigningSecretError:
             return False  # an unparseable public key cannot verify anything
     if backend is None:

@@ -18,6 +18,7 @@ from prism.core.types import (
 from prism.http.app import create_app
 from prism.http.auth import Authenticator, generate_api_key
 from prism.http.webhook import verify_webhook
+from prism.receipts.signing import generate_keypair
 from prism.receipts.store import ReceiptStore
 
 VERIFY_BODY = {"artifact": "x = 1", "intent": "assign one", "caller_family": "anthropic"}
@@ -225,6 +226,81 @@ class TestReplayAndVerifyReceipt:
         resp = client.post("/verify-receipt", json={"receipt": row})
         assert resp.status_code == 200
         assert resp.json()["signature_valid"] is True
+
+
+class TestVerifyReceiptPublicKeyInput:
+    """``public_key`` over HTTP is inline PEM only, never a path the server opens."""
+
+    @pytest.fixture
+    def ed_store(self, tmp_path):
+        priv_pem, pub_pem, _kid = generate_keypair()
+        s = ReceiptStore(db_path=tmp_path / "ed.db", signing_key=priv_pem)
+        yield s, pub_pem
+        s.close()
+
+    def _signed_row(self, store: ReceiptStore, client: TestClient) -> dict[str, Any]:
+        receipt_id = client.post("/verify", json=VERIFY_BODY).json()["receipt"]["id"]
+        return json.loads(json.dumps(store.get_receipt(receipt_id), default=str))
+
+    def test_inline_pem_verifies(self, ed_store):
+        store, pub_pem = ed_store
+        client = TestClient(make_app(store))
+        row = self._signed_row(store, client)
+        resp = client.post("/verify-receipt", json={"receipt": row, "public_key": pub_pem})
+        assert resp.status_code == 200
+        assert resp.json()["signature_valid"] is True
+
+    def test_existing_and_missing_paths_are_the_same_clean_400(self, ed_store, tmp_path):
+        store, pub_pem = ed_store
+        client = TestClient(make_app(store))
+        row = self._signed_row(store, client)
+        pubfile = tmp_path / "pub.pem"
+        pubfile.write_text(pub_pem)
+
+        existing = client.post(
+            "/verify-receipt", json={"receipt": row, "public_key": str(pubfile)}
+        )
+        missing = client.post(
+            "/verify-receipt",
+            json={"receipt": row, "public_key": str(tmp_path / "does-not-exist.pem")},
+        )
+        assert existing.status_code == missing.status_code == 400
+        assert existing.headers["content-type"].startswith("application/problem+json")
+        assert existing.json()["type"].endswith("invalid-public-key")
+        assert existing.json() == missing.json()
+        # The caller's value is never echoed back.
+        assert str(pubfile) not in existing.text
+        assert "does-not-exist" not in missing.text
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["", "   ", "-----BEGIN PUBLIC KEY-----\nnot base64\n-----END PUBLIC KEY-----", "x\x00y"],
+    )
+    def test_malformed_public_key_is_400_not_a_server_error(self, ed_store, bad):
+        store, _pub = ed_store
+        client = TestClient(make_app(store))
+        row = self._signed_row(store, client)
+        resp = client.post("/verify-receipt", json={"receipt": row, "public_key": bad})
+        assert resp.status_code == 400
+        assert resp.json()["type"].endswith("invalid-public-key")
+
+    def test_non_ed25519_public_key_is_400(self, ed_store):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        store, _pub = ed_store
+        client = TestClient(make_app(store))
+        row = self._signed_row(store, client)
+        ec_pem = (
+            ec.generate_private_key(ec.SECP256R1())
+            .public_key()
+            .public_bytes(
+                serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            .decode()
+        )
+        resp = client.post("/verify-receipt", json={"receipt": row, "public_key": ec_pem})
+        assert resp.status_code == 400
 
 
 class TestAsync:

@@ -20,7 +20,7 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
@@ -136,8 +136,15 @@ class Ed25519Backend(SigningBackend):
         return cls(key)
 
     @classmethod
-    def from_public_pem(cls, pem_or_path: str) -> Ed25519Backend:
-        key = serialization.load_pem_public_key(_read_key_material(pem_or_path))
+    def from_public_pem(cls, pem_or_path: str, *, allow_path: bool = True) -> Ed25519Backend:
+        """Build a verify-only backend. ``allow_path=False`` accepts inline PEM only — pass it for
+        any value that arrives over the network, which must never be opened as a file."""
+        try:
+            key = serialization.load_pem_public_key(
+                _read_key_material(pem_or_path, allow_path=allow_path)
+            )
+        except (ValueError, UnsupportedAlgorithm) as exc:
+            raise SigningSecretError("public key is not a valid PEM public key") from exc
         if not isinstance(key, Ed25519PublicKey):
             raise SigningSecretError("public key is not an Ed25519 public key")
         return cls(private_key=None, public_key=key)
@@ -149,13 +156,22 @@ class Ed25519Backend(SigningBackend):
 DEV_KID = Ed25519Backend.dev().kid
 
 
-def _read_key_material(value: str) -> bytes:
-    """Accept either an inline PEM string or a filesystem path to a PEM file."""
+def _read_key_material(value: str, *, allow_path: bool = True) -> bytes:
+    """Accept either an inline PEM string or a filesystem path to a PEM file.
+
+    ``allow_path=False`` is for untrusted input (the HTTP surface): anything but inline PEM is
+    refused without touching the filesystem, and the message never echoes ``value``.
+    """
     if "-----BEGIN" in value:
         return value.encode()
-    path = Path(value).expanduser()
-    if path.is_file():
-        return path.read_bytes()
+    if not allow_path:
+        raise SigningSecretError("key material must be an inline PEM string")
+    try:
+        path = Path(value).expanduser()
+        if path.is_file():
+            return path.read_bytes()
+    except (OSError, ValueError):
+        pass  # an unusable path is reported the same way as a missing one
     raise SigningSecretError(
         f"signing key is neither inline PEM nor a readable file: {value!r}"
     )

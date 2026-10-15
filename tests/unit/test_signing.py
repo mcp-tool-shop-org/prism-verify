@@ -132,6 +132,56 @@ class TestCrossToolVerification:
         assert verify_receipt_dict(row, public_key_pem=pub_pem) is True
 
 
+class TestPublicKeyIsNotAPathForUntrustedInput:
+    """The HTTP surface passes ``allow_path=False``: a caller-supplied value is never opened."""
+
+    def test_path_is_refused_without_reading_the_file(self, tmp_path, monkeypatch):
+        _priv, pub_pem, _kid = generate_keypair()
+        pubfile = tmp_path / "pub.pem"
+        pubfile.write_text(pub_pem)
+
+        def _boom(*_a, **_k):
+            raise AssertionError("key path must not be opened")
+
+        monkeypatch.setattr("pathlib.Path.read_bytes", _boom)
+        monkeypatch.setattr("pathlib.Path.is_file", _boom)
+        with pytest.raises(SigningSecretError) as exc:
+            Ed25519Backend.from_public_pem(str(pubfile), allow_path=False)
+        assert str(pubfile) not in str(exc.value)
+
+    def test_existing_and_missing_paths_get_the_same_error(self, tmp_path):
+        _priv, pub_pem, _kid = generate_keypair()
+        pubfile = tmp_path / "pub.pem"
+        pubfile.write_text(pub_pem)
+        messages = set()
+        for value in (str(pubfile), str(tmp_path / "nope.pem")):
+            with pytest.raises(SigningSecretError) as exc:
+                Ed25519Backend.from_public_pem(value, allow_path=False)
+            messages.add(str(exc.value))
+        assert len(messages) == 1
+
+    def test_malformed_inline_pem_is_a_signing_error_not_a_value_error(self):
+        with pytest.raises(SigningSecretError):
+            Ed25519Backend.from_public_pem(
+                "-----BEGIN PUBLIC KEY-----\nnot base64\n", allow_path=False
+            )
+
+    def test_inline_pem_still_works(self):
+        _priv, pub_pem, _kid = generate_keypair()
+        assert Ed25519Backend.from_public_pem(pub_pem, allow_path=False).kid.startswith("ed25519-")
+
+    def test_verify_receipt_dict_does_not_open_a_path_when_disallowed(self, tmp_path):
+        priv_pem, pub_pem, _kid = generate_keypair()
+        pubfile = tmp_path / "pub.pem"
+        pubfile.write_text(pub_pem)
+        store = ReceiptStore(db_path=tmp_path / "e.db", signing_key=priv_pem)
+        row = store.get_receipt(_mk(store).id)
+        store.close()
+        # CLI default still reads the path; the HTTP-style call does not.
+        assert verify_receipt_dict(row, public_key_pem=str(pubfile)) is True
+        assert verify_receipt_dict(row, public_key_pem=str(pubfile), allow_key_path=False) is False
+
+
 class TestVersionAwareAndDowngrade:
     def test_ed25519_store_with_hmac_secret_verifies_legacy_hmac(self, tmp_path):
         # A migrating deployment: Ed25519 signs new receipts, but the retained HMAC secret still

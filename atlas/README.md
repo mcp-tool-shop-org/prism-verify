@@ -1,20 +1,19 @@
 # prism-verify: how it works
 
-Mapped at 2026-10-01 from commit 2d54775 by Atlas 1.24.0.
+Mapped at 2026-10-15 from commit 551c163 by Atlas 1.24.0.
 
 ## What this is
 
 18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.
 
-## What changed since 2026-09-30 (94925c6)
+## What changed since 2026-10-01 (2d54775)
 
-- CI's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `pyproject.toml`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tests/**`.
-- 1 file changed content, across 1 part.
+Nothing structural changed since 2026-10-01; 15 files changed content.
 
 ## What comes in
 
 1. **CI.** On a pull request; on a push touching 9 paths; or by hand. Checks src/ and tests/.
-2. **Release.** When a release is published; or by hand. Builds src/prism/__main__.py; checks npm/bin/prism.js and src/prism/.
+2. **Release.** When a release is published; or by hand. Checks npm/bin/prism.js and src/prism/. On a run by hand with tag false, it also builds src/prism/__main__.py.
 3. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
 4. **prism** (a command people run, from pyproject.toml). Runs src/prism/cli/main.py.
 5. **prism** (a command people run, from npm/package.json). Runs npm/bin/prism.js.
@@ -51,17 +50,11 @@ CI writes nothing this map can see.
 
 ## What tends to change together
 
-- **src/prism/http/app.py** and **tests/integration/test_http.py** changed together in 5 of 6 commits, and the tests part imports the servers part.
-- **src/prism/providers/ollama.py** and **src/prism/providers/openai.py** changed together in 5 of 6 commits, inside the providers part.
-- **src/prism/receipts/store.py** and **tests/unit/test_receipts.py** changed together in 9 of 11 commits, and the tests part imports the receipts part.
-- **src/prism/providers/anthropic.py** and **src/prism/providers/openai.py** changed together in 4 of 6 commits, inside the providers part.
-- **src/prism/providers/anthropic.py** and **src/prism/providers/ollama.py** changed together in 4 of 7 commits, inside the providers part.
+No two source files, other than a file and its own test, changed together often enough to name.
 
 1 file changed together with its own test, as expected.
 
-Confidence is low: fewer than 25 source files reach 10 revisions in the window.
-
-Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do.
+Window: 180 days; a pair counts from 3 shared commits, since 0 source files reach 10 revisions; the floor rises to 10 when 25 do.
 
 ## What no test touches
 
