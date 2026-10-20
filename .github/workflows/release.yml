@@ -76,7 +76,7 @@ jobs:
         # on a publish step is a supply-chain risk, so pin the exact commit the version tag points to.
         # v1.14.2 carries Twine 7, which accepts core metadata 2.5 (what current hatchling writes);
         # v1.14.0 refused the 1.7.0 wheel with "'2.5' is not a valid metadata version".
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
   build-binaries:
     name: Build PyInstaller binary (${{ matrix.target }})
