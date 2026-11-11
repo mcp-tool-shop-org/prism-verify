@@ -118,40 +118,116 @@
   "changes": {
     "fileCounts": {
       "added": 0,
-      "changed": 15,
+      "changed": 2,
       "moved": 0,
-      "parts": 8,
+      "parts": 1,
       "removed": 0
     },
     "items": [
       {
         "kind": "counts",
-        "sentence": "Nothing structural changed since 2026-10-01; 15 files changed content.",
+        "sentence": "Nothing structural changed since 2026-10-15; 2 files changed content.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "2d547750ddafb82cefe885624753f14af8da08f6",
-      "generatedAt": "2026-10-01T02:13:46.190Z"
+      "commit": "551c1633abfa3d39e7e1480c2bc9cb5ccdb8de14",
+      "generatedAt": "2026-10-15T01:17:07.097Z"
     },
     "unchanged": true
   },
-  "changesTogether": [],
+  "changesTogether": [
+    {
+      "a": "src/prism/providers/ollama.py",
+      "b": "src/prism/providers/openai.py",
+      "either": 6,
+      "partLabels": [
+        "providers",
+        "providers"
+      ],
+      "parts": [
+        "providers",
+        "providers"
+      ],
+      "relation": "inside",
+      "shared": 5
+    },
+    {
+      "a": "src/prism/receipts/store.py",
+      "b": "tests/unit/test_receipts.py",
+      "either": 12,
+      "partLabels": [
+        "receipts",
+        "tests"
+      ],
+      "parts": [
+        "receipts",
+        "tests"
+      ],
+      "relation": "b-imports-a",
+      "shared": 9
+    },
+    {
+      "a": "src/prism/http/app.py",
+      "b": "tests/integration/test_http.py",
+      "either": 8,
+      "partLabels": [
+        "servers",
+        "tests"
+      ],
+      "parts": [
+        "servers",
+        "tests"
+      ],
+      "relation": "b-imports-a",
+      "shared": 6
+    },
+    {
+      "a": "src/prism/providers/anthropic.py",
+      "b": "src/prism/providers/openai.py",
+      "either": 6,
+      "partLabels": [
+        "providers",
+        "providers"
+      ],
+      "parts": [
+        "providers",
+        "providers"
+      ],
+      "relation": "inside",
+      "shared": 4
+    },
+    {
+      "a": "src/prism/providers/anthropic.py",
+      "b": "src/prism/providers/ollama.py",
+      "either": 7,
+      "partLabels": [
+        "providers",
+        "providers"
+      ],
+      "parts": [
+        "providers",
+        "providers"
+      ],
+      "relation": "inside",
+      "shared": 4
+    }
+  ],
   "changesTogetherNote": [
     "1 file changed together with its own test, as expected.",
-    "Window: 180 days; a pair counts from 3 shared commits, since 0 source files reach 10 revisions; the floor rises to 10 when 25 do."
+    "Confidence is low: fewer than 25 source files reach 10 revisions in the window.",
+    "Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 1,
-  "commit": "551c1633abfa3d39e7e1480c2bc9cb5ccdb8de14",
+  "commit": "025f4b6806788b1a79701f89954c447efb989cd4",
   "defaultBranch": "main",
   "derived": "18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.",
   "doors": [
     {
       "checks": [
-        "src/",
-        "tests/"
+        "src/"
       ],
-      "checksCount": 2,
+      "checksCount": 1,
       "checksMore": 0,
       "file": ".github/workflows/ci.yml",
       "id": ".github/workflows/ci.yml",
@@ -205,8 +281,10 @@
           "files": 62
         }
       ],
-      "runs": [],
-      "runsCount": 0,
+      "runs": [
+        "tests/"
+      ],
+      "runsCount": 1,
       "runsMore": 0,
       "sends": [
         "uploads coverage to Codecov"
@@ -216,7 +294,8 @@
         "on a pull request",
         "on a push touching 9 paths",
         "or by hand"
-      ]
+      ],
+      "untracked": "eval/corpus-familyab-v3/, which is not tracked"
     },
     {
       "checks": [
@@ -522,9 +601,10 @@
       "to": "receipts"
     }
   ],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generated": [
     {
+      "into": true,
       "place": "specialist/dataset/",
       "writers": [
         "specialist/dataset/merge_corpus.py"
@@ -605,7 +685,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-10-15T01:17:07.097Z",
+  "generatedAt": "2026-11-11T22:29:01.985Z",
   "limits": [
     "2 import sites name a path outside this repository, so what they load is not followed.",
     "3 writes and 5 reads use paths built at run time and are not named here.",
@@ -644,7 +724,14 @@
   "startHere": [
     "src/prism/cli/main.py"
   ],
-  "startReason": "This path follows prism (a command people run, from pyproject.toml) from its entry, since CI only checks code.",
+  "startReason": "This path follows prism (a command people run, from pyproject.toml) from its entry, since CI runs only tests and checks.",
+  "startStop": {
+    "files": [
+      "src/prism/core/engine.py",
+      "src/prism/core/setup.py"
+    ],
+    "from": "src/prism/cli/main.py"
+  },
   "summary": null,
   "summaryFrom": null,
   "testFiles": 63,
@@ -662,9 +749,11 @@
     "servers": 10,
     "specialist": 1
   },
+  "testedCodeParts": 12,
   "unnamedWrites": 3,
   "unread": [
     {
+      "into": true,
       "place": "specialist/dataset/",
       "writers": [
         "specialist/dataset/merge_corpus.py"

@@ -9,7 +9,7 @@
       "externals": 0,
       "files": [
         {
-          "hash": "62c93fdb8d3fc83712a19c9ff5e3b28529ccdfc0a74775caa8850d57959c2757",
+          "hash": "799ff9be3890e07299a6a04cc762f5e63189b357222ef442988bb89475e90693",
           "path": ".github/workflows/ci.yml"
         },
         {
@@ -17,7 +17,7 @@
           "path": ".github/workflows/pages.yml"
         },
         {
-          "hash": "6e8b6e4ef87fa4f4266d0dc97bbe747db5ac11a8364101d93b919588a3790ac1",
+          "hash": "0f6e815113446e0098744e1dd0c0f38a095538c422560a2f8c2851561870e6bb",
           "path": ".github/workflows/release.yml"
         }
       ],
@@ -1731,6 +1731,9 @@
       "outsideReads": 6,
       "outsideWrites": 9,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 6,
       "unresolvedSites": 0
     },
@@ -2528,6 +2531,9 @@
       ],
       "outsideReads": 5,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 51,
       "unresolvedSites": 0
     },
@@ -4111,6 +4117,9 @@
       "outsideReads": 8,
       "outsideWrites": 7,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 32,
       "unresolvedSites": 0
     },
@@ -4270,6 +4279,9 @@
       ],
       "outsideReads": 1,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 20,
       "unresolvedSites": 0
     },
@@ -4373,6 +4385,9 @@
       "name": "probes",
       "origin": "authored",
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 8,
       "unresolvedSites": 0
     },
@@ -4805,6 +4820,9 @@
       "name": "providers",
       "origin": "authored",
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 26,
       "unresolvedSites": 0
     },
@@ -5012,6 +5030,9 @@
       ],
       "outsideReads": 1,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 20,
       "unresolvedSites": 0
     },
@@ -5408,6 +5429,9 @@
       ],
       "outsideReads": 3,
       "role": "code",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 10,
       "unresolvedSites": 0
     },
@@ -7007,13 +7031,16 @@
       "name": "tests",
       "origin": "authored",
       "role": "test",
+      "testRunners": [
+        "pytest"
+      ],
       "testedBy": 0,
       "unresolvedSites": 0
     }
   ],
   "doors": [
     {
-      "checksCount": 2,
+      "checksCount": 1,
       "commands": [
         {
           "dir": "",
@@ -7180,7 +7207,7 @@
           "directory": true,
           "job": "test",
           "path": "tests/",
-          "runKind": "checks"
+          "runKind": "executes"
         }
       ],
       "runsCount": 2,
@@ -7199,7 +7226,7 @@
       "tests": [
         {
           "config": "pyproject.toml",
-          "files": 0,
+          "files": 62,
           "job": "test",
           "junit": true,
           "runner": "pytest",
@@ -7238,6 +7265,22 @@
           "tool": "uv sync",
           "why": "no setup-python step before it"
         }
+      ],
+      "unresolvedExpressions": [
+        {
+          "adds": "words",
+          "job": "test",
+          "step": "4"
+        },
+        {
+          "adds": "flags",
+          "job": "test",
+          "step": "8"
+        }
+      ],
+      "untrackedLandings": [
+        "eval/corpus-familyab-v3/",
+        "eval/corpus-familyab-v3/FAMILYAB_MANIFEST.json"
       ],
       "uses": [
         "actions/checkout",
@@ -8066,9 +8109,9 @@
       "to": "servers"
     }
   ],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generatedFrom": {
-    "commit": "551c1633abfa3d39e7e1480c2bc9cb5ccdb8de14",
+    "commit": "025f4b6806788b1a79701f89954c447efb989cd4",
     "tracked": 330
   },
   "landings": [
@@ -8281,49 +8324,8 @@
           "by": "specialist/dataset/merge_corpus.py",
           "confidence": "ast"
         }
-      ]
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/build_demo.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/build_verifier_dataset.py",
-          "call": "import",
-          "confidence": "ast"
-        }
       ],
-      "target": "specialist/dataset/audit.py",
-      "writers": []
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/build_verifier_dataset.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/certify_verifier.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/gen_phase2.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/puzzles.py",
-          "call": "import",
-          "confidence": "ast"
-        }
-      ],
-      "target": "specialist/dataset/config.py",
-      "writers": []
+      "writesInto": true
     },
     {
       "readers": [],
@@ -8370,17 +8372,6 @@
           "confidence": "ast"
         }
       ]
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/puzzles.py",
-          "call": "import",
-          "confidence": "ast"
-        }
-      ],
-      "target": "specialist/dataset/corrupt.py",
-      "writers": []
     },
     {
       "readers": [],
@@ -8451,59 +8442,6 @@
           "confidence": "ast"
         }
       ]
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/build_demo.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/build_verifier_dataset.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/gen_phase2.py",
-          "call": "import",
-          "confidence": "ast"
-        }
-      ],
-      "target": "specialist/dataset/puzzles.py",
-      "writers": []
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/certify_sycophancy.py",
-          "call": "import",
-          "confidence": "ast"
-        }
-      ],
-      "target": "specialist/dataset/sycophancy_config.py",
-      "writers": []
-    },
-    {
-      "readers": [
-        {
-          "by": "specialist/dataset/build_verifier_dataset.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/gen_phase2.py",
-          "call": "import",
-          "confidence": "ast"
-        },
-        {
-          "by": "specialist/dataset/validate_gate.py",
-          "call": "import",
-          "confidence": "ast"
-        }
-      ],
-      "target": "specialist/dataset/synth.py",
-      "writers": []
     },
     {
       "readers": [],
@@ -8580,65 +8518,7 @@
   "symlinks": [],
   "testFiles": 63,
   "testsNotRun": [
-    "specialist/probes/test_sycophancy_probes.py",
-    "tests/integration/test_citation_groundedness_ollama_live.py",
-    "tests/integration/test_citations.py",
-    "tests/integration/test_compensate_after_verify.py",
-    "tests/integration/test_eval_family_ab_cli.py",
-    "tests/integration/test_eval_round_robin_cli.py",
-    "tests/integration/test_eval_runner.py",
-    "tests/integration/test_http.py",
-    "tests/integration/test_local_verifier_live.py",
-    "tests/integration/test_meta_citations.py",
-    "tests/integration/test_sycophancy_panel_engine.py",
-    "tests/integration/test_verify_pipeline.py",
-    "tests/unit/test_active_probes.py",
-    "tests/unit/test_auth.py",
-    "tests/unit/test_bigcodebench.py",
-    "tests/unit/test_bypass_safety.py",
-    "tests/unit/test_citation_spotlight.py",
-    "tests/unit/test_citations.py",
-    "tests/unit/test_cli.py",
-    "tests/unit/test_cli_probe_sycophancy.py",
-    "tests/unit/test_codejudgebench.py",
-    "tests/unit/test_container_sandbox.py",
-    "tests/unit/test_engine.py",
-    "tests/unit/test_eval_calibrate.py",
-    "tests/unit/test_eval_corpus.py",
-    "tests/unit/test_eval_harvest.py",
-    "tests/unit/test_eval_metrics.py",
-    "tests/unit/test_eval_report.py",
-    "tests/unit/test_eval_stats.py",
-    "tests/unit/test_failure_signature.py",
-    "tests/unit/test_familyab.py",
-    "tests/unit/test_familygen.py",
-    "tests/unit/test_lenses.py",
-    "tests/unit/test_livecodebench.py",
-    "tests/unit/test_local_verifier.py",
-    "tests/unit/test_mcp.py",
-    "tests/unit/test_mutate.py",
-    "tests/unit/test_nli.py",
-    "tests/unit/test_observability.py",
-    "tests/unit/test_openrouter.py",
-    "tests/unit/test_oracle.py",
-    "tests/unit/test_problem_select.py",
-    "tests/unit/test_providers.py",
-    "tests/unit/test_realbug.py",
-    "tests/unit/test_receipts.py",
-    "tests/unit/test_retrieval.py",
-    "tests/unit/test_routing.py",
-    "tests/unit/test_routing_config.py",
-    "tests/unit/test_routing_same_family_bypass.py",
-    "tests/unit/test_sandbox.py",
-    "tests/unit/test_security_normalize.py",
-    "tests/unit/test_security_spotlight.py",
-    "tests/unit/test_signing.py",
-    "tests/unit/test_stripping.py",
-    "tests/unit/test_submodularity.py",
-    "tests/unit/test_sycophancy.py",
-    "tests/unit/test_sycophancy_panel.py",
-    "tests/unit/test_verifier_registry_surfaces.py",
-    "tests/unit/test_webhook.py"
+    "specialist/probes/test_sycophancy_probes.py"
   ],
   "unassigned": [],
   "unseen": [
