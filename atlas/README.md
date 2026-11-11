@@ -1,18 +1,18 @@
 # prism-verify: how it works
 
-Mapped at 2026-10-15 from commit 551c163 by Atlas 1.24.0.
+Mapped at 2026-11-11 from commit 025f4b6 by Atlas 1.26.0.
 
 ## What this is
 
 18 parts, mostly Python (200 files), JavaScript (6), CSS (2), TypeScript (2) and Astro (1). Work enters through 5 doors; CI and Release each reach 9 parts, and CI is followed because a pull request goes through it. It publishes to PyPI and @mcptoolshop/prism-verify to npm. It deploys a site to GitHub Pages. People run prism.
 
-## What changed since 2026-10-01 (2d54775)
+## What changed since 2026-10-15 (551c163)
 
-Nothing structural changed since 2026-10-01; 15 files changed content.
+Nothing structural changed since 2026-10-15; 2 files changed content.
 
 ## What comes in
 
-1. **CI.** On a pull request; on a push touching 9 paths; or by hand. Checks src/ and tests/.
+1. **CI.** On a pull request; on a push touching 9 paths; or by hand. Runs tests/; checks src/.
 2. **Release.** When a release is published; or by hand. Checks npm/bin/prism.js and src/prism/. On a run by hand with tag false, it also builds src/prism/__main__.py.
 3. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
 4. **prism** (a command people run, from pyproject.toml). Runs src/prism/cli/main.py.
@@ -20,12 +20,13 @@ Nothing structural changed since 2026-10-01; 15 files changed content.
 
 ## What happens through CI
 
-1. The workflow checks tests/ in tests and src/ (8 parts).
-2. It uploads coverage to Codecov.
+1. The workflow runs tests/ in tests; it checks src/ (8 parts).
+2. It writes to eval/corpus-familyab-v3/, which is not tracked.
+3. It uploads coverage to Codecov.
 
 ## Who reads the results
 
-CI writes nothing this map can see.
+CI writes only to eval/corpus-familyab-v3/, which is not tracked.
 
 ## The other doors
 
@@ -50,11 +51,17 @@ CI writes nothing this map can see.
 
 ## What tends to change together
 
-No two source files, other than a file and its own test, changed together often enough to name.
+- **src/prism/providers/ollama.py** and **src/prism/providers/openai.py** changed together in 5 of 6 commits, inside the providers part.
+- **src/prism/receipts/store.py** and **tests/unit/test_receipts.py** changed together in 9 of 12 commits, and the tests part imports the receipts part.
+- **src/prism/http/app.py** and **tests/integration/test_http.py** changed together in 6 of 8 commits, and the tests part imports the servers part.
+- **src/prism/providers/anthropic.py** and **src/prism/providers/openai.py** changed together in 4 of 6 commits, inside the providers part.
+- **src/prism/providers/anthropic.py** and **src/prism/providers/ollama.py** changed together in 4 of 7 commits, inside the providers part.
 
 1 file changed together with its own test, as expected.
 
-Window: 180 days; a pair counts from 3 shared commits, since 0 source files reach 10 revisions; the floor rises to 10 when 25 do.
+Confidence is low: fewer than 25 source files reach 10 revisions in the window.
+
+Window: 180 days; a pair counts from 3 shared commits, since 7 source files reach 10 revisions; the floor rises to 10 when 25 do.
 
 ## What no test touches
 
@@ -66,7 +73,7 @@ specialist/probes/test_sycophancy_probes.py runs in no workflow.
 
 ## Written but never read
 
-- **specialist/dataset/** is written by specialist/dataset/merge_corpus.py and read by nothing else in this repository.
+- **specialist/dataset/** holds files written by specialist/dataset/merge_corpus.py and read by nothing else in this repository.
 - **specialist/dataset/corpus_conjuncts.json** is written by specialist/dataset/ingest_corpus.py and read by nothing else in this repository.
 - **specialist/dataset/corpus_hops.json** is written by specialist/dataset/ingest_corpus.py and read by nothing else in this repository.
 - **specialist/dataset/corpus_triples.json** is written by specialist/dataset/ingest_corpus.py and read by nothing else in this repository.
@@ -81,7 +88,7 @@ No two parts export a helper that looks alike.
 
 ## Generated, never hand-edited
 
-- **specialist/dataset/** is written by specialist/dataset/merge_corpus.py.
+- **specialist/dataset/** holds files written by specialist/dataset/merge_corpus.py.
 - **specialist/dataset/corpus_conjuncts.json** is written by specialist/dataset/ingest_corpus.py.
 - **specialist/dataset/corpus_evidence.json** is written by specialist/dataset/ingest_corpus.py.
 - **specialist/dataset/corpus_hops.json** is written by specialist/dataset/ingest_corpus.py.
@@ -101,7 +108,7 @@ People write .github/, assets/, design/, the repository root and site/; 3 writes
 
 ## Where to start
 
-Start at src/prism/cli/main.py to follow one run of prism end to end. This path follows prism (a command people run, from pyproject.toml) from its entry, since CI only checks code.
+Start at src/prism/cli/main.py, which leads on to src/prism/core/engine.py and src/prism/core/setup.py; this map records no order among them, so the path ends there. This path follows prism (a command people run, from pyproject.toml) from its entry, since CI runs only tests and checks.
 
 ## What this map cannot see
 
